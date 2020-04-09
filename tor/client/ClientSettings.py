@@ -1,9 +1,7 @@
 import math
 import numpy as np
 
-from . import Cords
-from . import MovementManager
-from . import Position
+from tor.client.Position import Position
 
 LX = 190
 LY = 190
@@ -20,4 +18,4 @@ RAMP_ALPHA = np.arctan((RAMP_END_Z - RAMP_START_Z) / RAMP_END_X)
 PICKUP_Z = 200
 MAGNET_RADIUS = 12
 HOME_POSITION = Position(0, 0, 0)
-HOME_CORDS =  MovementManager.getCordLengths(HOME_POSITION)
+HOME_CORDS =  HOME_POSITION.toCordLengths()

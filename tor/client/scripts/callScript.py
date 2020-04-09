@@ -2,4 +2,4 @@
 
 import os
 
-os.system("python3 ./sercmd.py" " \"M122\"")
+os.system("python3 ./serialCmd.py" " \"M122\"")

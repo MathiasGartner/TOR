@@ -3,22 +3,12 @@ import numpy as np
 import time
 
 import tor.client.ClientSettings as cs
-from . import Communicator
-from . import Cords
-from . import Position
+from tor.client.Communicator import Communicator
+from tor.client.Position import Position
 
-class Movementmanager:
+class MovementManager:
     def __init__(self):
-        com = Communicator()
-        pass
-
-    def getCordLengths(self, pos):
-        diffs = cs.BOX_SIZE - pos
-        c1 = math.sqrt(pos.x ** 2 + pos.y ** 2 + pos.z ** 2)
-        c2 = math.sqrt(pos.x ** 2 + diffs.y ** 2 + pos.z ** 2)
-        c3 = math.sqrt(diffs.x ** 2 + diffs.y ** 2 + pos.z ** 2)
-        c4 = math.sqrt(diffs.x ** 2 + pos.y ** 2 + pos.z ** 2)
-        return Cords([c1, c2, c3, c4])
+        self.com = Communicator()
 
     def sendGCode(self, cmd):
         print("SEND: " + cmd)
@@ -43,7 +33,7 @@ class Movementmanager:
 
     def moveToPos(self, pos):
         print("MOVE:", pos.x, pos.y, pos.z)
-        cords = self.getCordLengths(pos)
+        cords = pos.toCordLengths()
         cmd = "G1 " + self.getCordLengthGCode(cords)
         self.sendGCode(cmd)
 

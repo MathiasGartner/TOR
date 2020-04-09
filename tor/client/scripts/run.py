@@ -4,8 +4,8 @@ import sys
 import time
 
 import tor.client.ClientSettings as cs
-from tor.client import MovementManager
-from tor.client import Position
+from tor.client.MovementManager import MovementManager
+from tor.client.Position import Position
 
 mm = MovementManager()
 
