@@ -1,0 +1,1 @@
+To execute scripts call `python3 -m tor.client.scripts.scriptName` in the `TOR` directory.

@@ -10,6 +10,10 @@ class MovementManager:
     def __init__(self):
         self.com = Communicator()
 
+    def initBoard(self):
+        self.sendGCode("M501")
+        self.sendGCode("M220 S300")
+
     def sendGCode(self, cmd):
         print("SEND: " + cmd)
         self.com.send(cmd)

@@ -9,6 +9,7 @@ from tor.client.Position import Position
 
 mm = MovementManager()
 
+mm.initBoard()
 mm.setCurrentPosition(cs.HOME_CORDS)
 mm.getCurrentPosition()
 time.sleep(0.5)
