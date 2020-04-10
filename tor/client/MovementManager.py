@@ -11,7 +11,9 @@ class MovementManager:
         self.com = Communicator()
 
     def initBoard(self):
+        # Restore Settings
         self.sendGCode("M501")
+        # Set Feedrate Percentage
         self.sendGCode("M220 S300")
 
     def sendGCode(self, cmd):
@@ -32,6 +34,7 @@ class MovementManager:
         self.sendGCode(cmd)
 
     def getCurrentPosition(self):
+        # Get Current Position
         cmd = "M114"
         self.sendGCode(cmd)
 
