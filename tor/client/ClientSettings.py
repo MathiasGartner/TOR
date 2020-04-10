@@ -1,7 +1,13 @@
 import math
 import numpy as np
+import sys
 
 from tor.client.Position import Position
+
+if sys.platform == "linux":
+    ON_RASPI = True
+else:
+    ON_RASPI = False
 
 LX = 190
 LY = 190
@@ -19,3 +25,5 @@ PICKUP_Z = 200
 MAGNET_RADIUS = 12
 HOME_POSITION = Position(0, 0, 0)
 HOME_CORDS =  HOME_POSITION.toCordLengths()
+
+DIE_ROLL_TIME = 5

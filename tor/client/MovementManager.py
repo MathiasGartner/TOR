@@ -80,7 +80,11 @@ class MovementManager:
         self.moveToPos(cX)
         self.moveHome()
 
-    def searchForDice(self):
+    def rollDie(self):
+        #TODO: imlement
+        print("dice is now rolled...")
+
+    def searchForDie(self):
         dx = 5
         dxMoves = 2
         dy = 5
