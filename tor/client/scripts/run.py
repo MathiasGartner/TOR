@@ -43,14 +43,7 @@ elif mode == 2: #move to x y z
     mm.moveToPos(pos)
 
 elif mode == 3: #move to all corners
-    cX = Position(0, 0, 0)
-    cY = Position(0, cs.LY, 0)
-    cZ = Position(cs.LX, cs.LY, 0)
-    cE = Position(cs.LX, 0, 0)
-    mm.moveToPos(cY)
-    mm.moveToPos(cZ)
-    mm.moveToPos(cE)
-    mm.moveToPos(cX)
+    mm.moveToAllCorners()
 
 elif mode == 4: #search for dice
     mm.searchForDice()

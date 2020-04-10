@@ -56,8 +56,29 @@ class MovementManager:
         pos = Position(cs.RAMP_DROPOFF_X, y, cs.RAMP_DROPOFF_Z)
         self.moveToPos(pos)
 
+    def moveToXYPosDiceAndRamp(self, x, y):
+        pos = Position(x, y, cs.PICKUP_Z)
+        self.moveToPos(pos)
+        pos = Position(cs.RAMP_DROPOFF_X, y, cs.RAMP_DROPOFF_Z)
+        self.moveToPos(pos)
+
     def moveHome(self):
         self.moveToPos(cs.HOME_POSITION)
+
+    def moveToAllCorners(self):
+        cX = Position(0, 0, 0)
+        cY = Position(0, cs.LY, 0)
+        cZ = Position(cs.LX, cs.LY, 0)
+        cE = Position(cs.LX, 0, 0)
+        self.moveToPos(cY)
+        self.moveToPos(cZ)
+        self.moveToPos(cE)
+        self.moveToPos(cX)
+        self.moveToPos(cZ)
+        self.moveToPos(cY)
+        self.moveToPos(cE)
+        self.moveToPos(cX)
+        self.moveHome()
 
     def searchForDice(self):
         dx = 5

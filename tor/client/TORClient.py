@@ -1,4 +1,3 @@
-import json
 from random import randint
 from random import seed
 import socket
@@ -6,6 +5,8 @@ import sys
 import time
 
 from tor.base import NetworkUtils
+import tor.client.ClientSettings as cs
+from tor.client.MovementManager import MovementManager
 import tor.TORSettings as ts
 
 def createConnection():
@@ -33,9 +34,14 @@ def sendDieRollResult(result):
     conn.close()
 
 def doDieRoll():
+    mm.moveToXYPosDiceAndRamp(100, 130)
+    mm.waitForMovementFinished(0)
+    time.sleep(1)
     dieResult = randint(1, 6)
     sendDieRollResult(dieResult)
     time.sleep(1)
+    mm.moveHome()
+    mm.waitForMovementFinished(0)
 
 seed(12345)
 
@@ -43,7 +49,14 @@ clientId = 1
 if len(sys.argv) > 1:
     clientId = int(sys.argv[1])
 
-for _ in range(10):
+mm = MovementManager()
+
+mm.initBoard()
+mm.setCurrentPosition(cs.HOME_CORDS)
+mm.getCurrentPosition()
+time.sleep(0.5)
+
+for _ in range(3):
     doDieRoll()
 
 answer = askForJob()
