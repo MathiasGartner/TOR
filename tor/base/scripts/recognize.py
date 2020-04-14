@@ -3,5 +3,5 @@ from tor.base.DiceRecognizer import  DiceRecognizer
 
 dr = DiceRecognizer()
 im = dr.readDummyImage()
-dr.getDiePosition(im, withUI=True)
-
+result = dr.getDiePosition(im, withUI=True)
+print(result)

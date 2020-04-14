@@ -51,7 +51,7 @@ def doDieRoll():
         image = cam.takePicture()
     else:
         image = dr.readDummyImage()
-    (found,x,y,result) = dr.getDiePosition(image)
+    (found, _, diePosition, result) = dr.getDiePosition(image)
     if found:
         if not result > 0:
             result = dr.getDieResult()
@@ -61,17 +61,17 @@ def doDieRoll():
             sendDieRollResult(result)
         else:
             sendDieResultNotRecognized()
-        mm.moveToXYPosDiceAndRamp(x, y)
+        mm.moveToXYPosDiceAndRamp(diePosition.x, diePosition.y)
         mm.waitForMovementFinished()
         if not dr.checkIfDiePickedUp():
             mm.searchForDie()
             mm.waitForMovementFinished()
-            mm.moveToYPosRamp(cs.LY/2)
+            mm.moveToXPosRamp(cs.LX/2)
             mm.waitForMovementFinished()
     else:
         sendDieNotFound()
         mm.searchForDie()
-        mm.moveToYPosRamp(cs.LY/2)
+        mm.moveToXPosRamp(cs.LX/2)
         mm.waitForMovementFinished()
 
 seed(12345)
