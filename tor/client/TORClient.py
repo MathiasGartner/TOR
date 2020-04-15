@@ -17,32 +17,42 @@ def createConnection():
     conn.connect((ts.SERVER_IP, ts.SERVER_PORT))
     return conn
 
-def askForJob():
+def sendAndGetAnswer(msg):
     conn = createConnection()
-    NetworkUtils.sendData(conn, {"C" : clientId, "J" : "waiting"})
+    NetworkUtils.sendData(conn, msg)
     answer = NetworkUtils.recvData(conn)
     conn.close()
     return answer
 
+def askForJob():
+    msg = {"C" : clientId, "J" : "waiting"}
+    answer = sendAndGetAnswer(msg)
+    return answer
+
 def sendDieRollResult(result):
-    conn = createConnection()
-    dieRoll = {
+    msg = {
         "C" : clientId,
         "D" : result
     }
-    NetworkUtils.sendData(conn, dieRoll)
-    answer = NetworkUtils.recvData(conn)
+    answer = sendAndGetAnswer(msg)
     if "STATUS" in answer:
         print("server responds", answer["STATUS"])
-    conn.close()
 
 def sendDieNotFound():
-    #TODO: send message to server that die could not be located
-    pass
+    msg = {
+        "C" : clientId,
+        "E" : 1,
+        "MESSAGE" : "Could not locate die."
+    }
+    answer = sendAndGetAnswer(msg)
 
 def sendDieResultNotRecognized():
-    #TODO: send message to server that die could not be recognized
-    pass
+    msg = {
+        "C" : clientId,
+        "E" : 1,
+        "MESSAGE" : "Could not recognize die result."
+    }
+    answer = sendAndGetAnswer(msg)
 
 def doDieRoll():
     mm.rollDie()
