@@ -20,23 +20,23 @@ if len(sys.argv) > 1:
 print("mode: ", mode)
 
 if mode == 0:
-    dicePosition = Position(100, 30, 210)
+    diePosition = Position(100, 30, 210)
     mm.moveToPos(cs.HOME_POSITION)
-    mm.moveToPos(dicePosition)
+    mm.moveToPos(diePosition)
     mm.moveToPos(cs.HOME_POSITION)
 
-    diceX = 120
-    diceY = 160
-    mm.moveToXYPosDice(diceX, diceY)
+    dieX = 120
+    dieY = 160
+    mm.moveToXYPosDie(dieX, dieY)
     mm.waitForMovementFinished(0.5)
-    mm.moveToXPosRamp(diceX)
+    mm.moveToXPosRamp(dieX)
 
-elif mode == 1: #move to x y and pick up dice
-    diceX = int(sys.argv[2])
-    diceY = int(sys.argv[3])
-    mm.moveToXYPosDice(diceX, diceY)
+elif mode == 1: #move to x y and pick up die
+    dieX = int(sys.argv[2])
+    dieY = int(sys.argv[3])
+    mm.moveToXYPosDie(dieX, dieY)
     mm.waitForMovementFinished(0.5)
-    mm.moveToXPosRamp(diceX)
+    mm.moveToXPosRamp(dieX)
 
 elif mode == 2: #move to x y z
     pos = Position(int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]))
@@ -45,7 +45,7 @@ elif mode == 2: #move to x y z
 elif mode == 3: #move to all corners
     mm.moveToAllCorners()
 
-elif mode == 4: #search for dice
+elif mode == 4: #search for die
     mm.searchForDie()
     mm.moveToXPosRamp(cs.LX/2)
 

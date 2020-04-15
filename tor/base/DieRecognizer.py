@@ -1,11 +1,12 @@
 import cv2
+from datetime import datetime
 import math
 import numpy as np
 
 from tor.base.utils.Point2D import Point2D
 import tor.client.ClientSettings as cs
 
-class DiceRecognizer:
+class DieRecognizer:
     def __init__(self):
         self.blobParams = cv2.SimpleBlobDetector_Params()
         self.blobParams.filterByColor = True
@@ -33,6 +34,10 @@ class DiceRecognizer:
             raise Exception("Could not open image: ", imgPath)
         return image
 
+    def writeImage(self, im):
+        cv2.imwrite("run_{}.jpg".format(datetime.now().strftime("%Y%m%d%H%M%S")), im)
+        pass
+
     def cropToSearchableArea(self, im):
         cropped = im[cs.IMAGE_CROP_Y_TOP:(im.shape[0] - cs.IMAGE_CROP_Y_BOTTOM), cs.IMAGE_CROP_X_LEFT:(im.shape[1] - cs.IMAGE_CROP_X_RIGHT)]
         return cropped
@@ -56,7 +61,7 @@ class DiceRecognizer:
                 x = np.int(p.pt[0])
                 y = np.int(p.pt[1])
                 size = np.int(p.size)
-                im_color = cv2.circle(im_color, (x, y), int(size/2), (0, 0, 255), thickness=-1)
+                im_color = cv2.circle(im_color, (x, y), int(size/2), (0, 0, 255), thickness=3)
             im_color = cv2.rectangle(im_color, (minX, minY), (maxX, maxY), (0, 0, 255), thickness=10)
         return im_color
 
@@ -109,7 +114,7 @@ class DiceRecognizer:
 
                 diePositionPX = Point2D(meanX, meanY)
                 diePositionMM = self.px_to_mm(diePositionPX)
-                diePositionMM.y = cs.LY - diePositionMM.y
+                diePositionMM.y = cs.LY - diePositionMM.y + 20 #TODO: check mapping of y value from pixel to mm
                 found = True
                 result = min(len(blobs), 6)
         else:
@@ -117,8 +122,16 @@ class DiceRecognizer:
             diePositionPX = Point2D(-1, -1)
             diePositionMM = Point2D(-1, -1)
             result = 0
-        return (found, diePositionPX, diePositionMM, result, (im_original, im_with_blobs))
+        return (found, diePositionMM, result, (im_original, im_with_blobs))
+
+    def getDieResult(self):
+        #TODO: not implemented yet
+        return 0
+
+    def getDieResultWithExtensiveProcessing(self):
+        #TODO: not implemented yet
+        return 0
 
     def checkIfDiePickedUp(self):
         #TODO: compare to previous image and check if die is now missing
-        pass
+        return True

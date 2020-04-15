@@ -11,8 +11,8 @@ def handleRequest(conn):
     if "C" in request:
         clientId = request["C"]
         if "D" in request:
-            diceResult = request["D"]
-            print("Client", clientId, "rolled", diceResult)
+            dieResult = request["D"]
+            print("Client", clientId, "rolled", dieResult)
             conn.send(msgOK.encode())
         elif "E" in request:
             print("ERROR", request["E"])

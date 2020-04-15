@@ -4,11 +4,11 @@ import time
 
 class Camera:
     def __init__(self):
-        self.cam = PiCamera()
-        rawCapture = PiRGBArray(self.cam)
+        self.cam = PiCamera(resolution=(2592, 1944))
         #self.cam.led = False
 
     def takePicture(self):
-        camera.capture(rawCapture, format="bgr")
+        rawCapture = PiRGBArray(self.cam)
+        self.cam.capture(rawCapture, format="bgr")
         image = rawCapture.array
         return image

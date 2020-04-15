@@ -2,7 +2,7 @@ import cv2
 import math
 import numpy as np
 
-from tor.base.DiceRecognizer import  DiceRecognizer
+from tor.base.DieRecognizer import  DieRecognizer
 
 def createImageTable(images, cols):
     shape = images[0].shape
@@ -39,14 +39,14 @@ tags = (1, 1, 5, 0, 3, 6, 4, 1, 5, 5, 5, 0, 5, 4) #11/14
 
 borderSize = 10
 borderCol = (0, 0, 0)
-dr = DiceRecognizer()
+dr = DieRecognizer()
 images = []
 results = []
 correct = 0
 i = 0
 for imNr in range(start, end+1):
     im = dr.readDummyImage(imNr, path)
-    found, posPX, posMM, result, resultImg = dr.getDiePosition(im, withUI=False, returnOriginalImg=True)
+    found, posMM, result, resultImg = dr.getDiePosition(im, withUI=False, returnOriginalImg=True)
     if len(tags) > i:
         if result == tags[i]:
             print("correct ({})".format(result))

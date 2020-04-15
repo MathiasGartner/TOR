@@ -5,7 +5,7 @@ import sys
 import time
 
 from tor.base import NetworkUtils
-from tor.base.DiceRecognizer import DiceRecognizer
+from tor.base.DieRecognizer import DieRecognizer
 import tor.client.ClientSettings as cs
 if cs.ON_RASPI:
     from tor.client.Camera import Camera
@@ -41,7 +41,7 @@ def sendDieNotFound():
     pass
 
 def sendDieResultNotRecognized():
-    #TODO: send message to server that die could not be located
+    #TODO: send message to server that die could not be recognized
     pass
 
 def doDieRoll():
@@ -51,7 +51,8 @@ def doDieRoll():
         image = cam.takePicture()
     else:
         image = dr.readDummyImage()
-    (found, _, diePosition, result) = dr.getDiePosition(image)
+    found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
+    dr.writeImage(processedImages[1])
     if found:
         if not result > 0:
             result = dr.getDieResult()
@@ -61,7 +62,7 @@ def doDieRoll():
             sendDieRollResult(result)
         else:
             sendDieResultNotRecognized()
-        mm.moveToXYPosDiceAndRamp(diePosition.x, diePosition.y)
+        mm.moveToXYPosDieAndRamp(diePosition.x, diePosition.y)
         mm.waitForMovementFinished()
         if not dr.checkIfDiePickedUp():
             mm.searchForDie()
@@ -70,8 +71,8 @@ def doDieRoll():
             mm.waitForMovementFinished()
     else:
         sendDieNotFound()
-        mm.searchForDie()
-        mm.moveToXPosRamp(cs.LX/2)
+        #mm.searchForDie()
+        #mm.moveToXPosRamp(cs.LX/2)
         mm.waitForMovementFinished()
 
 seed(12345)
@@ -83,7 +84,7 @@ if len(sys.argv) > 1:
 if cs.ON_RASPI:
     cam = Camera()
 
-dr = DiceRecognizer()
+dr = DieRecognizer()
 
 mm = MovementManager()
 

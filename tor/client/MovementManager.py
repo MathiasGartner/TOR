@@ -48,16 +48,17 @@ class MovementManager:
         pos = Position(x, y, z)
         self.moveToPos(pos)
 
-    def moveToXYPosDice(self, x, y):
+    def moveToXYPosDie(self, x, y):
         pos = Position(x, y, cs.PICKUP_Z)
         self.moveToPos(pos)
 
     def moveToXPosRamp(self, x):
+        x = min(max(x, cs.RAMP_FORBIDDEN_X_MIN), cs.RAMP_FORBIDDEN_X_MAX)
         pos = Position(x, cs.RAMP_DROPOFF_Y, cs.RAMP_DROPOFF_Z)
         self.moveToPos(pos)
 
-    def moveToXYPosDiceAndRamp(self, x, y):
-        self.moveToXYPosDice(x, y)
+    def moveToXYPosDieAndRamp(self, x, y):
+        self.moveToXYPosDie(x, y)
         self.moveToXPosRamp(x)
 
     def moveHome(self):
@@ -80,7 +81,7 @@ class MovementManager:
 
     def rollDie(self):
         #TODO: implement
-        print("dice is now rolled...")
+        print("die is now rolled...")
 
     def searchForDie(self):
         dy = 5
