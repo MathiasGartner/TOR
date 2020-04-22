@@ -9,11 +9,17 @@ if sys.platform == "linux":
 else:
     ON_RASPI = False
 
-LX = 230
-LY = 230
-LZ = 210
+LX = 246
+LY = 246
+LZ = 290 - 15 + 0 #height - hook + empiric value...
 LMAX = math.sqrt(LX**2 + LY**2 + LZ**2)
 BOX_SIZE = Position(LX, LY, LZ)
+HOME_POSITION = Position(0, 0, 0)
+HOME_CORDS =  HOME_POSITION.toCordLengths()
+CORNER_X = Position(0, 0, 0)
+CORNER_Y = Position(LX, 0, 0)
+CORNER_Z = Position(LX, LY, 0)
+CORNER_E = Position(0, LY, 0)
 
 RAMP_FORBIDDEN_X_MIN = 30
 RAMP_FORBIDDEN_X_MAX = LX - 30
@@ -24,10 +30,10 @@ RAMP_END_Y = 115
 RAMP_END_Z = LZ - 65
 RAMP_START_Z = 50
 RAMP_ALPHA = np.arctan((RAMP_END_Z - RAMP_START_Z) / RAMP_END_Y)
-PICKUP_Z = 190
 MAGNET_RADIUS = 12
-HOME_POSITION = Position(0, 0, 0)
-HOME_CORDS =  HOME_POSITION.toCordLengths()
+MAGNET_HEIGHT = 40
+PICKUP_ABOVE_GROUND = 18
+PICKUP_Z = LZ - MAGNET_HEIGHT - PICKUP_ABOVE_GROUND
 
 DIE_ROLL_TIME = 2
 

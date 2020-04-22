@@ -13,6 +13,12 @@ class Position:
     def __sub__(self, other):
         return Position(self.x - other.x, self.y - other.y, self.z - other.z)
 
+    def __str__(self):
+        return "<Position: (x={}, y={}, z={})>".format(self.x, self.y, self.z)
+
+    def __repr__(self):
+        return self.__str__()
+
     def toCordLengths(self):
         diffs = cs.BOX_SIZE - self
         c1 = math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)

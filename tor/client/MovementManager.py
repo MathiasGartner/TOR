@@ -12,9 +12,9 @@ class MovementManager:
 
     def initBoard(self):
         # Restore Settings
-        self.sendGCode("M501")
+        #self.sendGCode("M501")
         # Set Feedrate Percentage
-        self.sendGCode("M220 S300")
+        self.sendGCode("M220 S400")
 
     def sendGCode(self, cmd):
         print("SEND: " + cmd)
@@ -65,18 +65,14 @@ class MovementManager:
         self.moveToPos(cs.HOME_POSITION)
 
     def moveToAllCorners(self):
-        cX = Position(0, 0, 0)
-        cY = Position(cs.LX, 0, 0)
-        cZ = Position(cs.LX, cs.LY, 0)
-        cE = Position(0, cs.LY, 0)
-        self.moveToPos(cY)
-        self.moveToPos(cZ)
-        self.moveToPos(cE)
-        self.moveToPos(cX)
-        self.moveToPos(cZ)
-        self.moveToPos(cY)
-        self.moveToPos(cE)
-        self.moveToPos(cX)
+        self.moveToPos(cs.CORNER_X)
+        self.moveToPos(cs.CORNER_Z)
+        self.moveToPos(cs.CORNER_E)
+        self.moveToPos(cs.CORNER_X)
+        self.moveToPos(cs.CORNER_Z)
+        self.moveToPos(cs.CORNER_Y)
+        self.moveToPos(cs.CORNER_E)
+        self.moveToPos(cs.CORNER_X)
         self.moveHome()
 
     def rollDie(self):

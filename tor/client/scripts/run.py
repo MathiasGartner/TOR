@@ -10,7 +10,7 @@ from tor.client.Position import Position
 mm = MovementManager()
 
 mm.initBoard()
-mm.setCurrentPosition(cs.HOME_CORDS)
+#mm.setCurrentPosition(cs.HOME_CORDS)
 mm.getCurrentPosition()
 time.sleep(0.5)
 
@@ -50,6 +50,6 @@ elif mode == 4: #search for die
     mm.moveToXPosRamp(cs.LX/2)
 
 mm.waitForMovementFinished(2)
-mm.moveHome()
+#mm.moveHome()
 
 

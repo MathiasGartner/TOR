@@ -10,6 +10,7 @@ import tor.client.ClientSettings as cs
 if cs.ON_RASPI:
     from tor.client.Camera import Camera
 from tor.client.MovementManager import MovementManager
+from tor.client.Position import Position
 import tor.TORSettings as ts
 
 def createConnection():
@@ -49,12 +50,13 @@ def sendDieNotFound():
 def sendDieResultNotRecognized():
     msg = {
         "C" : clientId,
-        "E" : 1,
+        "E" : 2,
         "MESSAGE" : "Could not recognize die result."
     }
     answer = sendAndGetAnswer(msg)
 
 def doDieRoll():
+    print("doDieRoll()")
     mm.rollDie()
     time.sleep(cs.DIE_ROLL_TIME)
     if cs.ON_RASPI:
@@ -64,11 +66,13 @@ def doDieRoll():
     found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
     dr.writeImage(processedImages[1])
     if found:
+        print("found @", diePosition)
         if not result > 0:
             result = dr.getDieResult()
         if not result > 0:
             result = dr.getDieResultWithExtensiveProcessing()
         if result > 0:
+            print("die result:", result)
             sendDieRollResult(result)
         else:
             sendDieResultNotRecognized()
@@ -99,18 +103,47 @@ dr = DieRecognizer()
 mm = MovementManager()
 
 mm.initBoard()
-mm.setCurrentPosition(cs.HOME_CORDS)
+#mm.sendGCode("G288 M1 S75")
+#mm.sendGCode("G288 S70")
+#mm.setCurrentPosition(cs.HOME_CORDS)
 mm.getCurrentPosition()
+mm.moveToXPosRamp(cs.LX/2)
+mm.waitForMovementFinished()
+print("now in starting position.")
 time.sleep(0.5)
 
-for _ in range(1):
-    doDieRoll()
-
-answer = askForJob()
-print(answer)
-if "R" in answer:
-    for _ in range(answer["R"]):
-        doDieRoll()
+done = False
+while not done:
+    answer = askForJob()
+    print(answer)
+    if "R" in answer:
+        for _ in range(answer["R"]):
+            doDieRoll()
+    elif "C" in answer:
+        mm.moveToAllCorners()
+        mm.waitForMovementFinished()
+    elif "M" in answer:
+        if "P" in answer:
+            pos = None
+            if answer["P"] == "BOTTOM_CENTER":
+                pos = Position(cs.LX/2, cs.LY/2, cs.PICKUP_Z)
+            elif answer["P"] == "CX":
+                pos = cs.CORNER_X
+            elif answer["P"] == "CY":
+                pos = cs.CORNER_Y
+            elif answer["P"] == "CZ":
+                pos = cs.CORNER_Z
+            elif answer["P"] == "CE":
+                pos = cs.CORNER_E
+            if pos is not None:
+                mm.moveToPos(pos)
+                mm.waitForMovementFinished()
+                time.sleep(1)
+                mm.moveHome()
+                mm.waitForMovementFinished()
+                time.sleep(1)
+    elif "Q" in answer:
+        done = True
 
 mm.moveHome()
 print("finished")

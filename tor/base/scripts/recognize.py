@@ -14,28 +14,29 @@ def createImageTable(images, cols):
     return finalImage
 
 tags = []
-#path, start, end = r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_0_testen Kamera\bild{}.jpg", 1, 9
+directory = r"D:\Dropbox\Uni\AEC\\"
+#path, start, end = directory + r"Elektronik\Raspi\2_0_testen Kamera\bild{}.jpg", 1, 9
 #tags = (4, 6, 6, 6, 6, 0, 5, 5, 5) #5/9
-#path, start, end = r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_1_glasklar\test{:04d}.jpg", 0, 16
+#path, start, end = directory + "Elektronik\Raspi\2_1_glasklar\test{:04d}.jpg", 0, 16
 #tags = (2, 0, 1, 5, 4, 6, 0, 1, 5, 1, 2, 2, 3, 0, 2, 3, 3) #17/17
-#path, start, end = r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_1_glasklar\bild{}.jpg", 1, 25
+#path, start, end = directory + r"Elektronik\Raspi\2_1_glasklar\bild{}.jpg", 1, 25
 #tags = (5, 5, 5, 5, 5, 5, 5, 5, 4, 2, 1, 1, 4, 3, 3, 3, 2, 1, 6, 0, 1, 4, 4, 2, 2) #23/25
-#path, start, end = r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_1_glasklar\bild{}.jpg", 26, 50
+#path, start, end = directory + r"Elektronik\Raspi\2_1_glasklar\bild{}.jpg", 26, 50
 #tags = (2, 1, 1, 1, 1, 1, 1, 6, 1, 1, 3, 3, 3, 6, 2, 4, 3, 1, 3, 4, 5, 5, 1, 1, 1) #8/25
-#path, start, end = r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_1_glasklar\bild{}.jpg", 51, 69
+#path, start, end = directory + r"Elektronik\Raspi\2_1_glasklar\bild{}.jpg", 51, 69
 #tags = (1, 1, 1, 1, 1, 5, 4, 2, 3, 2, 6, 2, 5, 5, 5, 5, 4, 4, 1) #12/19
-#path, start, end = r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_1_glasklar\bild{}.png", 70, 71
+#path, start, end = directory + r"Elektronik\Raspi\2_1_glasklar\bild{}.png", 70, 71
 #tags = (1, 1) #2/2
-#path, start, end = r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_1_glasklar\bild{}.jpg", 72, 73
+#path, start, end = directory + r"Elektronik\Raspi\2_1_glasklar\bild{}.jpg", 72, 73
 #tags = (3, 1) #2/2
-path, start, end = r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_2_neue Kamera testen\image{:03d}.jpg", 0, 13
+path, start, end = directory + r"Elektronik\Raspi\2_2_neue Kamera testen\image{:03d}.jpg", 0, 13
 tags = (1, 1, 5, 0, 3, 6, 4, 1, 5, 5, 5, 0, 5, 4) #11/14
-#path, start, end = r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_2_neue Kamera testen\test{}.jpg", 1, 4
+#path, start, end = directory + r"Elektronik\Raspi\2_2_neue Kamera testen\test{}.jpg", 1, 4
 #tags = (5, 6, 2, 0) #4/4
 
-#path, start, end = r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_2_neue Kamera testen\image{:03d}.jpg", 8, 8
-#path, start, end = r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_1_glasklar\bild{}.jpg", 15, 15
-#path, start, end = r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_1_glasklar\bild{}.jpg", 39, 39 #here the threshold has to be around 85 to 90 because the image is very bright
+#path, start, end = directory + r"Elektronik\Raspi\2_2_neue Kamera testen\image{:03d}.jpg", 8, 8
+#path, start, end = directory + r"Elektronik\Raspi\2_1_glasklar\bild{}.jpg", 15, 15
+#path, start, end = directory + r"Elektronik\Raspi\2_1_glasklar\bild{}.jpg", 39, 39 #here the threshold has to be around 85 to 90 because the image is very bright
 
 borderSize = 10
 borderCol = (0, 0, 0)

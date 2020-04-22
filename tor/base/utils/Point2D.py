@@ -11,10 +11,10 @@ class Point2D:
         return Point2D(dx, dy)
 
     def __str__(self):
-        return "Point2D: x={} y={}".format(self.x, self.y)
+        return "<Point2D: (x={}, y={})>".format(self.x, self.y)
 
     def __repr__(self):
-        return "<Point2D: (x={}, y={})>".format(self.x, self.y)
+        return self.__str__()
 
     def length(self):
         return math.hypot(self.x, self.y)

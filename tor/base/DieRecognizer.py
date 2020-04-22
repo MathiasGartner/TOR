@@ -114,7 +114,7 @@ class DieRecognizer:
 
                 diePositionPX = Point2D(meanX, meanY)
                 diePositionMM = self.px_to_mm(diePositionPX)
-                diePositionMM.y = cs.LY - diePositionMM.y + 20 #TODO: check mapping of y value from pixel to mm
+                diePositionMM.y = cs.LY - diePositionMM.y + 15 #TODO: check mapping of y value from pixel to mm
                 found = True
                 result = min(len(blobs), 6)
         else:

@@ -9,13 +9,20 @@ ser = serial.Serial(
     parity=serial.PARITY_NONE,
     stopbits=serial.STOPBITS_ONE,
     bytesize=serial.EIGHTBITS,
-    timeout=1
+    timeout=10
 )
 
 cmd = sys.argv[1]
 ser.write((cmd + "\n").encode())
-msg = ""
-while(msg != "ok\n"):
-    msg = ser.readline().decode()
-    print("RECV: " + msg, end='')
-print()
+waitForResponse = True
+if cmd == "M997": #reflash firmware
+    waitForResponse = False
+closeOnOk = True
+if len(sys.argv) > 2:
+    closeOnOk = False
+if waitForResponse:
+    msg = ""
+    while(not (msg == "ok\n" and closeOnOk)):
+        msg = ser.readline().decode()
+        print("RECV: " + msg, end='')
+    print()
