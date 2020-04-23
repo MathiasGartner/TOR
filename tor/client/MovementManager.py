@@ -38,11 +38,25 @@ class MovementManager:
         cmd = "M114"
         self.sendGCode(cmd)
 
-    def moveToPos(self, pos):
-        print("MOVE:", pos.x, pos.y, pos.z)
-        cords = pos.toCordLengths()
-        cmd = "G1 " + self.getCordLengthGCode(cords)
+    def toggleLED(self, ledId, isOn, r=0, b=0, g=0, brightness=255):
+        if not isOn:
+            r = b = g = 0
+        cmd = "M150 N{} R{} U{} B{} P{}".format(ledId, r, g, b, brightness)
         self.sendGCode(cmd)
+
+
+    def doHoming(self):
+        cmd = "M288 A1"
+        self.sendGCode(cmd)
+
+    def moveToPos(self, pos):
+        if not isinstance(pos, list):
+            pos = [pos]
+        for p in pos:
+            print("MOVE:", p.x, p.y, p.z)
+            cords = p.toCordLengths()
+            cmd = "G1 " + self.getCordLengthGCode(cords)
+            self.sendGCode(cmd)
 
     def moveToXYZ(self, x, y, z):
         pos = Position(x, y, z)

@@ -58,7 +58,10 @@ def sendDieResultNotRecognized():
 def doDieRoll():
     print("doDieRoll()")
     mm.rollDie()
-    time.sleep(cs.DIE_ROLL_TIME)
+    time.sleep(cs.DIE_ROLL_TIME / 2)
+    mm.moveToPos(cs.CENTER_TOP)
+    mm.waitForMovementFinished()
+    time.sleep(cs.DIE_ROLL_TIME / 2)
     if cs.ON_RASPI:
         image = cam.takePicture()
     else:
@@ -73,9 +76,12 @@ def doDieRoll():
             result = dr.getDieResultWithExtensiveProcessing()
         if result > 0:
             print("die result:", result)
+            for i in range(1, 7):
+                mm.toggleLED(i, i <= result, r=255)
             sendDieRollResult(result)
         else:
             sendDieResultNotRecognized()
+        mm.moveToPos(cs.CENTER_TOP)
         mm.moveToXYPosDieAndRamp(diePosition.x, diePosition.y)
         mm.waitForMovementFinished()
         if not dr.checkIfDiePickedUp():
@@ -126,22 +132,23 @@ while not done:
         if "P" in answer:
             pos = None
             if answer["P"] == "BOTTOM_CENTER":
-                pos = Position(cs.LX/2, cs.LY/2, cs.PICKUP_Z)
+                pos = cs.CENTER_BOTTOM
             elif answer["P"] == "CX":
-                pos = cs.CORNER_X
+                pos = [cs.CENTER_TOP, cs.CORNER_X, cs.CENTER_TOP]
             elif answer["P"] == "CY":
-                pos = cs.CORNER_Y
+                pos = [cs.CENTER_TOP, cs.CORNER_Y, cs.CENTER_TOP]
             elif answer["P"] == "CZ":
-                pos = cs.CORNER_Z
+                pos = [cs.CENTER_TOP, cs.CORNER_Z, cs.CENTER_TOP]
             elif answer["P"] == "CE":
-                pos = cs.CORNER_E
+                pos = [cs.CENTER_TOP, cs.CORNER_E, cs.CENTER_TOP]
             if pos is not None:
                 mm.moveToPos(pos)
                 mm.waitForMovementFinished()
                 time.sleep(1)
-                mm.moveHome()
-                mm.waitForMovementFinished()
-                time.sleep(1)
+        elif "H" in answer:
+            mm.doHoming()
+            mm.moveToPos(cs.CENTER_TOP)
+            mm.waitForMovementFinished()
     elif "Q" in answer:
         done = True
 

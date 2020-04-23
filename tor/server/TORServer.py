@@ -2,6 +2,7 @@ import json
 import random
 import socket
 
+from tor.base import DBManager
 from tor.base import NetworkUtils
 import tor.TORSettings as ts
 
@@ -15,12 +16,14 @@ def handleRequest(conn):
             dieResult = request["D"]
             print("Client", clientId, "rolled", dieResult)
             conn.send(msgOK.encode())
+            DBManager.writeResult(clientId, dieResult)
         elif "E" in request:
             print("ERROR", request["E"], "@ client", clientId)
             print(request["MESSAGE"])
             conn.send(msgOK.encode())
         elif "J" in request:
-            jobIds = [1, 3, 4, 5, 6, 7]
+            #jobIds = [1, 1, 1, 1, 1, 1, 3, 4, 5, 6, 7, 8]
+            jobIds = [1]
             job = random.choice(jobIds)
             print("client", clientId, "asks for job, send", job)
             if job == 1:
@@ -37,6 +40,8 @@ def handleRequest(conn):
                 NetworkUtils.sendData(conn, {"M": 1, "P" : "CZ"})
             elif job == 7: #move to CE
                 NetworkUtils.sendData(conn, {"M": 1, "P" : "CE"})
+            elif job == 8: #do homing
+                NetworkUtils.sendData(conn, {"H": 1})
     else:
         print("could not identify client.")
 

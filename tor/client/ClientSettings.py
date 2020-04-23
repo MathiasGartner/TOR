@@ -13,16 +13,9 @@ LX = 246
 LY = 246
 LZ = 290 - 15 + 0 #height - hook + empiric value...
 LMAX = math.sqrt(LX**2 + LY**2 + LZ**2)
-BOX_SIZE = Position(LX, LY, LZ)
-HOME_POSITION = Position(0, 0, 0)
-HOME_CORDS =  HOME_POSITION.toCordLengths()
-CORNER_X = Position(0, 0, 0)
-CORNER_Y = Position(LX, 0, 0)
-CORNER_Z = Position(LX, LY, 0)
-CORNER_E = Position(0, LY, 0)
 
-RAMP_FORBIDDEN_X_MIN = 30
-RAMP_FORBIDDEN_X_MAX = LX - 30
+RAMP_FORBIDDEN_X_MIN = 50
+RAMP_FORBIDDEN_X_MAX = LX - 50
 RAMP_FOBIDDEN_Y = 20
 RAMP_DROPOFF_Y = 0
 RAMP_DROPOFF_Z = 0
@@ -34,6 +27,17 @@ MAGNET_RADIUS = 12
 MAGNET_HEIGHT = 40
 PICKUP_ABOVE_GROUND = 18
 PICKUP_Z = LZ - MAGNET_HEIGHT - PICKUP_ABOVE_GROUND
+
+#special positions
+BOX_SIZE = Position(LX, LY, LZ)
+HOME_POSITION = Position(0, 0, 0)
+HOME_CORDS =  HOME_POSITION.toCordLengths()
+CORNER_X = Position(0, 0, 0)
+CORNER_Y = Position(LX, 0, 0)
+CORNER_Z = Position(LX, LY, 0)
+CORNER_E = Position(0, LY, 0)
+CENTER_TOP = Position(LX/2, LY/2, 0)
+CENTER_BOTTOM = Position(LX/2, LY/2, PICKUP_Z)
 
 DIE_ROLL_TIME = 2
 
