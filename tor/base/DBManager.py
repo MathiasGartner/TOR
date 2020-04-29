@@ -9,10 +9,17 @@ db = mysql.connect(
     database = "tor"
 )
 
-cursor = db.cursor()
+cursor = db.cursor(named_tuple=True)
 
 def writeResult(clientId, result):
-    query = "INSERT INTO diceresult (clientId, result) VALUES ({}, {})".format(clientId, result)
+    query = "INSERT INTO diceresult (ClientId, Result) VALUES ({}, {})".format(clientId, result)
     cursor.execute(query)
     db.commit()
 
+def getClientIdentity(clientName):
+    query = "SELECT Id, IP, Name, Material FROM client WHERE Name = %(client_name)s"
+    cursor.execute(query, { "client_name" : clientName })
+    data = cursor.fetchone()
+    if data is None:
+        raise Exception("Could not read client identity for: ", clientName)
+    return data

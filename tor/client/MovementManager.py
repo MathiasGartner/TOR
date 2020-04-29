@@ -14,7 +14,7 @@ class MovementManager:
         # Restore Settings
         #self.sendGCode("M501")
         # Set Feedrate Percentage
-        self.sendGCode("M220 S400")
+        self.sendGCode("M220 S{}".format(cs.FEEDRATE_PERCENTAGE))
 
     def sendGCode(self, cmd):
         print("SEND: " + cmd)
@@ -49,13 +49,13 @@ class MovementManager:
         cmd = "M288 A1"
         self.sendGCode(cmd)
 
-    def moveToPos(self, pos):
+    def moveToPos(self, pos, segmented=False):
         if not isinstance(pos, list):
             pos = [pos]
         for p in pos:
-            print("MOVE:", p.x, p.y, p.z)
+            print("MOVE{}:".format(" SEG" if segmented else ""), p.x, p.y, p.z)
             cords = p.toCordLengths()
-            cmd = "G1 " + self.getCordLengthGCode(cords)
+            cmd = "G1 " + self.getCordLengthGCode(cords) + (" S" if segmented else "")
             self.sendGCode(cmd)
 
     def moveToXYZ(self, x, y, z):

@@ -25,6 +25,11 @@ def sendAndGetAnswer(msg):
     conn.close()
     return answer
 
+def askForClientIdentity(name):
+    msg = {"ID" : name}
+    answer = sendAndGetAnswer(msg);
+    return answer
+
 def askForJob():
     msg = {"C" : clientId, "J" : "waiting"}
     answer = sendAndGetAnswer(msg)
@@ -62,12 +67,16 @@ def doDieRoll():
     mm.moveToPos(cs.CENTER_TOP)
     mm.waitForMovementFinished()
     time.sleep(cs.DIE_ROLL_TIME / 2)
+    print("take picture...")
     if cs.ON_RASPI:
         image = cam.takePicture()
     else:
         image = dr.readDummyImage()
+    print("search die...")
     found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
+    print("write image...")
     dr.writeImage(processedImages[1])
+    print("send result...")
     if found:
         print("found @", diePosition)
         if not result > 0:
@@ -81,8 +90,9 @@ def doDieRoll():
             sendDieRollResult(result)
         else:
             sendDieResultNotRecognized()
+        mm.moveToXYPosDie(diePosition.x, diePosition.y)
         mm.moveToPos(cs.CENTER_TOP)
-        mm.moveToXYPosDieAndRamp(diePosition.x, diePosition.y)
+        mm.moveToXPosRamp(diePosition.x)
         mm.waitForMovementFinished()
         if not dr.checkIfDiePickedUp():
             mm.searchForDie()
@@ -97,9 +107,9 @@ def doDieRoll():
 
 seed(12345)
 
-clientId = 1
+clientName = "C1"
 if len(sys.argv) > 1:
-    clientId = int(sys.argv[1])
+    clientName = sys.argv[1]
 
 if cs.ON_RASPI:
     cam = Camera()
@@ -107,6 +117,10 @@ if cs.ON_RASPI:
 dr = DieRecognizer()
 
 mm = MovementManager()
+
+cId = askForClientIdentity(clientName)
+clientId = cId["Id"]
+print("I am client \"{}\" with ID {} and my ramp is made out of {}".format(cId["Name"], cId["Id"], cId["Material"]))
 
 mm.initBoard()
 #mm.sendGCode("G288 M1 S75")

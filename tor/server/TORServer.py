@@ -42,6 +42,13 @@ def handleRequest(conn):
                 NetworkUtils.sendData(conn, {"M": 1, "P" : "CE"})
             elif job == 8: #do homing
                 NetworkUtils.sendData(conn, {"H": 1})
+    elif "ID" in request:
+        cId = DBManager.getClientIdentity(request["ID"])
+        NetworkUtils.sendData(conn, {"Id": cId.Id,
+                                     "IP": cId.IP,
+                                     "Name": cId.Name,
+                                     "Material": cId.Material
+                                     })
     else:
         print("could not identify client.")
 

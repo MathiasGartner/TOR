@@ -49,6 +49,10 @@ elif mode == 4: #search for die
     mm.searchForDie()
     mm.moveToXPosRamp(cs.LX/2)
 
+elif mode == 5: #move to x y z
+    pos = Position(int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]))
+    mm.moveToPos(pos, True)
+
 mm.waitForMovementFinished(2)
 #mm.moveHome()
 
