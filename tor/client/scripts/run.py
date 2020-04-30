@@ -14,7 +14,7 @@ mm.initBoard()
 mm.getCurrentPosition()
 time.sleep(0.5)
 
-mode = 3
+mode = 4
 if len(sys.argv) > 1:
     mode=int(sys.argv[1])
 print("mode: ", mode)
@@ -51,7 +51,7 @@ elif mode == 4: #search for die
 
 elif mode == 5: #move to x y z
     pos = Position(int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]))
-    mm.moveToPos(pos, True)
+    mm.moveToPosSegmented(pos)
 
 mm.waitForMovementFinished(2)
 #mm.moveHome()

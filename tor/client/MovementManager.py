@@ -15,6 +15,9 @@ class MovementManager:
         #self.sendGCode("M501")
         # Set Feedrate Percentage
         self.sendGCode("M220 S{}".format(cs.FEEDRATE_PERCENTAGE))
+        # enable all steppers
+        self.sendGCode("M17")
+        self.currentPosition = cs.CORNER_X
 
     def sendGCode(self, cmd):
         print("SEND: " + cmd)
@@ -44,76 +47,91 @@ class MovementManager:
         cmd = "M150 N{} R{} U{} B{} P{}".format(ledId, r, g, b, brightness)
         self.sendGCode(cmd)
 
-
     def doHoming(self):
-        cmd = "M288 A1"
+        cmd = "M28 N0 A2"
         self.sendGCode(cmd)
+        self.currentPosition = cs.CORNER_Z
 
     def moveToPos(self, pos, segmented=False):
         if not isinstance(pos, list):
             pos = [pos]
         for p in pos:
-            print("MOVE{}:".format(" SEG" if segmented else ""), p.x, p.y, p.z)
-            cords = p.toCordLengths()
-            cmd = "G1 " + self.getCordLengthGCode(cords) + (" S" if segmented else "")
-            self.sendGCode(cmd)
+            if segmented:
+                self.moveToPosSegmented(p)
+            else:
+                print("MOVE{}:".format(" SEG" if segmented else ""), p.x, p.y, p.z)
+                cords = p.toCordLengths()
+                cmd = "G1 " + self.getCordLengthGCode(cords) + (" S" if segmented else "")
+                self.sendGCode(cmd)
+                self.currentPosition = p
 
-    def moveToXYZ(self, x, y, z):
+    def moveToPosSegmented(self, pos):
+        startPos = self.currentPosition
+        diffPos = pos - startPos
+        unitsPerSegment = 10.0
+        length = diffPos.norm()
+        segmentCount = math.floor(length / unitsPerSegment)
+        segmentCount = max(segmentCount, 1)
+        segmentChange = diffPos / segmentCount
+        nextPos = startPos + segmentChange
+        segmentedPositions = []
+        for i in range(1, segmentCount):
+            segmentedPositions.append(nextPos)
+            nextPos = nextPos + segmentChange
+        segmentedPositions.append(pos)
+        self.moveToPos(segmentedPositions)
+
+    def moveToXYZ(self, x, y, z, segmented=False):
         pos = Position(x, y, z)
-        self.moveToPos(pos)
+        self.moveToPos(pos, segmented)
 
-    def moveToXYPosDie(self, x, y):
+    def moveToXYPosDie(self, x, y, segmented=False):
         pos = Position(x, y, cs.PICKUP_Z)
-        self.moveToPos(pos)
+        self.moveToPos(pos, segmented)
 
-    def moveToXPosRamp(self, x):
+    def moveToXPosRamp(self, x, segmented=False):
         x = min(max(x, cs.RAMP_FORBIDDEN_X_MIN), cs.RAMP_FORBIDDEN_X_MAX)
         pos = Position(x, cs.RAMP_DROPOFF_Y, cs.RAMP_DROPOFF_Z)
-        self.moveToPos(pos)
+        self.moveToPos(pos, segmented)
 
-    def moveToXYPosDieAndRamp(self, x, y):
-        self.moveToXYPosDie(x, y)
-        self.moveToXPosRamp(x)
+    def moveToXYPosDieAndRamp(self, x, y, segmented=False):
+        self.moveToXYPosDie(x, y, segmented)
+        self.moveToXPosRamp(x, segmented)
 
-    def moveHome(self):
-        self.moveToPos(cs.HOME_POSITION)
+    def moveHome(self, segmented=False):
+        self.moveToPos(cs.HOME_POSITION, segmented)
 
-    def moveToAllCorners(self):
-        self.moveToPos(cs.CORNER_X)
-        self.moveToPos(cs.CORNER_Z)
-        self.moveToPos(cs.CORNER_E)
-        self.moveToPos(cs.CORNER_X)
-        self.moveToPos(cs.CORNER_Z)
-        self.moveToPos(cs.CORNER_Y)
-        self.moveToPos(cs.CORNER_E)
-        self.moveToPos(cs.CORNER_X)
-        self.moveHome()
+    def moveToAllCorners(self, segmented=False):
+        self.moveToPos(cs.CORNER_X, segmented)
+        self.moveToPos(cs.CORNER_Z, segmented)
+        self.moveToPos(cs.CORNER_E, segmented)
+        self.moveToPos(cs.CORNER_X, segmented)
+        self.moveToPos(cs.CORNER_Z, segmented)
+        self.moveToPos(cs.CORNER_Y, segmented)
+        self.moveToPos(cs.CORNER_E, segmented)
+        self.moveToPos(cs.CORNER_X, segmented)
+        self.moveHome(segmented)
 
     def rollDie(self):
         #TODO: implement
         print("die is now rolled...")
 
     def searchForDie(self):
-        dy = 5
-        dyMoves = 2
-        dx = 5
+        dy = 50
         y = cs.LY
         magnetToRampOffsetY = 5
         z = cs.PICKUP_Z
         xToZero = True
         while y > 0:
             x = 0 if xToZero else cs.LX
-            self.moveToXYZ(x, y, z)
+            self.moveToXYZ(x, y, z, segmented=True)
             xToZero = not xToZero
-            while (xToZero and x > 0) or (not xToZero and x < cs.LX):
-                x += -dx if xToZero else dx
-                self.moveToXYZ(x, y, z)
-            for _ in range(dyMoves):
-                y -= dy
-                self.moveToXYZ(x, y, z)
-                overRampY = (cs.RAMP_END_Y + cs.MAGNET_RADIUS + magnetToRampOffsetY) - y
-                if overRampY > 0:
-                    z = cs.RAMP_END_Z - overRampY * np.tan(cs.RAMP_ALPHA)
+            x = 0 if xToZero else cs.LX
+            self.moveToXYZ(x, y, z, segmented=True)
+            y -= dy
+            overRampY = (cs.RAMP_END_Y + cs.MAGNET_RADIUS + magnetToRampOffsetY) - y
+            if overRampY > 0:
+                z = cs.RAMP_END_Z - overRampY * np.tan(cs.RAMP_ALPHA)
 
     def waitForMovementFinished(self, sleepTime=0):
         self.sendGCode("M400")

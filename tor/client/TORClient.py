@@ -72,7 +72,7 @@ def doDieRoll():
         image = cam.takePicture()
     else:
         image = dr.readDummyImage()
-    print("search die...")
+    print("analyze picture...")
     found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
     print("write image...")
     dr.writeImage(processedImages[1])
@@ -101,8 +101,8 @@ def doDieRoll():
             mm.waitForMovementFinished()
     else:
         sendDieNotFound()
-        #mm.searchForDie()
-        #mm.moveToXPosRamp(cs.LX/2)
+        mm.searchForDie()
+        mm.moveToXPosRamp(cs.LX/2)
         mm.waitForMovementFinished()
 
 seed(12345)
