@@ -49,8 +49,10 @@ elif mode == 4: #search for die
 
 elif mode == 5: #move to x y z segmented
     pos = Position(int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]))
-    mm.doHoming()
     mm.moveToPosSegmented(pos)
+
+elif mode == 6: #home to Z anchor
+    mm.doHoming()
 
 mm.waitForMovementFinished(2)
 #mm.moveHome()

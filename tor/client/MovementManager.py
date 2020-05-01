@@ -141,9 +141,11 @@ class MovementManager:
         while y > 0:
             x = 0 if xToZero else cs.LX
             self.moveToXYZ(x, y, z, segmented=True)
+            time.sleep(1)
             xToZero = not xToZero
             x = 0 if xToZero else cs.LX
             self.moveToXYZ(x, y, z, segmented=True)
+            time.sleep(1)
             y -= dy
             overRampY = (cs.RAMP_END_Y + cs.MAGNET_RADIUS + magnetToRampOffsetY) - y
             if overRampY > 0:
