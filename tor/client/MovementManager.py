@@ -71,16 +71,16 @@ class MovementManager:
         if not isinstance(pos, list):
             pos = [pos]
         for p in pos:
-            if segmented:
-                self.moveToPosSegmented(p)
-            else:
-                print("MOVE{}:".format(" SEG" if segmented else ""), p.x, p.y, p.z)
-                cords = p.toCordLengths()
-                cmd = "G1 " + self.getCordLengthGCode(cords) + (" S" if segmented else "")
-                self.sendGCode(cmd)
-                self.currentPosition = p
+            print("MOVE{}:".format(" SEG" if segmented else ""), p.x, p.y, p.z)
+            cords = p.toCordLengths()
+            cmd = "G1 " + self.getCordLengthGCode(cords) + (" S" if segmented else "")
+            self.sendGCode(cmd)
+            self.currentPosition = p
 
+    #TODO: remove, should only be done in Marlin and not on external client. use "G1 S ..." command
     def moveToPosSegmented(self, pos):
+        self.moveToPos(pos, True)
+        """
         startPos = self.currentPosition
         diffPos = pos - startPos
         unitsPerSegment = 10.0
@@ -95,6 +95,7 @@ class MovementManager:
             nextPos = nextPos + segmentChange
         segmentedPositions.append(pos)
         self.moveToPos(segmentedPositions)
+        """
 
     def moveToXYZ(self, x, y, z, segmented=False):
         pos = Position(x, y, z)
