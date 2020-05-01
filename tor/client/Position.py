@@ -2,7 +2,7 @@ import math
 
 import tor.client.ClientSettings as cs
 
-from tor.client.Cords import Cords
+from tor.client.Cords import *
 
 class Position:
     def __init__(self, x, y, z):

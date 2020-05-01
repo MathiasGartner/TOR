@@ -10,8 +10,6 @@ from tor.client.Position import Position
 mm = MovementManager()
 
 mm.initBoard()
-#mm.setCurrentPosition(cs.HOME_CORDS)
-mm.getCurrentPosition()
 time.sleep(0.5)
 
 mode = 4
@@ -49,8 +47,9 @@ elif mode == 4: #search for die
     mm.searchForDie()
     mm.moveToXPosRamp(cs.LX/2)
 
-elif mode == 5: #move to x y z
+elif mode == 5: #move to x y z segmented
     pos = Position(int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]))
+    mm.doHoming()
     mm.moveToPosSegmented(pos)
 
 mm.waitForMovementFinished(2)

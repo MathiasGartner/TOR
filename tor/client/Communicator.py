@@ -33,10 +33,13 @@ class Communicator:
 
     def recvUntilOk(self):
         msg = ""
+        msgs = []
         while (msg != "ok\n"):
             if self.useSerial:
                 msg = self.recv()
+                msgs.append(msg)
             else:
                 msg = "ok\n"
             print("RECV: " + msg, end='')
         print()
+        return msgs

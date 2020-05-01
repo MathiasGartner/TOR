@@ -123,10 +123,7 @@ clientId = cId["Id"]
 print("I am client \"{}\" with ID {} and my ramp is made out of {}".format(cId["Name"], cId["Id"], cId["Material"]))
 
 mm.initBoard()
-#mm.sendGCode("G288 M1 S75")
-#mm.sendGCode("G288 S70")
-#mm.setCurrentPosition(cs.HOME_CORDS)
-mm.getCurrentPosition()
+mm.doHoming()
 mm.moveToXPosRamp(cs.LX/2)
 mm.waitForMovementFinished()
 print("now in starting position.")

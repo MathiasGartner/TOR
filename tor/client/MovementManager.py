@@ -1,9 +1,11 @@
 import math
 import numpy as np
+import re
 import time
 
 import tor.client.ClientSettings as cs
 from tor.client.Communicator import Communicator
+from tor.client.Cords import Cords
 from tor.client.Position import Position
 
 class MovementManager:
@@ -17,12 +19,13 @@ class MovementManager:
         self.sendGCode("M220 S{}".format(cs.FEEDRATE_PERCENTAGE))
         # enable all steppers
         self.sendGCode("M17")
-        self.currentPosition = cs.CORNER_X
+        self.updateCurrentPosition()
 
     def sendGCode(self, cmd):
         print("SEND: " + cmd)
         self.com.send(cmd)
-        self.com.recvUntilOk()
+        msgs = self.com.recvUntilOk()
+        return msgs
 
     def getCordLengthGCode(self, cords):
         cmd = ""
@@ -37,9 +40,20 @@ class MovementManager:
         self.sendGCode(cmd)
 
     def getCurrentPosition(self):
-        # Get Current Position
+        pos = cs.HOME_POSITION
         cmd = "M114"
-        self.sendGCode(cmd)
+        msgs = self.sendGCode(cmd)
+        if not cs.ON_RASPI:
+            msgs = ["X:347.8965 Y:246.0000 Z:0.0000 E:246.0000 Count X:0 Y:13921 Z:19687"]
+        pattern = "X:(\d+\.\d+) Y:(\d+\.\d+) Z:(\d+\.\d+) E:(\d+\.\d+) Count X:\d+ Y:\d+ Z:\d+"
+        for msg in msgs:
+            match = re.match(pattern, msg)
+            if match:
+                pos = Cords([float(match.group(i)) for i in range(1, 5)]).toPosition()
+        return pos
+
+    def updateCurrentPosition(self):
+        self.currentPosition = self.getCurrentPosition()
 
     def toggleLED(self, ledId, isOn, r=0, b=0, g=0, brightness=255):
         if not isOn:
@@ -48,9 +62,10 @@ class MovementManager:
         self.sendGCode(cmd)
 
     def doHoming(self):
-        cmd = "M28 N0 A2"
+        cmd = "G28 N0 A2"
         self.sendGCode(cmd)
-        self.currentPosition = cs.CORNER_Z
+        self.waitForMovementFinished()
+        self.updateCurrentPosition()
 
     def moveToPos(self, pos, segmented=False):
         if not isinstance(pos, list):
