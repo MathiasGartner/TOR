@@ -9,9 +9,9 @@ if sys.platform == "linux":
 else:
     ON_RASPI = False
 
-LX = 246
-LY = 246
-LZ = 290 - 15 + 5 #height - hook + empiric value...
+LX = 252
+LY = LX
+LZ = 290 - 15 + 0 #height - hook + empiric value...
 LMAX = math.sqrt(LX**2 + LY**2 + LZ**2)
 
 RAMP_FORBIDDEN_X_MIN = 50
@@ -24,9 +24,11 @@ RAMP_END_Z = LZ - 65
 RAMP_START_Z = 50
 RAMP_ALPHA = np.arctan((RAMP_END_Z - RAMP_START_Z) / RAMP_END_Y)
 MAGNET_RADIUS = 12
-MAGNET_HEIGHT = 40
-PICKUP_ABOVE_GROUND = 20
+MAGNET_HEIGHT = 50
+DICE_HEIGHT = 16
+PICKUP_ABOVE_GROUND = DICE_HEIGHT + 2
 PICKUP_Z = LZ - MAGNET_HEIGHT - PICKUP_ABOVE_GROUND
+DIE_ROLL_TIME = 2
 
 #special positions
 BOX_SIZE = Position(LX, LY, LZ)
@@ -38,9 +40,10 @@ CORNER_Z = Position(LX, LY, 0)
 CORNER_E = Position(0, LY, 0)
 CENTER_TOP = Position(LX/2, LY/2, 0)
 CENTER_BOTTOM = Position(LX/2, LY/2, PICKUP_Z)
+DROPOFF_ADVANCE_POSITION = Position(LX/2, 20, 50)
+DROPOFF_POSITION = Position(LX/2, 0, 0)
 
-DIE_ROLL_TIME = 2
-
+# dice recognition configuration:
 IMAGE_CROP_X_LEFT = 10
 IMAGE_CROP_X_RIGHT = 0
 IMAGE_CROP_Y_TOP = 325
@@ -58,5 +61,14 @@ AREA_PX_PER_MM_Y = AREA_PX_Y / AREA_Y
 BLOB_MIN_DIAMETER = 18
 BLOB_MAX_DIAMETER = 31
 
+# movement configuration:
 FEEDRATE_PERCENTAGE = 250
 
+# LED strip configuration:
+LED_COUNT      = 6      # Number of LED pixels.
+LED_PIN        = 18      # GPIO pin connected to the pixels (18 uses PWM!).
+LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
+LED_DMA        = 10      # DMA channel to use for generating signal (try 10)
+LED_BRIGHTNESS = 255     # Set to 0 for darkest and 255 for brightest
+LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
+LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53

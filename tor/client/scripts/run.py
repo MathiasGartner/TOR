@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
 
+import random
 import sys
 import time
 
 import tor.client.ClientSettings as cs
+from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
 from tor.client.Position import Position
 
-mm = MovementManager()
+try:
+    mm = MovementManager()
 
-mm.initBoard()
-time.sleep(0.5)
+    mm.initBoard()
+    time.sleep(0.5)
+except:
+    mm = None
+    print("ERROR: could not connect to SKR board.")
+
 
 mode = 4
 if len(sys.argv) > 1:
@@ -54,7 +61,32 @@ elif mode == 5: #move to x y z segmented
 elif mode == 6: #home to Z anchor
     mm.doHoming()
 
-mm.waitForMovementFinished(2)
-#mm.moveHome()
+elif mode == 7: #test dropoff
+    while (True):
+        mm.doHoming()
+        mm.waitForMovementFinished(0.5)
+        mm.moveToPos(cs.CENTER_TOP)
+        mm.waitForMovementFinished(0.5)
+        mm.moveToPos(cs.DROPOFF_ADVANCE_POSITION)
+        mm.waitForMovementFinished(0.5)
+        mm.moveToPos(cs.DROPOFF_POSITION, segmented=True)
+        mm.waitForMovementFinished(2)
+        mm.moveToPos(cs.DROPOFF_ADVANCE_POSITION)
+        mm.waitForMovementFinished(0.5)
+
+elif mode == 8:  # test dropoff
+    lm = LedManager()
+    lm.test()
+    for i in range(1, 7):
+        lm.showResult(i)
+        time.sleep(1)
+    for i in [random.randint(1, 6) for x in range(1, 4)]:
+        lm.showResult(i)
+        time.sleep(1)
+    lm.clear()
+
+if mm is not None:
+    mm.waitForMovementFinished(2)
+    #mm.moveHome()
 
 

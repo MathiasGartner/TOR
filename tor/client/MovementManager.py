@@ -62,7 +62,7 @@ class MovementManager:
         self.sendGCode(cmd)
 
     def doHoming(self):
-        cmd = "G28 N0 A2"
+        cmd = "G28 N0 A2 P105"
         self.sendGCode(cmd)
         self.waitForMovementFinished()
         self.updateCurrentPosition()
@@ -129,16 +129,20 @@ class MovementManager:
         self.moveHome(segmented)
 
     def rollDie(self):
-        #TODO: implement
         print("die is now rolled...")
+        self.moveToPos(cs.DROPOFF_ADVANCE_POSITION)
+        self.waitForMovementFinished()
+        self.moveToPos(cs.DROPOFF_POSITION, segmented=True)
+        # mvove should have already happened before. here the current for the magnet should be turned on for 0.5 seconds
 
     def searchForDie(self):
-        dy = 50
+        minY = 20
+        dy = 40
         y = cs.LY
         magnetToRampOffsetY = 5
         z = cs.PICKUP_Z
         xToZero = True
-        while y > 0:
+        while y > (dy + minY):
             x = 0 if xToZero else cs.LX
             self.moveToXYZ(x, y, z, segmented=True)
             time.sleep(1)
@@ -150,6 +154,7 @@ class MovementManager:
             overRampY = (cs.RAMP_END_Y + cs.MAGNET_RADIUS + magnetToRampOffsetY) - y
             if overRampY > 0:
                 z = cs.RAMP_END_Z - overRampY * np.tan(cs.RAMP_ALPHA)
+        self.moveToPos(cs.CENTER_TOP)
 
     def waitForMovementFinished(self, sleepTime=0):
         self.sendGCode("M400")

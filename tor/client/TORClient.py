@@ -92,18 +92,15 @@ def doDieRoll():
             sendDieResultNotRecognized()
         mm.moveToXYPosDie(diePosition.x, diePosition.y)
         mm.moveToPos(cs.CENTER_TOP)
-        mm.moveToXPosRamp(diePosition.x)
-        mm.waitForMovementFinished()
         if not dr.checkIfDiePickedUp():
             mm.searchForDie()
-            mm.waitForMovementFinished()
-            mm.moveToXPosRamp(cs.LX/2)
             mm.waitForMovementFinished()
     else:
         sendDieNotFound()
         mm.searchForDie()
-        mm.moveToXPosRamp(cs.LX/2)
-        mm.waitForMovementFinished()
+    #mm.moveToXPosRamp(cs.LX/2)
+    mm.moveToPos(cs.DROPOFF_ADVANCE_POSITION)
+    mm.waitForMovementFinished()
 
 seed(12345)
 
@@ -124,7 +121,7 @@ print("I am client \"{}\" with ID {} and my ramp is made out of {}".format(cId["
 
 mm.initBoard()
 mm.doHoming()
-mm.moveToXPosRamp(cs.LX/2)
+mm.moveToPos(cs.CENTER_TOP)
 mm.waitForMovementFinished()
 print("now in starting position.")
 time.sleep(0.5)
