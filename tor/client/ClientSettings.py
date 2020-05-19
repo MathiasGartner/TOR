@@ -9,6 +9,15 @@ if sys.platform == "linux":
 else:
     ON_RASPI = False
 
+L_X_RAW = 290
+L_Y_RAW = 290
+L_ANCHOR_Z_HOOK_X = 12
+L_ANCHOR_Z_HOOK_Y = 15
+L_ANCHOR_E_HOOK_X = 12
+L_ANCHOR_E_HOOK_Y = 15
+
+MIN_Z = 20
+
 LX = 252
 LY = LX
 LZ = 290 - 15 + 0 #height - hook + empiric value...
@@ -26,8 +35,10 @@ RAMP_ALPHA = np.arctan((RAMP_END_Z - RAMP_START_Z) / RAMP_END_Y)
 MAGNET_RADIUS = 12
 MAGNET_HEIGHT = 50
 DICE_HEIGHT = 16
-PICKUP_ABOVE_GROUND = DICE_HEIGHT + 2
+PICKUP_ABOVE_GROUND = DICE_HEIGHT + 3
 PICKUP_Z = LZ - MAGNET_HEIGHT - PICKUP_ABOVE_GROUND
+
+PULSE_MAGNET_TIME = 0.1
 DIE_ROLL_TIME = 2
 
 #special positions
@@ -38,10 +49,10 @@ CORNER_X = Position(0, 0, 0)
 CORNER_Y = Position(LX, 0, 0)
 CORNER_Z = Position(LX, LY, 0)
 CORNER_E = Position(0, LY, 0)
-CENTER_TOP = Position(LX/2, LY/2, 0)
+CENTER_TOP = Position(LX/2, LY/2, MIN_Z)
 CENTER_BOTTOM = Position(LX/2, LY/2, PICKUP_Z)
 DROPOFF_ADVANCE_POSITION = Position(LX/2, 20, 50)
-DROPOFF_POSITION = Position(LX/2, 0, 0)
+DROPOFF_POSITION = Position(LX/2, 5, 30)
 
 # dice recognition configuration:
 IMAGE_CROP_X_LEFT = 10

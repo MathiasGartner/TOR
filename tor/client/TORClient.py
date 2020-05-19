@@ -62,6 +62,10 @@ def sendDieResultNotRecognized():
 
 def doDieRoll():
     print("doDieRoll()")
+    mm.moveToPos(cs.DROPOFF_ADVANCE_POSITION)
+    mm.waitForMovementFinished()
+    mm.moveToPos(cs.DROPOFF_POSITION, segmented=True)
+    mm.waitForMovementFinished()
     mm.rollDie()
     time.sleep(cs.DIE_ROLL_TIME / 2)
     mm.moveToPos(cs.CENTER_TOP)

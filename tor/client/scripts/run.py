@@ -4,7 +4,10 @@ import random
 import sys
 import time
 
+from tor.base.DieRecognizer import DieRecognizer
 import tor.client.ClientSettings as cs
+if cs.ON_RASPI:
+    from tor.client.Camera import Camera
 from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
 from tor.client.Position import Position
@@ -74,7 +77,7 @@ elif mode == 7: #test dropoff
         mm.moveToPos(cs.DROPOFF_ADVANCE_POSITION)
         mm.waitForMovementFinished(0.5)
 
-elif mode == 8:  # test dropoff
+elif mode == 8:  # led test
     lm = LedManager()
     lm.test()
     for i in range(1, 7):
@@ -84,6 +87,21 @@ elif mode == 8:  # test dropoff
         lm.showResult(i)
         time.sleep(1)
     lm.clear()
+
+elif mode == 9: # take picture and search dice dots
+    #lm = LedManager()
+    dr = DieRecognizer()
+    if cs.ON_RASPI:
+        cam = Camera()
+        image = cam.takePicture()
+    else:
+        image = dr.readDummyImage()
+    print("analyze picture...")
+    found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
+    print("write image...")
+    dr.writeImage(processedImages[1])
+    print("result:", result)
+    #lm.showResult(result)
 
 if mm is not None:
     mm.waitForMovementFinished(2)

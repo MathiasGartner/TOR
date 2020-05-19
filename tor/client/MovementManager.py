@@ -56,10 +56,24 @@ class MovementManager:
         self.currentPosition = self.getCurrentPosition()
 
     def toggleLED(self, ledId, isOn, r=0, b=0, g=0, brightness=255):
+        raise Exception("LEDs are not supported")
         if not isOn:
             r = b = g = 0
         cmd = "M150 N{} R{} U{} B{} P{}".format(ledId, r, g, b, brightness)
         self.sendGCode(cmd)
+
+    def enableMagnet(self):
+        cmd = "M42 P41 S255"
+        self.sendGCode(cmd)
+
+    def disableMagnet(self):
+        cmd = "M42 P41 S0"
+        self.sendGCode(cmd)
+
+    def pulseMagnet(self, seconds):
+        self.enableMagnet()
+        time.sleep(seconds)
+        self.disableMagnet()
 
     def doHoming(self):
         cmd = "G28 N0 A2 P105"
@@ -130,10 +144,7 @@ class MovementManager:
 
     def rollDie(self):
         print("die is now rolled...")
-        self.moveToPos(cs.DROPOFF_ADVANCE_POSITION)
-        self.waitForMovementFinished()
-        self.moveToPos(cs.DROPOFF_POSITION, segmented=True)
-        # mvove should have already happened before. here the current for the magnet should be turned on for 0.5 seconds
+        self.pulseMagnet(cs.PULSE_MAGNET_TIME)
 
     def searchForDie(self):
         minY = 20

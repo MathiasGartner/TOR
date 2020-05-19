@@ -2,7 +2,7 @@ import cv2
 import math
 import numpy as np
 
-from tor.base.DieRecognizer import  DieRecognizer
+from tor.base.DieRecognizer import DieRecognizer
 
 def createImageTable(images, cols):
     shape = images[0].shape
@@ -19,8 +19,8 @@ directory = r"D:\Dropbox\Uni\AEC\\"
 #tags = (4, 6, 6, 6, 6, 0, 5, 5, 5) #5/9
 #path, start, end = directory + "Elektronik\Raspi\2_1_glasklar\test{:04d}.jpg", 0, 16
 #tags = (2, 0, 1, 5, 4, 6, 0, 1, 5, 1, 2, 2, 3, 0, 2, 3, 3) #17/17
-path, start, end = directory + r"Elektronik\Raspi\2_1_glasklar\bild{}.jpg", 1, 25
-tags = (5, 5, 5, 5, 5, 5, 5, 5, 4, 2, 1, 1, 4, 3, 3, 3, 2, 1, 6, 0, 1, 4, 4, 2, 2) #23/25
+#path, start, end = directory + r"Elektronik\Raspi\2_1_glasklar\bild{}.jpg", 1, 25
+#tags = (5, 5, 5, 5, 5, 5, 5, 5, 4, 2, 1, 1, 4, 3, 3, 3, 2, 1, 6, 0, 1, 4, 4, 2, 2) #23/25
 #path, start, end = directory + r"Elektronik\Raspi\2_1_glasklar\bild{}.jpg", 26, 50
 #tags = (2, 1, 1, 1, 1, 1, 1, 6, 1, 1, 3, 3, 3, 6, 2, 4, 3, 1, 3, 4, 5, 5, 1, 1, 1) #8/25
 #path, start, end = directory + r"Elektronik\Raspi\2_1_glasklar\bild{}.jpg", 51, 69
@@ -37,6 +37,15 @@ tags = (5, 5, 5, 5, 5, 5, 5, 5, 4, 2, 1, 1, 4, 3, 3, 3, 2, 1, 6, 0, 1, 4, 4, 2, 
 #path, start, end = directory + r"Elektronik\Raspi\2_2_neue Kamera testen\image{:03d}.jpg", 8, 8
 #path, start, end = directory + r"Elektronik\Raspi\2_1_glasklar\bild{}.jpg", 15, 15
 #path, start, end = directory + r"Elektronik\Raspi\2_1_glasklar\bild{}.jpg", 39, 39 #here the threshold has to be around 85 to 90 because the image is very bright
+
+
+#path, start, end = directory + r"Elektronik\Raspi\2_3_punkte\1\image{:03d}.jpg", 0, 16
+#tags = (5, 1, 3, 6, 4, 5, 3, 6, 5, 4, 1, 1, 3, 5, 0, 0, 0)
+
+#path, start, end = directory + r"Elektronik\Raspi\2_3_punkte\2\image{:03d}.jpg", 0, 24
+#tags = (5, 0, 5, 4, 6, 5, 2, 4, 0, 2, 0, 1, 0 ,0, 4, 0, 0, 0, 3, 0, 0, 0, 0, 3, 5)
+path, start, end = directory + r"Elektronik\Raspi\2_3_punkte\2\image{:03d}.jpg", 25, 46
+tags = (5, 0, 0, 0, 0, 4, 0, 2, 0, 2, 6, 0, 1, 4, 0, 0, 0, 0, 3, 1, 4, 6)
 
 borderSize = 10
 borderCol = (0, 0, 0)
