@@ -4,10 +4,7 @@ import random
 import sys
 import time
 
-from tor.base.DieRecognizer import DieRecognizer
 import tor.client.ClientSettings as cs
-if cs.ON_RASPI:
-    from tor.client.Camera import Camera
 from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
 from tor.client.Position import Position
@@ -89,6 +86,9 @@ elif mode == 8:  # led test
     lm.clear()
 
 elif mode == 9: # take picture and search dice dots
+    from tor.base.DieRecognizer import DieRecognizer
+    if cs.ON_RASPI:
+        from tor.client.Camera import Camera
     #lm = LedManager()
     dr = DieRecognizer()
     if cs.ON_RASPI:

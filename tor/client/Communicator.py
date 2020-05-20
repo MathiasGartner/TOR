@@ -1,11 +1,14 @@
 import serial
 import sys
 
+import tor.client.ClientSettings as cs
+
 class Communicator:
     def __init__(self, serialPort = ""):
         if serialPort == "":
-            if sys.platform == "linux":  # on raspi
-                serialPort = "/dev/ttyACM0"
+            if cs.ON_RASPI:
+                #serialPort = "/dev/ttyACM0"
+                serialPort = "/dev/ttyS0"
         if serialPort == "":
             self.useSerial = False
         else:
