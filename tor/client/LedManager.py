@@ -11,6 +11,7 @@ class LedManager:
         self.G = Color(255, 0, 0)
         self.R = Color(0, 255, 0)
         self.B = Color(0, 0, 255)
+        self.W = Color(255, 255, 255)
 
     def test(self):
         for i in range(self.strip.numPixels()):
@@ -26,6 +27,24 @@ class LedManager:
         self.strip.show()
         time.sleep(1)
         self.clear()
+
+    def testRightLeftBack(self):
+        for i in cs.LEDS_RIGHT:
+            self.strip.setPixelColor(i, self.R)
+        self.strip.show()
+        time.sleep(1)
+        for i in cs.LEDS_BACK:
+            self.strip.setPixelColor(i, self.G)
+        self.strip.show()
+        time.sleep(1)
+        for i in cs.LEDS_LEFT:
+            self.strip.setPixelColor(i, self.B)
+        self.strip.show()
+        time.sleep(1)
+        for i in cs.LEDS_FRONT:
+            self.strip.setPixelColor(i, self.W)
+        self.strip.show()
+        time.sleep(1)
 
     def clear(self):
         for i in range(self.strip.numPixels()):

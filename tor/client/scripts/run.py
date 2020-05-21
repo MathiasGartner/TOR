@@ -103,6 +103,20 @@ elif mode == 9: # take picture and search dice dots
     print("result:", result)
     #lm.showResult(result)
 
+elif mode == 10: #leds
+    lm = LedManager()
+    lm.testRightLeftBack()
+
+elif mode == 11: # clear leds
+    lm = LedManager()
+    lm.clear()
+
+elif mode == 12: # leds
+    lm = LedManager()
+    for i in range(140, cs.LED_COUNT):
+        lm.strip.setPixelColor(i, lm.W)
+    lm.strip.show()
+
 if mm is not None:
     mm.waitForMovementFinished(2)
     #mm.moveHome()
