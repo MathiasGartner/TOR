@@ -76,7 +76,7 @@ class MovementManager:
         self.disableMagnet()
 
     def doHoming(self):
-        cmd = "G28 N0 A2 P105"
+        cmd = "G28 N0 A2 P105 S10"
         self.sendGCode(cmd)
         self.waitForMovementFinished()
         self.updateCurrentPosition()

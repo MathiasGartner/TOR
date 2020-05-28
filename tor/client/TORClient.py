@@ -9,6 +9,7 @@ from tor.base.DieRecognizer import DieRecognizer
 import tor.client.ClientSettings as cs
 if cs.ON_RASPI:
     from tor.client.Camera import Camera
+from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
 from tor.client.Position import Position
 import tor.TORSettings as ts
@@ -89,8 +90,7 @@ def doDieRoll():
             result = dr.getDieResultWithExtensiveProcessing()
         if result > 0:
             print("die result:", result)
-            for i in range(1, 7):
-                mm.toggleLED(i, i <= result, r=255)
+            lm.showResult(result)
             sendDieRollResult(result)
         else:
             sendDieResultNotRecognized()
@@ -118,6 +118,8 @@ if cs.ON_RASPI:
 dr = DieRecognizer()
 
 mm = MovementManager()
+
+lm = LedManager()
 
 cId = askForClientIdentity(clientName)
 clientId = cId["Id"]

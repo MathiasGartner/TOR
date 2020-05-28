@@ -38,7 +38,7 @@ DICE_HEIGHT = 16
 PICKUP_ABOVE_GROUND = DICE_HEIGHT + 3
 PICKUP_Z = LZ - MAGNET_HEIGHT - PICKUP_ABOVE_GROUND
 
-PULSE_MAGNET_TIME = 0.1
+PULSE_MAGNET_TIME = 1.0
 DIE_ROLL_TIME = 2
 
 #special positions
@@ -76,11 +76,11 @@ BLOB_MAX_DIAMETER = 31
 FEEDRATE_PERCENTAGE = 250
 
 # LED strip configuration:
-LED_COUNT      = 144      # Number of LED pixels.
+LED_COUNT      = 3      # Number of LED pixels.
 LED_PIN        = 18      # GPIO pin connected to the pixels (18 uses PWM!).
 LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
 LED_DMA        = 10      # DMA channel to use for generating signal (try 10)
-LED_BRIGHTNESS = 150     # Set to 0 for darkest and 255 for brightest
+LED_BRIGHTNESS = 255     # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 LEDS_RIGHT = range(0, 22)

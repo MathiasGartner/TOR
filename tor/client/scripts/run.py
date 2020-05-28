@@ -113,7 +113,7 @@ elif mode == 11: # clear leds
 
 elif mode == 12: # leds
     lm = LedManager()
-    for i in range(140, cs.LED_COUNT):
+    for i in range(0, cs.LED_COUNT):
         lm.strip.setPixelColor(i, lm.W)
     lm.strip.show()
 

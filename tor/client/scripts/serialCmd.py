@@ -4,7 +4,8 @@ import serial
 import sys
 
 ser = serial.Serial(
-    port='/dev/ttyACM0',
+    #port='/dev/ttyS0', #serial connection via RX and TX pins
+    port="/dev/ttyACM0", #serial connectin via USB
     baudrate=115200,
     parity=serial.PARITY_NONE,
     stopbits=serial.STOPBITS_ONE,

@@ -7,8 +7,8 @@ class Communicator:
     def __init__(self, serialPort = ""):
         if serialPort == "":
             if cs.ON_RASPI:
-                #serialPort = "/dev/ttyACM0"
-                serialPort = "/dev/ttyS0"
+                serialPort = "/dev/ttyACM0"
+                #serialPort = "/dev/ttyS0"
         if serialPort == "":
             self.useSerial = False
         else:
