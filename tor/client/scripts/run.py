@@ -44,7 +44,7 @@ elif mode == 1: #move to x y and pick up die
     mm.moveToXPosRamp(dieX)
 
 elif mode == 2: #move to x y z
-    pos = Position(int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]))
+    pos = Position(float(sys.argv[2]), float(sys.argv[3]), float(sys.argv[4]))
     mm.moveToPos(pos)
 
 elif mode == 3: #move to all corners
@@ -116,6 +116,16 @@ elif mode == 12: # leds
     for i in range(0, cs.LED_COUNT):
         lm.strip.setPixelColor(i, lm.W)
     lm.strip.show()
+
+elif mode == 13: # test magnet pulse
+    mm.pulseMagnet(cs.PULSE_MAGNET_TIME)
+
+elif mode == 14: #test top led
+    for i in range(10):
+        mm.setLed(int(sys.argv[2]))
+        time.sleep(0.3)
+        mm.setLed(0)
+        time.sleep(0.3)
 
 if mm is not None:
     mm.waitForMovementFinished(2)

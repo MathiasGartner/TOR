@@ -75,11 +75,23 @@ class MovementManager:
         time.sleep(seconds)
         self.disableMagnet()
 
+    def setLed(self, brightness):
+        if brightness < 0:
+            brightness = 0
+        elif brightness > 255:
+            brightness = 255
+        cmd = "M42 P40 S{} I".format(brightness)
+        self.sendGCode(cmd)
+
     def doHoming(self):
-        cmd = "G28 N0 A2 P105 S10"
+        cmd = "G28 N0 A0 P140 S70"
         self.sendGCode(cmd)
         self.waitForMovementFinished()
         self.updateCurrentPosition()
+
+    def moveToCords(self, cords, segmented=False):
+        cmd = "G1 " + self.getCordLengthGCode(cords) + (" S" if segmented else "")
+        self.sendGCode(cmd)
 
     def moveToPos(self, pos, segmented=False):
         if not isinstance(pos, list):
@@ -87,8 +99,7 @@ class MovementManager:
         for p in pos:
             print("MOVE{}:".format(" SEG" if segmented else ""), p.x, p.y, p.z)
             cords = p.toCordLengths()
-            cmd = "G1 " + self.getCordLengthGCode(cords) + (" S" if segmented else "")
-            self.sendGCode(cmd)
+            self.moveToCords(cords, segmented)
             self.currentPosition = p
 
     #TODO: remove, should only be done in Marlin and not on external client. use "G1 S ..." command
@@ -147,19 +158,24 @@ class MovementManager:
         self.pulseMagnet(cs.PULSE_MAGNET_TIME)
 
     def searchForDie(self):
+        x = 0
         minY = 20
         dy = 40
         y = cs.LY
         magnetToRampOffsetY = 5
         z = cs.PICKUP_Z
         xToZero = True
+        self.moveToXYZ(x, y, z)
+        self.waitForMovementFinished()
         while y > (dy + minY):
             x = 0 if xToZero else cs.LX
             self.moveToXYZ(x, y, z, segmented=True)
-            time.sleep(1)
+            self.waitForMovementFinished()
+            #time.sleep(1)
             xToZero = not xToZero
             x = 0 if xToZero else cs.LX
             self.moveToXYZ(x, y, z, segmented=True)
+            self.waitForMovementFinished()
             time.sleep(1)
             y -= dy
             overRampY = (cs.RAMP_END_Y + cs.MAGNET_RADIUS + magnetToRampOffsetY) - y

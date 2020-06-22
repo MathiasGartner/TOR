@@ -1,3 +1,4 @@
+import datetime
 import json
 import random
 import socket
@@ -8,24 +9,28 @@ import tor.TORSettings as ts
 
 msgOK = json.dumps({"STATUS" : "OK"})
 
+def log(*msg):
+    print('{0:%Y-%m-%d %H:%M:%S}: '.format(datetime.datetime.now()), end='')
+    print(msg)
+
 def handleRequest(conn):
     request = NetworkUtils.recvData(conn)
     if "C" in request:
         clientId = request["C"]
         if "D" in request:
             dieResult = request["D"]
-            print("Client", clientId, "rolled", dieResult)
+            log("Client", clientId, "rolled", dieResult)
             conn.send(msgOK.encode())
             DBManager.writeResult(clientId, dieResult)
         elif "E" in request:
-            print("ERROR", request["E"], "@ client", clientId)
-            print(request["MESSAGE"])
+            log("ERROR", request["E"], "@ client", clientId)
+            log(request["MESSAGE"])
             conn.send(msgOK.encode())
         elif "J" in request:
             #jobIds = [1, 1, 1, 1, 1, 1, 3, 4, 5, 6, 7, 8]
             jobIds = [1]
             job = random.choice(jobIds)
-            print("client", clientId, "asks for job, send", job)
+            log("client", clientId, "asks for job, send", job)
             if job == 1:
                 NetworkUtils.sendData(conn, {"R" : 1})
             elif job == 2:
@@ -50,13 +55,13 @@ def handleRequest(conn):
                                      "Material": cId.Material
                                      })
     else:
-        print("could not identify client.")
+        log("could not identify client.")
 
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serverSocket.bind((ts.SERVER_IP, ts.SERVER_PORT))
 serverSocket.listen(5)
 
-print("start server")
+log("start server")
 while True:
     (clientSocket, address) = serverSocket.accept()
     handleRequest(clientSocket)

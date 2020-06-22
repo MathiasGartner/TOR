@@ -4,7 +4,7 @@ import tor.client.ClientSettings as cs
 
 class LedManager:
     def __init__(self):
-        from neopixel import Adafruit_NeoPixel, Color
+        from rpi_ws281x import Adafruit_NeoPixel, Color
         self.strip = Adafruit_NeoPixel(cs.LED_COUNT, cs.LED_PIN, cs.LED_FREQ_HZ, cs.LED_DMA, cs.LED_INVERT, cs.LED_BRIGHTNESS, cs.LED_CHANNEL)
         self.strip.begin()
         self.col_off = Color(0, 0, 0)

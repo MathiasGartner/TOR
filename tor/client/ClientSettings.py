@@ -18,8 +18,8 @@ L_ANCHOR_E_HOOK_Y = 15
 
 MIN_Z = 20
 
-LX = 252
-LY = LX
+LX = 241
+LY = 244
 LZ = 290 - 15 + 0 #height - hook + empiric value...
 LMAX = math.sqrt(LX**2 + LY**2 + LZ**2)
 
@@ -38,21 +38,21 @@ DICE_HEIGHT = 16
 PICKUP_ABOVE_GROUND = DICE_HEIGHT + 3
 PICKUP_Z = LZ - MAGNET_HEIGHT - PICKUP_ABOVE_GROUND
 
-PULSE_MAGNET_TIME = 1.0
-DIE_ROLL_TIME = 2
+PULSE_MAGNET_TIME = 0.5
+DIE_ROLL_TIME = 1
 
 #special positions
 BOX_SIZE = Position(LX, LY, LZ)
-HOME_POSITION = Position(0, 0, 0)
-HOME_CORDS =  HOME_POSITION.toCordLengths()
-CORNER_X = Position(0, 0, 0)
+CORNER_Z = Position(0, 0, 0)
 CORNER_Y = Position(LX, 0, 0)
-CORNER_Z = Position(LX, LY, 0)
+CORNER_X = Position(LX, LY, 0)
 CORNER_E = Position(0, LY, 0)
 CENTER_TOP = Position(LX/2, LY/2, MIN_Z)
 CENTER_BOTTOM = Position(LX/2, LY/2, PICKUP_Z)
 DROPOFF_ADVANCE_POSITION = Position(LX/2, 20, 50)
-DROPOFF_POSITION = Position(LX/2, 5, 30)
+DROPOFF_POSITION = Position(85, 0, 15)
+HOME_POSITION = CORNER_X
+HOME_CORDS =  HOME_POSITION.toCordLengths()
 
 # dice recognition configuration:
 IMAGE_CROP_X_LEFT = 10
@@ -76,11 +76,11 @@ BLOB_MAX_DIAMETER = 31
 FEEDRATE_PERCENTAGE = 250
 
 # LED strip configuration:
-LED_COUNT      = 3      # Number of LED pixels.
+LED_COUNT      = 8      # Number of LED pixels.
 LED_PIN        = 18      # GPIO pin connected to the pixels (18 uses PWM!).
 LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
 LED_DMA        = 10      # DMA channel to use for generating signal (try 10)
-LED_BRIGHTNESS = 255     # Set to 0 for darkest and 255 for brightest
+LED_BRIGHTNESS = 150     # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 LEDS_RIGHT = range(0, 22)

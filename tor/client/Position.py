@@ -32,9 +32,11 @@ class Position:
         return math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
 
     def toCordLengths(self):
+        factor = 1.0
         diffs = cs.BOX_SIZE - self
-        c1 = math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
-        c2 = math.sqrt(diffs.x ** 2 + self.y ** 2 + self.z ** 2)
-        c3 = math.sqrt(diffs.x ** 2 + diffs.y ** 2 + self.z ** 2)
-        c4 = math.sqrt(self.x ** 2 + diffs.y ** 2 + self.z ** 2)
-        return Cords([c1, c2, c3, c4])
+        c1 = math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2) * factor
+        c2 = math.sqrt(diffs.x ** 2 + self.y ** 2 + self.z ** 2) * factor
+        c3 = math.sqrt(diffs.x ** 2 + diffs.y ** 2 + self.z ** 2) * factor
+        c4 = math.sqrt(self.x ** 2 + diffs.y ** 2 + self.z ** 2) * factor
+        #return Cords([c1, c2, c3, c4])
+        return Cords([c3, c2, c1, c4])

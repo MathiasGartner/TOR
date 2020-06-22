@@ -7,9 +7,11 @@ import time
 from tor.base import NetworkUtils
 from tor.base.DieRecognizer import DieRecognizer
 import tor.client.ClientSettings as cs
+from tor.client.Cords import Cords
+
 if cs.ON_RASPI:
     from tor.client.Camera import Camera
-from tor.client.LedManager import LedManager
+#from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
 from tor.client.Position import Position
 import tor.TORSettings as ts
@@ -65,8 +67,18 @@ def doDieRoll():
     print("doDieRoll()")
     mm.moveToPos(cs.DROPOFF_ADVANCE_POSITION)
     mm.waitForMovementFinished()
-    mm.moveToPos(cs.DROPOFF_POSITION, segmented=True)
+
+    #mm.moveToPos(cs.DROPOFF_POSITION, segmented=True)
+
+    dropoff_cords = cs.DROPOFF_POSITION.toCordLengths()
+    print(dropoff_cords)
+    dropoff_cords.lengths[0] += 1
+    dropoff_cords.lengths[3] += 1
+    print(dropoff_cords)
+    mm.moveToCords(dropoff_cords)
+
     mm.waitForMovementFinished()
+    time.sleep(1)
     mm.rollDie()
     time.sleep(cs.DIE_ROLL_TIME / 2)
     mm.moveToPos(cs.CENTER_TOP)
@@ -90,7 +102,7 @@ def doDieRoll():
             result = dr.getDieResultWithExtensiveProcessing()
         if result > 0:
             print("die result:", result)
-            lm.showResult(result)
+            #lm.showResult(result)
             sendDieRollResult(result)
         else:
             sendDieResultNotRecognized()
@@ -119,7 +131,7 @@ dr = DieRecognizer()
 
 mm = MovementManager()
 
-lm = LedManager()
+#lm = LedManager()
 
 cId = askForClientIdentity(clientName)
 clientId = cId["Id"]
