@@ -118,7 +118,7 @@ elif mode == 12: # leds
     lm.strip.show()
 
 elif mode == 13: # test magnet pulse
-    mm.pulseMagnet(cs.PULSE_MAGNET_TIME)
+    mm.pulseMagnet()
 
 elif mode == 14: #test top led
     for i in range(10):

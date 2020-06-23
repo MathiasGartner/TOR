@@ -70,10 +70,9 @@ class MovementManager:
         cmd = "M42 P41 S0"
         self.sendGCode(cmd)
 
-    def pulseMagnet(self, seconds):
-        self.enableMagnet()
-        time.sleep(seconds)
-        self.disableMagnet()
+    def pulseMagnet(self):
+        cmd = "M43 T I S41 L41 R1 W{}".format(cs.PULSE_MAGNET_TIME_MS)
+        self.sendGCode(cmd)
 
     def setLed(self, brightness):
         if brightness < 0:
