@@ -4,25 +4,31 @@ import random
 import sys
 import time
 
+from tor.base.DieRecognizer import DieRecognizer
 import tor.client.ClientSettings as cs
+from tor.client.Camera import Camera
+from tor.client.Cords import Cords
 from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
 from tor.client.Position import Position
-
-try:
-    mm = MovementManager()
-
-    mm.initBoard()
-    time.sleep(0.5)
-except:
-    mm = None
-    print("ERROR: could not connect to SKR board.")
-
 
 mode = 4
 if len(sys.argv) > 1:
     mode=int(sys.argv[1])
 print("mode: ", mode)
+
+try:
+    if mode != 17:
+        print("init board...")
+        mm = MovementManager()
+        mm.initBoard()
+        time.sleep(0.5)
+    else:
+        mm = None
+except:
+    mm = None
+    print("ERROR: could not connect to SKR board.")
+
 
 if mode == 0:
     diePosition = Position(100, 30, 210)
@@ -126,6 +132,51 @@ elif mode == 14: #test top led
         time.sleep(0.3)
         mm.setLed(0)
         time.sleep(0.3)
+
+elif mode == 15: #set led strip segments
+    r = int(sys.argv[2])
+    g = int(sys.argv[3])
+    b = int(sys.argv[4])
+    segment = sys.argv[5]
+    brightness = int(sys.argv[6])
+
+    lm = LedManager(brightness)
+    if "L" in segment:
+        leds = cs.LEDS_LEFT
+        lm.setLeds(leds, r, g, b)
+    if "R" in segment:
+        leds = cs.LEDS_RIGHT
+        lm.setLeds(leds, r, g, b)
+    if "B" in segment:
+        leds = cs.LEDS_BACK
+        lm.setLeds(leds, r, g, b)
+    if "A" in segment:
+        leds = cs.LEDS_BEFORE
+        lm.setLeds(leds, r, g, b)
+    if "Z" in segment:
+        leds = cs.LEDS_AFTER
+        lm.setLeds(leds, r, g, b)
+
+elif mode == 16: # move forever
+    mm.setCurrentPosition(Cords([0, 0, 0, 0]))
+    while True:
+        mm.moveToCords(Cords([100, 100, 100, 100]))
+        mm.waitForMovementFinished(0.5)
+        mm.moveToCords(Cords([0, 0, 0, 0]))
+        mm.waitForMovementFinished(0.5)
+
+elif mode == 17: # take pictures forever
+    i = 0
+    cam = Camera()
+    dr = DieRecognizer()
+    while True:
+        image = cam.takePicture()
+        print("analyze picture...")
+        found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
+        if i == 100:
+            i = 0
+            dr.writeImage(processedImages[1])
+        i += 1
 
 if mm is not None:
     mm.waitForMovementFinished(2)

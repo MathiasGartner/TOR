@@ -3,9 +3,9 @@ import time
 import tor.client.ClientSettings as cs
 
 class LedManager:
-    def __init__(self):
+    def __init__(self, brightness=cs.LED_BRIGHTNESS):
         from rpi_ws281x import Adafruit_NeoPixel, Color
-        self.strip = Adafruit_NeoPixel(cs.LED_COUNT, cs.LED_PIN, cs.LED_FREQ_HZ, cs.LED_DMA, cs.LED_INVERT, cs.LED_BRIGHTNESS, cs.LED_CHANNEL)
+        self.strip = Adafruit_NeoPixel(cs.LED_COUNT, cs.LED_PIN, cs.LED_FREQ_HZ, cs.LED_DMA, cs.LED_INVERT, brightness, cs.LED_CHANNEL)
         self.strip.begin()
         self.col_off = Color(0, 0, 0)
         self.G = Color(255, 0, 0)
@@ -41,7 +41,11 @@ class LedManager:
             self.strip.setPixelColor(i, self.B)
         self.strip.show()
         time.sleep(1)
-        for i in cs.LEDS_FRONT:
+        for i in cs.LEDS_BEFORE:
+            self.strip.setPixelColor(i, self.W)
+        self.strip.show()
+        time.sleep(1)
+        for i in cs.LEDS_AFTER:
             self.strip.setPixelColor(i, self.W)
         self.strip.show()
         time.sleep(1)
@@ -54,4 +58,10 @@ class LedManager:
     def showResult(self, result):
         for i in range(self.strip.numPixels()):
             self.strip.setPixelColor(i, self.R if (i < result) else self.col_off)
+        self.strip.show()
+
+    def setLeds(self, leds, r, g, b):
+        from rpi_ws281x import Color
+        for i in leds:
+            self.strip.setPixelColor(i, Color(r, g, b))
         self.strip.show()

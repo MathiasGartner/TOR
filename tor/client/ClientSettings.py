@@ -34,7 +34,7 @@ RAMP_START_Z = 50
 RAMP_ALPHA = np.arctan((RAMP_END_Z - RAMP_START_Z) / RAMP_END_Y)
 MAGNET_RADIUS = 12
 MAGNET_HEIGHT = 50
-DICE_HEIGHT = 16
+DICE_HEIGHT = 20
 PICKUP_ABOVE_GROUND = DICE_HEIGHT + 3
 PICKUP_Z = LZ - MAGNET_HEIGHT - PICKUP_ABOVE_GROUND
 
@@ -49,8 +49,8 @@ CORNER_X = Position(LX, LY, 0)
 CORNER_E = Position(0, LY, 0)
 CENTER_TOP = Position(LX/2, LY/2, MIN_Z)
 CENTER_BOTTOM = Position(LX/2, LY/2, PICKUP_Z)
-DROPOFF_ADVANCE_POSITION = Position(LX/2, 20, 50)
-DROPOFF_POSITION = Position(85, 0, 15)
+DROPOFF_ADVANCE_POSITION = Position(LX/2, 30, 30)
+DROPOFF_POSITION = Position(85, 8, 17)
 HOME_POSITION = CORNER_X
 HOME_CORDS =  HOME_POSITION.toCordLengths()
 
@@ -73,17 +73,18 @@ BLOB_MIN_DIAMETER = 18
 BLOB_MAX_DIAMETER = 31
 
 # movement configuration:
-FEEDRATE_PERCENTAGE = 250
+FEEDRATE_PERCENTAGE = 350
 
 # LED strip configuration:
-LED_COUNT      = 8      # Number of LED pixels.
+LED_COUNT      = 144      # Number of LED pixels.
 LED_PIN        = 18      # GPIO pin connected to the pixels (18 uses PWM!).
 LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
 LED_DMA        = 10      # DMA channel to use for generating signal (try 10)
 LED_BRIGHTNESS = 150     # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
-LEDS_RIGHT = range(0, 22)
-LEDS_BACK = range(23, 66)
-LEDS_LEFT = range(67, 88)
-LEDS_FRONT = range(89, LED_COUNT)
+LEDS_BEFORE = range(0, 47)
+LEDS_RIGHT = range(48, 68)
+LEDS_BACK = range(69, 108)
+LEDS_LEFT = range(109, 129)
+LEDS_AFTER = range(130, LED_COUNT)

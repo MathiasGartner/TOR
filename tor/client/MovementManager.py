@@ -154,7 +154,7 @@ class MovementManager:
 
     def rollDie(self):
         print("die is now rolled...")
-        self.pulseMagnet(cs.PULSE_MAGNET_TIME)
+        self.pulseMagnet()
 
     def searchForDie(self):
         x = 0
