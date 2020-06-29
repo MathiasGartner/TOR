@@ -6,7 +6,6 @@ import time
 
 from tor.base.DieRecognizer import DieRecognizer
 import tor.client.ClientSettings as cs
-from tor.client.Camera import Camera
 from tor.client.Cords import Cords
 from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
@@ -18,6 +17,8 @@ if len(sys.argv) > 1:
 print("mode: ", mode)
 
 try:
+    if mode == 17:
+        from tor.client.Camera import Camera
     if mode != 17 and mode != 15:
         print("init board...")
         mm = MovementManager()
