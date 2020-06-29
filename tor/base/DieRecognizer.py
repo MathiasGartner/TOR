@@ -27,7 +27,6 @@ class DieRecognizer:
 
     def readDummyImage(self, imNr=1, path=r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_2_neue Kamera testen\test{:03d}.jpg"):
         #image = cv2.imread(r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_2_neue Kamera testen\test{:03d}.jpg".format(imNr))
-        #range 0 - 16
         imgPath = path.format(imNr)
         image = cv2.imread(imgPath)
         if image is None:
@@ -109,6 +108,8 @@ class DieRecognizer:
                 diePositionMM = Point2D(-1, -1)
                 result = 0
             else:
+                #TODO: check if the detected blobs correspond to the face of a die
+                #      eg. distance between blobs, arrangement, ...
                 meanX = np.mean([blob.pt[0] for blob in blobs])
                 meanY = np.mean([blob.pt[1] for blob in blobs])
 

@@ -18,7 +18,7 @@ if len(sys.argv) > 1:
 print("mode: ", mode)
 
 try:
-    if mode != 17:
+    if mode != 17 and mode != 15:
         print("init board...")
         mm = MovementManager()
         mm.initBoard()
@@ -160,7 +160,8 @@ elif mode == 15: #set led strip segments
 elif mode == 16: # move forever
     mm.setCurrentPosition(Cords([0, 0, 0, 0]))
     while True:
-        mm.moveToCords(Cords([100, 100, 100, 100]))
+        length = 50
+        mm.moveToCords(Cords([length, length, length, length]))
         mm.waitForMovementFinished(0.5)
         mm.moveToCords(Cords([0, 0, 0, 0]))
         mm.waitForMovementFinished(0.5)
