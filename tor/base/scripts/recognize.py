@@ -14,7 +14,7 @@ def createImageTable(images, cols):
     return finalImage
 
 tags = []
-directory = r"D:\Dropbox\Uni\AEC\\"
+directory = r"C:\\Users\\Michaela\\Documents\\physik\\AEC_Projekt\\michi2\\"
 #path, start, end = directory + r"Elektronik\Raspi\2_0_testen Kamera\bild{}.jpg", 1, 9
 #tags = (4, 6, 6, 6, 6, 0, 5, 5, 5) #5/9
 #path, start, end = directory + "Elektronik\Raspi\2_1_glasklar\test{:04d}.jpg", 0, 16
@@ -44,12 +44,14 @@ directory = r"D:\Dropbox\Uni\AEC\\"
 
 #path, start, end = directory + r"Elektronik\Raspi\2_3_punkte\2\image{:03d}.jpg", 0, 24
 #tags = (5, 0, 5, 4, 6, 5, 2, 4, 0, 2, 0, 1, 0 ,0, 4, 0, 0, 0, 3, 0, 0, 0, 0, 3, 5)
-#path, start, end = directory + r"Elektronik\Raspi\2_3_punkte\2\image{:03d}.jpg", 25, 46
-#tags = (5, 0, 0, 0, 0, 4, 0, 2, 0, 2, 6, 0, 1, 4, 0, 0, 0, 0, 3, 1, 4, 6)
+# path, start, end = directory + r"Elektronik\Raspi\2_3_punkte\2\image{:03d}.jpg", 25, 46
+# tags = (5, 0, 0, 0, 0, 4, 0, 2, 0, 2, 6, 0, 1, 4, 0, 0, 0, 0, 3, 1, 4, 6)
 
 
-path, start, end = directory + r"Elektronik\Raspi\2_4_leds\testled{:03d}.jpg", 1, 1
-tags = [(3)]
+# path, start, end = directory + r"Elektronik\Raspi\2_4_leds\testled{:03d}.jpg", 1, 1
+# tags = [(3)]
+path, start, end = directory + r"Elektronik\Raspi\2_1_glasklar\bild{:02d}.jpg", 34, 36
+tags = [(1,1,3)]
 
 borderSize = 10
 borderCol = (0, 0, 0)

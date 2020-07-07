@@ -25,7 +25,7 @@ class DieRecognizer:
         self.blobParams.maxInertiaRatio = 1.0
         self.blobDetector = cv2.SimpleBlobDetector_create(self.blobParams)
 
-    def readDummyImage(self, imNr=1, path=r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_2_neue Kamera testen\test{:03d}.jpg"):
+    def readDummyImage(self, imNr=1, path=r"C:\\Users\\Michaela\\Documents\\physik\\AEC_Projekt\\michi2\\Elektronik\Raspi\2_2_neue Kamera testen\test{:03d}.jpg"):
         #image = cv2.imread(r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_2_neue Kamera testen\test{:03d}.jpg".format(imNr))
         imgPath = path.format(imNr)
         image = cv2.imread(imgPath)
