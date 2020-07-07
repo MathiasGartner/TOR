@@ -86,7 +86,8 @@ class MovementManager:
         self.sendGCode(cmd)
 
     def doHoming(self):
-        cmd = "G28 N0 A0 P140 S70"
+        cmd = "G28 N0 A3 P140 S70"
+        #cmd = "G28 N0 A0 P140 S70" #initial parameters
         self.sendGCode(cmd)
         self.waitForMovementFinished()
         self.updateCurrentPosition()
