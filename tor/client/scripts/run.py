@@ -19,7 +19,7 @@ print("mode: ", mode)
 try:
     if mode == 17:
         from tor.client.Camera import Camera
-    if mode != 17 and mode != 15:
+    if mode != 17 and mode != 15 and mode != 11 and mode != 12 and mode != 10:
         print("init board...")
         mm = MovementManager()
         mm.initBoard()
@@ -172,13 +172,16 @@ elif mode == 17: # take pictures forever
     cam = Camera()
     dr = DieRecognizer()
     while True:
+        print("take picture...")
         image = cam.takePicture()
         print("analyze picture...")
         found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
-        if i == 100:
+        if i == 10:
             i = 0
             dr.writeImage(processedImages[1])
         i += 1
+        print("waiting...")
+        time.sleep(10)
 
 if mm is not None:
     mm.waitForMovementFinished(2)

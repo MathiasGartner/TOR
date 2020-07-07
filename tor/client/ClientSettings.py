@@ -75,18 +75,16 @@ BLOB_MIN_DIAMETER = 18
 BLOB_MAX_DIAMETER = 31
 
 # movement configuration:
-FEEDRATE_PERCENTAGE = 350
+FEEDRATE_PERCENTAGE = 250
 
 # LED strip configuration:
-LED_COUNT      = 144      # Number of LED pixels.
+LED_COUNT      = 81      # Number of LED pixels.
 LED_PIN        = 18      # GPIO pin connected to the pixels (18 uses PWM!).
 LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
 LED_DMA        = 10      # DMA channel to use for generating signal (try 10)
 LED_BRIGHTNESS = 150     # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
-LEDS_BEFORE = range(0, 47)
-LEDS_RIGHT = range(48, 68)
-LEDS_BACK = range(69, 108)
-LEDS_LEFT = range(109, 129)
-LEDS_AFTER = range(130, LED_COUNT)
+LEDS_RIGHT = range(0, 20)
+LEDS_BACK = range(21, 60)
+LEDS_LEFT = range(61, 80)

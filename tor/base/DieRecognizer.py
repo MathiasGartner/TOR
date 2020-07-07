@@ -33,9 +33,10 @@ class DieRecognizer:
             raise Exception("Could not open image: ", imgPath)
         return image
 
-    def writeImage(self, im):
-        cv2.imwrite("run_{}.jpg".format(datetime.now().strftime("%Y%m%d%H%M%S")), im)
-        pass
+    def writeImage(self, im, fileName = ""):
+        if fileName == "":
+            fileName = "run_{}.jpg".format(datetime.now().strftime("%Y%m%d%H%M%S"))
+        cv2.imwrite(fileName, im)
 
     def cropToSearchableArea(self, im):
         cropped = im[cs.IMAGE_CROP_Y_TOP:(im.shape[0] - cs.IMAGE_CROP_Y_BOTTOM), cs.IMAGE_CROP_X_LEFT:(im.shape[1] - cs.IMAGE_CROP_X_RIGHT)]

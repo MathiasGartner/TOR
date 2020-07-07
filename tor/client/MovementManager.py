@@ -16,10 +16,13 @@ class MovementManager:
         # Restore Settings
         #self.sendGCode("M501")
         # Set Feedrate Percentage
-        self.sendGCode("M220 S{}".format(cs.FEEDRATE_PERCENTAGE))
+        self.setFeedratePercentage(cs.FEEDRATE_PERCENTAGE)
         # enable all steppers
         self.sendGCode("M17")
         self.updateCurrentPosition()
+
+    def setFeedratePercentage(self, fr):
+        self.sendGCode("M220 S{}".format(fr))
 
     def sendGCode(self, cmd):
         print("SEND: " + cmd)

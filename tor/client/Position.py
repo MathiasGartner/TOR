@@ -40,3 +40,8 @@ class Position:
         c4 = math.sqrt(self.x ** 2 + diffs.y ** 2 + self.z ** 2) * factor
         #return Cords([c1, c2, c3, c4])
         return Cords([c3, c2, c1, c4])
+
+    def isValid(self):
+        if self.x < 0 or self.y < 0 or self.z < 0:
+            return False
+        return True
