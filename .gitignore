@@ -140,3 +140,5 @@ dmypy.json
 
 # Generated files
 .idea/**/contentModel.xml
+/venv_38/
+/venv_conda/
