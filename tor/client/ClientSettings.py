@@ -18,8 +18,8 @@ L_ANCHOR_E_HOOK_Y = 15
 
 MIN_Z = 20
 
-LX = 241
-LY = 244
+LX = 242
+LY = 242
 LZ = 290 - 15 + 0 #height - hook + empiric value...
 LMAX = math.sqrt(LX**2 + LY**2 + LZ**2)
 
@@ -34,7 +34,7 @@ RAMP_ALPHA = np.arctan((RAMP_END_Z - RAMP_START_Z) / RAMP_END_Y)
 MAGNET_RADIUS = 12
 MAGNET_HEIGHT = 50
 DICE_HEIGHT = 20
-PICKUP_ABOVE_GROUND = DICE_HEIGHT + 5
+PICKUP_ABOVE_GROUND = DICE_HEIGHT + 0
 PICKUP_Z = LZ - MAGNET_HEIGHT - PICKUP_ABOVE_GROUND
 
 PULSE_MAGNET_TIME_MS = 100
@@ -50,8 +50,9 @@ CENTER_TOP = Position(LX/2, LY/2, MIN_Z)
 CENTER_BOTTOM = Position(LX/2, LY/2, PICKUP_Z)
 #DROPOFF_ADVANCE_POSITION = Position(LX/2, 30, 30)
 #DROPOFF_POSITION = Position(85, 8, 17)
-DROPOFF_ADVANCE_POSITION = Position(130, 30, 30)
-DROPOFF_POSITION = Position(130, 10, 20)
+DROPOFF_ADVANCE_POSITION = Position(60, 30, 30)
+DROPOFF_ADVANCE_FEEDRATE = 50
+DROPOFF_POSITION = Position(60, 8, 11)
 HOME_POSITION = CORNER_X
 HOME_CORDS =  HOME_POSITION.toCordLengths()
 
@@ -77,7 +78,7 @@ BLOB_MIN_DIAMETER = 18
 BLOB_MAX_DIAMETER = 31
 
 # movement configuration:
-FEEDRATE_PERCENTAGE = 250
+FEEDRATE_PERCENTAGE = 400
 
 # LED strip configuration:
 LED_COUNT      = 81      # Number of LED pixels.
@@ -90,3 +91,7 @@ LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 LEDS_RIGHT = range(0, 20)
 LEDS_BACK = range(21, 60)
 LEDS_LEFT = range(61, 80)
+
+# properties of natural materials on ramp
+RAMP_MATERIAL = "plain"
+RAMP_MATERIAL_HEIGHT = 0
