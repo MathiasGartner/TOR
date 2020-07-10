@@ -44,4 +44,6 @@ class Position:
     def isValid(self):
         if self.x < 0 or self.y < 0 or self.z < 0:
             return False
+        if self.x>cs.LX or self.y>cs.LY or self.z>cs.LZ:
+            return False
         return True

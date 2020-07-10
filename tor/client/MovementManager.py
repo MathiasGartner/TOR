@@ -86,8 +86,7 @@ class MovementManager:
         self.sendGCode(cmd)
 
     def doHoming(self):
-        cmd = "G28 N0 A3 P140 S70"
-        #cmd = "G28 N0 A0 P140 S70" #initial parameters
+        cmd = "G28 A0 S50 P140 F68 R8 D1.05 B1.15"
         self.sendGCode(cmd)
         self.waitForMovementFinished()
         self.updateCurrentPosition()
@@ -147,13 +146,19 @@ class MovementManager:
 
     def moveToAllCorners(self, segmented=False):
         self.moveToPos(cs.CORNER_X, segmented)
+        time.sleep(0.5)
+        self.moveToPos(cs.CENTER_TOP, segmented)
         self.moveToPos(cs.CORNER_Z, segmented)
+        time.sleep(0.5)
+        self.moveToPos(cs.CENTER_TOP, segmented)
         self.moveToPos(cs.CORNER_E, segmented)
-        self.moveToPos(cs.CORNER_X, segmented)
-        self.moveToPos(cs.CORNER_Z, segmented)
+        time.sleep(0.5)
+        self.moveToPos(cs.CENTER_TOP, segmented)
         self.moveToPos(cs.CORNER_Y, segmented)
-        self.moveToPos(cs.CORNER_E, segmented)
+        time.sleep(0.5)
+        self.moveToPos(cs.CENTER_TOP, segmented)
         self.moveToPos(cs.CORNER_X, segmented)
+        time.sleep(0.5)
         self.moveHome(segmented)
 
     def rollDie(self):
