@@ -1,12 +1,12 @@
 import mysql.connector as mysql
 
-import tor.TORSettingsPrivate as tsp
+import tor.TORSettings as ts
 from tor.server.Job import Job
 
 db = mysql.connect(
-    host = tsp.DATABASE_HOST,
-    user = tsp.DATABASE_USER,
-    passwd = tsp.DATABASE_PASSWORD,
+    host = ts.DB_HOST,
+    user = ts.DB_USER,
+    passwd = ts.DB_PASSWORD,
     database = "tor",
     autocommit = True
 )
