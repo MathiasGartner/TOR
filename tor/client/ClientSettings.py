@@ -95,3 +95,7 @@ LEDS_LEFT = range(61, 80)
 # properties of natural materials on ramp
 RAMP_MATERIAL = "plain"
 RAMP_MATERIAL_HEIGHT = 0
+
+
+
+

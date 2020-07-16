@@ -4,10 +4,13 @@ import sys
 import argparse
 import time
 import numpy as np
+import os
 
 from tor.client import ClientSettings as cs
 from tor.client.MovementManager import MovementManager
 from tor.client.Position import Position
+from tor.base.DieRecognizer import DieRecognizer
+from tor.client.Camera import Camera
 
 
 
@@ -16,10 +19,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument("position", nargs='*', default=[cs.CENTER_TOP.x, cs.CENTER_TOP.y, cs.CENTER_TOP.z], type=float)
 parser.add_argument("-f", dest="feedratePercentage", default=cs.FEEDRATE_PERCENTAGE, type=int)
 parser.add_argument("-c", dest="doHoming", action="store_true")
-parser.add_argument("-ce", dest="doHomingexact", action="store_true")
 parser.add_argument("-s", dest="segmented", action="store_true")
 parser.add_argument("-start", dest='start', action="store_true")
 parser.add_argument("-find", dest='find', action="store_true")
+parser.add_argument("-points", dest='points', action="store_true")
+parser.add_argument("-infinity",dest='infinity', action="store_true")
 args = parser.parse_args()
 
 mm = MovementManager()
@@ -27,8 +31,6 @@ mm.initBoard()
 time.sleep(0.5)
 
 def find_die():
-    from tor.base.DieRecognizer import DieRecognizer
-    from tor.client.Camera import Camera
     dr = DieRecognizer()
     cam = Camera()
     mm.setLed(200)
@@ -38,11 +40,18 @@ def find_die():
     found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
     # dr.writeImage(processedImages[1])
     print(result)
+    found=False #for the moment finding doesn't work
+    cam.cam.close()
     if (found):
         print(diePosition)
-        mm.moveToPos(Position(min(diePosition.x * 1.1, 241), diePosition.y, 50), args.segmented)
+        mm.moveToPos(Position(120,200,100), True)
         mm.waitForMovementFinished()
-        mm.moveToPos(Position(min(diePosition.x * 1.1, 241), diePosition.y, 205), args.segmented)
+        mm.moveToPos(Position(min(diePosition.x , 241), diePosition.y, 50), True)
+        mm.waitForMovementFinished()
+        mm.moveToPos(Position(min(diePosition.x , 241), diePosition.y, 205), True)
+        mm.waitForMovementFinished()
+        mm.moveToPos(Position(120,200,100), True)
+        mm.waitForMovementFinished()
     else:
         print('Die not found')
         search_die()
@@ -50,32 +59,59 @@ def find_die():
 def search_die():
     #starting position
     '''
-    p4 p5 p3
-    p1 p6 p2
+    1  2  3
+    4  5  6
+    --------
+    7  8  9
+    10 11 12
     M      M
     '''
-    p1 = (0, 150, 201)
-    p2 = (242, 150, 203)
-    p3 = (242, 242, 203)
-    p4 = (0, 242, 198)
-    p5 = (121,242,200)
-    p6 = (121,150.5,204)
-    n_rows=4
-    mm.moveToPos(Position(p4[0],p4[1], 100))
-    mm.moveToPos(Position(p4[0],p4[1], p4[2]))
+    if(os.path.isfile('meshpoints.dat')):
+        print('Custom configuration found')
+        co=np.loadtxt('meshpoints.dat')
+        p1 = co[0, :]
+        p2 = co[1, :]
+        p3 = co[2, :]
+        p4 = co[3, :]
+        p5 = co[4, :]
+        p6 = co[5, :]
+        p7 = co[6, :]
+        p8 = co[7, :]
+        p9 = co[8, :]
+        p10 = co[9, :]
+        p11 = co[10, :]
+        p12 = co[11, :]
+    else:
+        print('No configuration found')
+        p1 = (0, 242, 198)
+        p2 = (121,242,200)
+        p3 = (242, 242, 203)
+        p4 = (0, 150, 201)
+        p5 = (121,150.5,204)
+        p6 = (242, 150, 203)
+        p7=(0,130,140)
+        p8 = (121, 130, 140)
+        p9=(242,130,140)
+        p10=(0, 40, 65)
+        p11=(121,40,65)
+        p12 = (242, 40, 65)
+    n_rows=4 # rows per area
+    ramp=False # Does ramp need search?
+    mm.moveToPos(Position(p1[0],p1[1], 100))
+    mm.moveToPos(Position(p1[0],p1[1], p1[2]))
     #raster bottom
     # mesh left side
-    x_mesh_l=np.linspace(p4[0],p1[0],n_rows)
-    y_mesh_l=np.linspace(p4[1],p1[1],n_rows)
-    z_mesh_l=np.linspace(p4[2],p1[2],n_rows)
+    x_mesh_l=np.linspace(p1[0],p4[0],n_rows)
+    y_mesh_l=np.linspace(p1[1],p4[1],n_rows)
+    z_mesh_l=np.linspace(p1[2],p4[2],n_rows)
     #mesh center
-    x_mesh_c = np.linspace(p5[0], p6[0], n_rows)
-    y_mesh_c = np.linspace(p5[1], p6[1], n_rows)
-    z_mesh_c = np.linspace(p5[2], p6[2], n_rows)
+    x_mesh_c = np.linspace(p2[0], p5[0], n_rows)
+    y_mesh_c = np.linspace(p2[1], p5[1], n_rows)
+    z_mesh_c = np.linspace(p2[2], p5[2], n_rows)
     #mesh right side
-    x_mesh_r=np.linspace(p3[0], p2[0], n_rows)
-    y_mesh_r = np.linspace(p3[1], p2[1], n_rows)
-    z_mesh_r = np.linspace(p3[2], p2[2], n_rows)
+    x_mesh_r = np.linspace(p3[0], p6[0], n_rows)
+    y_mesh_r = np.linspace(p3[1], p6[1], n_rows)
+    z_mesh_r = np.linspace(p3[2], p6[2], n_rows)
     mm.setFeedratePercentage(200)
     for i in range(n_rows):
         if(np.mod(i,2)==0):
@@ -94,65 +130,98 @@ def search_die():
             mm.waitForMovementFinished()
 
     ####ramp###
-    cur_po = mm.getCurrentPosition()
-    mm.moveToPos(Position(cur_po.x, cur_po.y, 100), True)
-    mm.waitForMovementFinished()
-    '''
-    p10 p11 p9
-    p7 p12 p8
-    M      M
-    '''
-    p10=(0,130,140)
-    p9=(242,130,140)
-    p8=(242, 40, 65)
-    p7=(0, 40, 65)
-    p11=(121,130,140)
-    p12=(121,40,65)
-    # mesh left side
-    x_mesh_l=np.linspace(p10[0],p7[0],n_rows)
-    y_mesh_l=np.linspace(p10[1],p7[1],n_rows)
-    z_mesh_l=np.linspace(p10[2],p7[2],n_rows)
-    #mesh center
-    x_mesh_c = np.linspace(p11[0], p12[0], n_rows)
-    y_mesh_c = np.linspace(p11[1], p12[1], n_rows)
-    z_mesh_c = np.linspace(p11[2], p12[2], n_rows)
-    #mesh right side
-    x_mesh_r=np.linspace(p9[0], p8[0], n_rows)
-    y_mesh_r = np.linspace(p9[1], p8[1], n_rows)
-    z_mesh_r = np.linspace(p9[2], p8[2], n_rows)
-    for i in range(n_rows):
-        if(np.mod(i,2)==0):
-            mm.moveToPos(Position(x_mesh_l[i], y_mesh_l[i], z_mesh_l[i]), True)
-            mm.waitForMovementFinished()
-            mm.moveToPos(Position(x_mesh_c[i], y_mesh_c[i], z_mesh_c[i]), True)
-            mm.waitForMovementFinished()
-            mm.moveToPos(Position(x_mesh_r[i], y_mesh_r[i], z_mesh_r[i]), True)
-            mm.waitForMovementFinished()
-        if(np.mod(i,2)==1):
-            mm.moveToPos(Position(x_mesh_r[i], y_mesh_r[i], z_mesh_r[i]), True)
-            mm.waitForMovementFinished()
-            mm.moveToPos(Position(x_mesh_c[i], y_mesh_c[i], z_mesh_c[i]), True)
-            mm.waitForMovementFinished()
-            mm.moveToPos(Position(x_mesh_l[i], y_mesh_l[i], z_mesh_l[i]), True)
-            mm.waitForMovementFinished()
+    if(ramp):
+        cur_po = mm.getCurrentPosition()
+        mm.moveToPos(Position(cur_po.x, cur_po.y+20, 100), True)
+        mm.waitForMovementFinished()
 
-
-
-
+        # mesh left side
+        x_mesh_l=np.linspace(p7[0],p10[0],n_rows)
+        y_mesh_l=np.linspace(p7[1],p10[1],n_rows)
+        z_mesh_l=np.linspace(p7[2],p10[2],n_rows)
+        #mesh center
+        x_mesh_c = np.linspace(p8[0], p11[0], n_rows)
+        y_mesh_c = np.linspace(p8[1], p11[1], n_rows)
+        z_mesh_c = np.linspace(p8[2], p11[2], n_rows)
+        #mesh right side
+        x_mesh_r=np.linspace(p9[0], p12[0], n_rows)
+        y_mesh_r = np.linspace(p9[1], p12[1], n_rows)
+        z_mesh_r = np.linspace(p9[2], p12[2], n_rows)
+        for i in range(n_rows):
+            if(np.mod(i,2)==0):
+                mm.moveToPos(Position(x_mesh_l[i], y_mesh_l[i], z_mesh_l[i]), True)
+                mm.waitForMovementFinished()
+                mm.moveToPos(Position(x_mesh_c[i], y_mesh_c[i], z_mesh_c[i]), True)
+                mm.waitForMovementFinished()
+                mm.moveToPos(Position(x_mesh_r[i], y_mesh_r[i], z_mesh_r[i]), True)
+                mm.waitForMovementFinished()
+            if(np.mod(i,2)==1):
+                mm.moveToPos(Position(x_mesh_r[i], y_mesh_r[i], z_mesh_r[i]), True)
+                mm.waitForMovementFinished()
+                mm.moveToPos(Position(x_mesh_c[i], y_mesh_c[i], z_mesh_c[i]), True)
+                mm.waitForMovementFinished()
+                mm.moveToPos(Position(x_mesh_l[i], y_mesh_l[i], z_mesh_l[i]), True)
+                mm.waitForMovementFinished()
     mm.setFeedratePercentage(250)
-    mm.moveToPos(Position(100,200,100))
+    mm.moveToPos(Position(100,200,100),True)
 
 
+def start_script():
+    mm.waitForMovementFinished()
+    mm.moveToPos(Position(125, 30, 50), True)
+    mm.waitForMovementFinished()
+    mm.setFeedratePercentage(50)
+    mm.moveToPos(Position(100, 12, 25), True)
+    mm.waitForMovementFinished()
+    mm.setFeedratePercentage(30)
+    mm.moveToPos(Position(105, 8, 22), True)
+    mm.waitForMovementFinished()
+    mm.setFeedratePercentage(250)
+    time.sleep(2)
+    mm.rollDie()
+    if (args.find):
+        time.sleep(3)
+        find_die()
 
-
-
-
-
-
-
-
-
-
+if args.points:
+    if(os.path.isfile('meshpoints.dat')):
+        print('Load coordinates')
+        co=np.loadtxt('meshpoints.dat')
+    else:
+        #default settings
+        co=np.array([[0, 242, 198],
+                     [121,242,200],
+                     [242, 242, 203],
+                     [0, 150, 201],
+                     [121,150.5,204],
+                     [242, 150, 203],
+                     [0,130,140],
+                     [121, 130, 140],
+                     [242,130,140],
+                     [0, 40, 65],
+                     [121,40,65],
+                     [242, 40, 65]])
+    for i in range(12):
+        if(i+1==7):
+            #overcome ramp
+            mm.moveToPos(Position(co[5, 0], co[5, 1], 60), True)
+            mm.waitForMovementFinished()
+        print('Searching point', i+1)
+        searching=True
+        while(searching):
+            mm.moveToPos(Position(co[i,0], co[i,1], co[i,2]), True)
+            mm.waitForMovementFinished()
+            print('Position OK? (y/n)')
+            if (input()=='y'): searching=False
+            else:
+                print('Current position')
+                print(mm.getCurrentPosition())
+                print('New position')
+                co[i, 0] = input('x:')
+                co[i, 1] = input('y:')
+                co[i, 2] = input('z:')
+    np.savetxt('meshpoints.dat',co)
+    exit(0)
 
 
 
@@ -165,36 +234,13 @@ if args.doHoming:
 
 #args.start=True
 
-if args.doHomingexact:
-    mm.moveToPos(Position(120,120,120), args.segmented)
-    mm.doHoming()
-    mm.waitForMovementFinished()
-    mm.moveToPos(Position(120, 120, 100), args.segmented)
-    mm.waitForMovementFinished()
-    mm.doHoming()
-    mm.moveToPos(Position(120, 120, 100), args.segmented)
-    exit(0)
-
 
 
 if args.start:
-    cur_po=mm.getCurrentPosition()
-    print(cur_po)
-    #mm.moveToPos(Position(cur_po.x, cur_po.y, 50), args.segmented)
-    mm.waitForMovementFinished()
-    mm.moveToPos(Position(125,50,30), args.segmented)
-    mm.waitForMovementFinished()
-    mm.setFeedratePercentage(50)
-    mm.moveToPos(Position(125, 15, -12), args.segmented)
-    mm.waitForMovementFinished()
-    mm.moveToPos(Position(130, 6, -15), args.segmented)
-    mm.waitForMovementFinished()
-    mm.setFeedratePercentage(250)
-    time.sleep(2)
-    mm.rollDie()
-    if (args.find):
-        time.sleep(3)
-        find_die()
+    if (args.infinity):
+        while(True): start_script()
+    else:
+        start_script()
     exit(0)
 
 
