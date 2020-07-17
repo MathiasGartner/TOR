@@ -48,8 +48,12 @@ directory = r"D:\Dropbox\Uni\AEC\\"
 #tags = (5, 0, 0, 0, 0, 4, 0, 2, 0, 2, 6, 0, 1, 4, 0, 0, 0, 0, 3, 1, 4, 6)
 
 
-path, start, end = directory + r"Elektronik\Raspi\2_4_leds\testled{:03d}.jpg", 1, 1
-tags = [(3)]
+directory = r"D:\AEC\DiceImages\20200717\\"
+path, start, end = directory + r"img ({}).jpg", 59, 67
+tags = [(2, 1, 6, 2, 3, 3, 4, 3, 2, 4, 3, 1, 2, 2, 4, 5, 0, 6, 3, 4)]
+
+#path, start, end = directory + r"Elektronik\Raspi\2_4_leds\testled{:03d}.jpg", 1, 1
+#tags = [(3)]
 
 borderSize = 10
 borderCol = (0, 0, 0)
@@ -60,7 +64,8 @@ correct = 0
 i = 0
 for imNr in range(start, end+1):
     im = dr.readDummyImage(imNr, path)
-    found, posMM, result, resultImg = dr.getDiePosition(im, withUI=False, returnOriginalImg=True)
+    #im = dr.readDummyRGBArray(imNr, path)
+    found, posMM, result, resultImg = dr.getDiePosition(im, withUI=False, returnOriginalImg=True, alreadyCropped=True)
     if len(tags) > i:
         if result == tags[i]:
             print("correct ({})".format(result))

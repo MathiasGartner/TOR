@@ -33,10 +33,22 @@ class DieRecognizer:
             raise Exception("Could not open image: ", imgPath)
         return image
 
+    def readDummyRGBArray(self, imNr=1, path=r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_2_neue Kamera testen\test{:03d}.jpg"):
+        imgPath = path.format(imNr)
+        image = np.load(imgPath)
+        if image is None:
+            raise Exception("Could not open image: ", imgPath)
+        return image
+
     def writeImage(self, im, fileName = ""):
         if fileName == "":
             fileName = "run_{}.jpg".format(datetime.now().strftime("%Y%m%d%H%M%S"))
         cv2.imwrite(fileName, im)
+
+    def writeRGBArray(self, im, fileName = ""):
+        if fileName == "":
+            fileName = "run_{}.npy".format(datetime.now().strftime("%Y%m%d%H%M%S"))
+        np.save(fileName, im)
 
     def cropToSearchableArea(self, im):
         cropped = im[cs.IMAGE_CROP_Y_TOP:(im.shape[0] - cs.IMAGE_CROP_Y_BOTTOM), cs.IMAGE_CROP_X_LEFT:(im.shape[1] - cs.IMAGE_CROP_X_RIGHT)]
@@ -65,9 +77,10 @@ class DieRecognizer:
             im_color = cv2.rectangle(im_color, (minX, minY), (maxX, maxY), (0, 0, 255), thickness=10)
         return im_color
 
-    def getDiePosition(self, im, withUI = False, returnOriginalImg=True):
+    def getDiePosition(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False):
         im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-        im = self.cropToSearchableArea(im)
+        if not alreadyCropped:
+            im = self.cropToSearchableArea(im)
         im_original = im
 
         #Blur the image
@@ -77,7 +90,8 @@ class DieRecognizer:
         #im = cv2.GaussianBlur(im, (blurSize, blurSize), 13, 13)
         #im = cv2.bilateralFilter(im, blurSize, blurSize / 2, blurSize / 2)
 
-        retVal, im = cv2.threshold(im, 45, 255, cv2.THRESH_BINARY)
+        threshold_min = 45
+        retVal, im = cv2.threshold(im, threshold_min, 255, cv2.THRESH_BINARY)
 
         blobs = self.blobDetector.detect(im)
 

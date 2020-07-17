@@ -142,3 +142,4 @@ dmypy.json
 .idea/**/contentModel.xml
 /venv_38/
 /venv_conda/
+/scratches/update_tor.cmd

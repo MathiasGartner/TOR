@@ -1,2 +1,9 @@
+
+import tor.TORSettingsPrivate as tsp
+
+DB_HOST = tsp.DB_HOST
+DB_USER = tsp.DB_USER
+DB_PASSWORD = tsp.DB_PASSWORD
+
 SERVER_IP = "192.168.0.99"
 SERVER_PORT = 12345

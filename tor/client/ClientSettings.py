@@ -78,7 +78,7 @@ BLOB_MIN_DIAMETER = 18
 BLOB_MAX_DIAMETER = 31
 
 # movement configuration:
-FEEDRATE_PERCENTAGE = 400
+FEEDRATE_PERCENTAGE = 200
 
 # LED strip configuration:
 LED_COUNT      = 81      # Number of LED pixels.
