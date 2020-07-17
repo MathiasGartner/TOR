@@ -130,8 +130,16 @@ class DieRecognizer:
                 meanY = np.mean([blob.pt[1] for blob in blobs])
 
                 diePositionPX = Point2D(meanX, meanY)
-                diePositionMM = self.px_to_mm(diePositionPX)
-                diePositionMM.y = cs.LY - diePositionMM.y + 15 #TODO: check mapping of y value from pixel to mm
+                print("diePositionPX:", diePositionPX)
+                #diePositionMM = self.px_to_mm(diePositionPX)
+                #print("diePositionMM (raw):", diePositionMM)
+                #diePositionMM.y = cs.LY - diePositionMM.y + 15 #TODO: check mapping of y value from pixel to mm
+                #print("diePositionMM:", diePositionMM)
+                diePositionMM = Point2D(-1, -1)
+                diePositionMM.x = max(diePositionPX.x - 110.0, 0.1) / (2350.0 / 237.0)
+                diePositionMM.y = max(diePositionPX.y - 187.0, 0.1) / (1069.0 / 91.0)
+                diePositionMM.y = cs.LY - diePositionMM.y - 1
+                print("diePositionMM (new):", diePositionMM)
                 found = True
                 result = min(len(blobs), 6)
         else:
