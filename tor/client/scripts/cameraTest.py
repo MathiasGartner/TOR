@@ -6,11 +6,11 @@ import time
 from picamera import PiCamera
 from picamera.array import PiRGBArray
 
-camera = PiCamera(resolution=(2592, 1944), framerate = 2)
+camera = PiCamera(resolution=(1024, 768), framerate = 2)
 
 iso = [100, 200, 400, 800]
-shutter = range(20000, 100001, 20000)
-contrast = range(0, 81, 10)
+shutter = range(20000, 50001, 10000)
+contrast = range(0, 81, 20)
 
 for i in iso:
     camera.iso = i
