@@ -30,10 +30,12 @@ writeCustomFile(material, settings)
 ### update source on clients ###
 ################################
 
-ips = [102]
+#ips = range(101, 131) #[107]
+
+ips = [129]
 
 path_key = r"C:\Users\Mathias\.ssh\tor"
-cmd_delete = r'ssh -i {0} pi@192.168.0.{1} "rm -r tor"'
+cmd_delete = r'ssh -i {0} pi@192.168.0.{1} "sudo rm -r tor"'
 cmd_copy = r"scp -i {0} -r D:\Sources\TOR\tor pi@192.168.0.{1}:/home/pi"
 
 filename = "update_tor.cmd"
