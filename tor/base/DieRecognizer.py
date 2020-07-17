@@ -77,8 +77,9 @@ class DieRecognizer:
             im_color = cv2.rectangle(im_color, (minX, minY), (maxX, maxY), (0, 0, 255), thickness=10)
         return im_color
 
-    def getDiePosition(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False):
-        im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    def getDiePosition(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False, alreadyGray=False):
+        if not alreadyGray:
+            im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
         if not alreadyCropped:
             im = self.cropToSearchableArea(im)
         im_original = im
@@ -90,7 +91,7 @@ class DieRecognizer:
         #im = cv2.GaussianBlur(im, (blurSize, blurSize), 13, 13)
         #im = cv2.bilateralFilter(im, blurSize, blurSize / 2, blurSize / 2)
 
-        threshold_min = 45
+        threshold_min = 70
         retVal, im = cv2.threshold(im, threshold_min, 255, cv2.THRESH_BINARY)
 
         blobs = self.blobDetector.detect(im)
