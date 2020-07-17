@@ -262,6 +262,7 @@ if args.spoints:
             mm.moveToPos(Position(co[i, 0], co[i, 1] , co[i, 2]), True)
             mm.waitForMovementFinished()
             mm.setFeedratePercentage(30)
+            time.sleep(2)
             mm.rollDie()
             print('Position OK? (y/n/c)')
             answ=input()
