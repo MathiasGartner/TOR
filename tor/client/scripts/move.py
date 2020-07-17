@@ -33,28 +33,33 @@ mm.initBoard()
 time.sleep(0.5)
 
 def find_die():
-    dr = DieRecognizer()
     cam = Camera()
     mm.setLed(200)
     image = cam.takePicture()
-    time.sleep(1)
+    time.sleep(0.5)
     mm.setLed(0)
+    cam.cam.close()
+
+    dr = DieRecognizer()
     found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
     dr.writeImage(processedImages[0])
     dr.writeRGBArray(processedImages[0])
     print(result)
-    found=False #for the moment finding doesn't work
-    cam.cam.close()
+    #found=False #for the moment finding doesn't work
     if (found):
         print(diePosition)
-        mm.moveToPos(Position(120,200,100), True)
+        #mm.moveToPos(Position(120,200,100), True)
+        #mm.waitForMovementFinished()
+        #mm.moveToPos(Position(min(diePosition.x , 241), diePosition.y, 50), True)
+        #mm.waitForMovementFinished()
+        mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
         mm.waitForMovementFinished()
-        mm.moveToPos(Position(min(diePosition.x , 241), diePosition.y, 50), True)
+        mm.moveToPos(Position(min(diePosition.x , 241), diePosition.y, cs.PICKUP_Z), True)
         mm.waitForMovementFinished()
-        mm.moveToPos(Position(min(diePosition.x , 241), diePosition.y, 205), True)
+        mm.moveToPos(cs.AFTER_PICKUP_POSITION)
         mm.waitForMovementFinished()
-        mm.moveToPos(Position(120,200,100), True)
-        mm.waitForMovementFinished()
+        #mm.moveToPos(Position(120,200,100), True)
+        #mm.waitForMovementFinished()
     else:
         print('Die not found')
         search_die()
@@ -192,11 +197,11 @@ def start_script():
         mm.setFeedratePercentage(30)
         mm.moveToPos(Position(140, 3, 0), True)
         mm.waitForMovementFinished()
-    mm.setFeedratePercentage(250)
-    time.sleep(2)
+    mm.setFeedratePercentage(450)
+    time.sleep(1)
     mm.rollDie()
     if (args.find):
-        time.sleep(3)
+        time.sleep(2)
         find_die()
 
 if args.points:
