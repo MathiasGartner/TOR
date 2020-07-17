@@ -77,8 +77,9 @@ class DieRecognizer:
             im_color = cv2.rectangle(im_color, (minX, minY), (maxX, maxY), (0, 0, 255), thickness=10)
         return im_color
 
-    def getDiePosition(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False):
-        im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    def getDiePosition(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False, alreadyGray=False):
+        if not alreadyGray:
+            im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
         if not alreadyCropped:
             im = self.cropToSearchableArea(im)
         im_original = im
@@ -90,7 +91,7 @@ class DieRecognizer:
         #im = cv2.GaussianBlur(im, (blurSize, blurSize), 13, 13)
         #im = cv2.bilateralFilter(im, blurSize, blurSize / 2, blurSize / 2)
 
-        threshold_min = 45
+        threshold_min = 70
         retVal, im = cv2.threshold(im, threshold_min, 255, cv2.THRESH_BINARY)
 
         blobs = self.blobDetector.detect(im)
@@ -129,8 +130,16 @@ class DieRecognizer:
                 meanY = np.mean([blob.pt[1] for blob in blobs])
 
                 diePositionPX = Point2D(meanX, meanY)
-                diePositionMM = self.px_to_mm(diePositionPX)
-                diePositionMM.y = cs.LY - diePositionMM.y + 15 #TODO: check mapping of y value from pixel to mm
+                print("diePositionPX:", diePositionPX)
+                #diePositionMM = self.px_to_mm(diePositionPX)
+                #print("diePositionMM (raw):", diePositionMM)
+                #diePositionMM.y = cs.LY - diePositionMM.y + 15 #TODO: check mapping of y value from pixel to mm
+                #print("diePositionMM:", diePositionMM)
+                diePositionMM = Point2D(-1, -1)
+                diePositionMM.x = max(diePositionPX.x - 110.0, 0.1) / (2350.0 / 237.0)
+                diePositionMM.y = max(diePositionPX.y - 187.0, 0.1) / (1069.0 / 91.0)
+                diePositionMM.y = cs.LY - diePositionMM.y - 1
+                print("diePositionMM (new):", diePositionMM)
                 found = True
                 result = min(len(blobs), 6)
         else:
