@@ -24,6 +24,7 @@ parser.add_argument("-start", dest='start', action="store_true")
 parser.add_argument("-find", dest='find', action="store_true")
 parser.add_argument("-points", dest='points', action="store_true")
 parser.add_argument("-infinity",dest='infinity', action="store_true")
+parser.add_argument("-spoints", dest='spoints',action='store_true') #validate starting points
 args = parser.parse_args()
 
 mm = MovementManager()
@@ -38,7 +39,7 @@ def find_die():
     time.sleep(1)
     mm.setLed(0)
     found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
-    # dr.writeImage(processedImages[1])
+    dr.writeImage(processedImages[0])
     print(result)
     found=False #for the moment finding doesn't work
     cam.cam.close()
@@ -168,13 +169,13 @@ def search_die():
 
 def start_script():
     mm.waitForMovementFinished()
-    mm.moveToPos(Position(125, 30, 50), True)
+    mm.moveToPos(Position(140, 30, 50), True)
     mm.waitForMovementFinished()
     mm.setFeedratePercentage(50)
-    mm.moveToPos(Position(100, 12, 25), True)
+    mm.moveToPos(Position(140, 10, 8), True)
     mm.waitForMovementFinished()
     mm.setFeedratePercentage(30)
-    mm.moveToPos(Position(105, 8, 22), True)
+    mm.moveToPos(Position(140, 3, 0), True)
     mm.waitForMovementFinished()
     mm.setFeedratePercentage(250)
     time.sleep(2)
@@ -223,7 +224,60 @@ if args.points:
     np.savetxt('meshpoints.dat',co)
     exit(0)
 
-
+if args.spoints:
+    mm.setFeedratePercentage(50)
+    mm.moveToPos(Position(120, 100, 100), True)
+    mm.waitForMovementFinished()
+    if(os.path.isfile('startpoints.dat')):
+        print('Load coordinates')
+        co=np.loadtxt('startpoints.dat')
+    else:
+        #default settings
+        co=np.array([[60,20,25],
+                    [110,20,25],
+                    [160,20,25],
+                    [220,20,25]])
+    for i in range(4):
+        mm.setFeedratePercentage(50)
+        print('Searching point', i+1)
+        searching=True
+        while(searching):
+            mm.moveToPos(Position(co[i,0], co[i,1]+20, co[i,2]+10), True)
+            mm.waitForMovementFinished()
+            mm.moveToPos(Position(co[i, 0], co[i, 1] , co[i, 2]), True)
+            mm.waitForMovementFinished()
+            mm.setFeedratePercentage(30)
+            mm.rollDie()
+            print('Position OK? (y/n/c)')
+            answ=input()
+            if (answ=='y'):
+                searching=False
+                mm.setFeedratePercentage(100)
+                mm.moveToPos(Position(120, 150, 100), True)
+                mm.waitForMovementFinished()
+                search_die()
+                mm.waitForMovementFinished()
+            elif (answ=='n'):
+                print('Current position')
+                print(mm.getCurrentPosition())
+                mm.moveToPos(Position(co[i, 0], co[i, 1] + 20, co[i, 2] + 20), True)
+                mm.waitForMovementFinished()
+                print('New position')
+                co[i, 0] = input('x:')
+                co[i, 1] = input('y:')
+                co[i, 2] = input('z:')
+            else:
+                mm.doHoming()
+                mm.setFeedratePercentage(400)
+                mm.moveToPos(Position(120, 100, 50), True)
+                mm.waitForMovementFinished()
+                mm.setFeedratePercentage(50)
+                print('New position')
+                co[i, 0] = input('x:')
+                co[i, 1] = input('y:')
+                co[i, 2] = input('z:')
+    np.savetxt('startpoints.dat',co)
+    exit(0)
 
 if args.feedratePercentage != cs.FEEDRATE_PERCENTAGE:
     mm.setFeedratePercentage(args.feedratePercentage)
