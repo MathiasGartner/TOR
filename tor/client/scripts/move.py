@@ -25,6 +25,7 @@ parser.add_argument("-find", dest='find', action="store_true")
 parser.add_argument("-points", dest='points', action="store_true")
 parser.add_argument("-infinity",dest='infinity', action="store_true")
 parser.add_argument("-spoints", dest='spoints',action='store_true') #validate starting points
+parser.add_argument("-cor", dest="cal_on_run", default=0, type=int)
 args = parser.parse_args()
 
 mm = MovementManager()
@@ -40,6 +41,7 @@ def find_die():
     mm.setLed(0)
     found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
     dr.writeImage(processedImages[0])
+    dr.writeRGBArray(processedImages[0])
     print(result)
     found=False #for the moment finding doesn't work
     cam.cam.close()
@@ -168,15 +170,28 @@ def search_die():
 
 
 def start_script():
-    mm.waitForMovementFinished()
-    mm.moveToPos(Position(140, 30, 50), True)
-    mm.waitForMovementFinished()
-    mm.setFeedratePercentage(50)
-    mm.moveToPos(Position(140, 10, 8), True)
-    mm.waitForMovementFinished()
-    mm.setFeedratePercentage(30)
-    mm.moveToPos(Position(140, 3, 0), True)
-    mm.waitForMovementFinished()
+    if (os.path.isfile('startpoints.dat')):
+        cos=np.loadtxt('startpoints.dat')
+        spos=cos[np.random.randint(0,4),:]
+        mm.waitForMovementFinished()
+        mm.moveToPos(Position(spos[0], spos[1]+20, 50), True)
+        mm.waitForMovementFinished()
+        mm.setFeedratePercentage(50)
+        mm.moveToPos(Position(spos[0], spos[1]+10, spos[2]+10), True)
+        mm.waitForMovementFinished()
+        mm.setFeedratePercentage(30)
+        mm.moveToPos(Position(spos[0], spos[1], spos[2]), True)
+        mm.waitForMovementFinished()
+    else:
+        mm.waitForMovementFinished()
+        mm.moveToPos(Position(140, 30, 50), True)
+        mm.waitForMovementFinished()
+        mm.setFeedratePercentage(50)
+        mm.moveToPos(Position(140, 10, 8), True)
+        mm.waitForMovementFinished()
+        mm.setFeedratePercentage(30)
+        mm.moveToPos(Position(140, 3, 0), True)
+        mm.waitForMovementFinished()
     mm.setFeedratePercentage(250)
     time.sleep(2)
     mm.rollDie()
@@ -292,7 +307,14 @@ if args.doHoming:
 
 if args.start:
     if (args.infinity):
-        while(True): start_script()
+        i=0
+        while(True):
+            i+=1
+            start_script()
+            if(args.cal_on_run>0):
+                if(np.mod(i,args.cal_on_run)==0):
+                    mm.doHoming()
+                    mm.waitForMovementFinished()
     else:
         start_script()
     exit(0)
