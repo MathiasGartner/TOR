@@ -6,6 +6,7 @@ class Camera:
     def __init__(self):
         self.cam = PiCamera(resolution=(2592, 1944))
         #self.cam.led = False
+        self.cam.iso = 300
 
     def takePicture(self):
         rawCapture = PiRGBArray(self.cam)
