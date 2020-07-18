@@ -140,3 +140,4 @@ dmypy.json
 
 # Generated files
 .idea/**/contentModel.xml
+/scratches/update_tor.cmd

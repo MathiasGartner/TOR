@@ -91,6 +91,17 @@ tags = [6]*40
 
 
 
+# directory = r"D:\AEC\DiceImages\20200717 - corners\\"
+# path, start, end = directory + r"img ({}).npy", 1, 23
+# tags = [4, 4, 1, 6, 1, 4, 5, 3, 4, 2, 3, 3 ,2, 5, 2, 4, 5, 1, 6, 5, 0, 1, 5]
+
+# path, start, end = directory + r"Elektronik\Raspi\2_4_leds\testled{:03d}.jpg", 1, 1
+# tags = [(3)]
+
+# path, start, end = directory + r"c{}.jpg", 1, 4
+# tags = [4, 4, 4, 4]
+
+
 
 borderSize = 10
 borderCol = (0, 0, 0)

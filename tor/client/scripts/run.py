@@ -57,7 +57,8 @@ elif mode == 2: #move to x y z
     mm.moveToPos(pos)
 
 elif mode == 3: #move to all corners
-    mm.moveToAllCorners()
+    mm.setFeedratePercentage(150)
+    mm.moveToAllCorners(int(sys.argv[2]) == 1)
 
 elif mode == 4: #search for die
     mm.searchForDie()
@@ -78,7 +79,9 @@ elif mode == 7: #test dropoff
         mm.waitForMovementFinished(0.5)
         mm.moveToPos(cs.DROPOFF_ADVANCE_POSITION)
         mm.waitForMovementFinished(0.5)
+        mm.setFeedratePercentage(cs.DROPOFF_ADVANCE_FEEDRATE)
         mm.moveToPos(cs.DROPOFF_POSITION, segmented=True)
+        mm.setFeedratePercentage(cs.FEEDRATE_PERCENTAGE)
         mm.waitForMovementFinished(2)
         mm.moveToPos(cs.DROPOFF_ADVANCE_POSITION)
         mm.waitForMovementFinished(0.5)

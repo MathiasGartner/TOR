@@ -33,10 +33,22 @@ class DieRecognizer:
             raise Exception("Could not open image: ", imgPath)
         return image
 
+    def readDummyRGBArray(self, imNr=1, path=r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_2_neue Kamera testen\test{:03d}.jpg"):
+        imgPath = path.format(imNr)
+        image = np.load(imgPath)
+        if image is None:
+            raise Exception("Could not open image: ", imgPath)
+        return image
+
     def writeImage(self, im, fileName = ""):
         if fileName == "":
             fileName = "run_{}.jpg".format(datetime.now().strftime("%Y%m%d%H%M%S"))
         cv2.imwrite(fileName, im)
+
+    def writeRGBArray(self, im, fileName = ""):
+        if fileName == "":
+            fileName = "run_{}.npy".format(datetime.now().strftime("%Y%m%d%H%M%S"))
+        np.save(fileName, im)
 
     def cropToSearchableArea(self, im):
         cropped = im[cs.IMAGE_CROP_Y_TOP:(im.shape[0] - cs.IMAGE_CROP_Y_BOTTOM), cs.IMAGE_CROP_X_LEFT:(im.shape[1] - cs.IMAGE_CROP_X_RIGHT)]
@@ -65,9 +77,11 @@ class DieRecognizer:
             im_color = cv2.rectangle(im_color, (minX, minY), (maxX, maxY), (0, 0, 255), thickness=10)
         return im_color
 
-    def getDiePosition(self, im, withUI = False, returnOriginalImg=True):
-        im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-        im = self.cropToSearchableArea(im)
+    def getDiePosition(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False, alreadyGray=False):
+        if not alreadyGray:
+            im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+        if not alreadyCropped:
+            im = self.cropToSearchableArea(im)
         im_original = im
 
         #Blur the image
@@ -80,10 +94,10 @@ class DieRecognizer:
         # print('im color max', im.max())
         # print('im color min', im.min())
         # th = (int(im.min())+int(np.mean(im)))/2.
-        th = 120 # sorted(im.reshape(-1))[10000]
+        threshold_min = 120 # sorted(im.reshape(-1))[10000]
         # print('threshold', th)
 
-        # retVal, im = cv2.threshold(im, th, 255, cv2.THRESH_BINARY)  #45
+        # retVal, im = cv2.threshold(im, threshold_min, 255, cv2.THRESH_BINARY)  #45
         im = cv2.adaptiveThreshold(im, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 51, 40)
         #second to last number is size of neighbourhood, threshhold is last number below mean over neighbourhood
 
@@ -124,8 +138,16 @@ class DieRecognizer:
                 meanY = np.mean([blob.pt[1] for blob in blobs])
 
                 diePositionPX = Point2D(meanX, meanY)
-                diePositionMM = self.px_to_mm(diePositionPX)
-                diePositionMM.y = cs.LY - diePositionMM.y + 15 #TODO: check mapping of y value from pixel to mm
+                print("diePositionPX:", diePositionPX)
+                #diePositionMM = self.px_to_mm(diePositionPX)
+                #print("diePositionMM (raw):", diePositionMM)
+                #diePositionMM.y = cs.LY - diePositionMM.y + 15 #TODO: check mapping of y value from pixel to mm
+                #print("diePositionMM:", diePositionMM)
+                diePositionMM = Point2D(-1, -1)
+                diePositionMM.x = max(diePositionPX.x - 110.0, 0.1) / (2350.0 / 237.0)
+                diePositionMM.y = max(diePositionPX.y - 187.0, 0.1) / (1069.0 / 91.0)
+                diePositionMM.y = cs.LY - diePositionMM.y - 1
+                print("diePositionMM (new):", diePositionMM)
                 found = True
                 result = min(len(blobs), 6)
         else:
