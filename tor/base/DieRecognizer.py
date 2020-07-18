@@ -77,7 +77,16 @@ class DieRecognizer:
         #im = cv2.GaussianBlur(im, (blurSize, blurSize), 13, 13)
         #im = cv2.bilateralFilter(im, blurSize, blurSize / 2, blurSize / 2)
 
-        retVal, im = cv2.threshold(im, 45, 255, cv2.THRESH_BINARY)
+        # print('im color max', im.max())
+        # print('im color min', im.min())
+        # th = (int(im.min())+int(np.mean(im)))/2.
+        th = 120 # sorted(im.reshape(-1))[10000]
+        # print('threshold', th)
+
+        # retVal, im = cv2.threshold(im, th, 255, cv2.THRESH_BINARY)  #45
+        im = cv2.adaptiveThreshold(im, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 51, 40)
+        #second to last number is size of neighbourhood, threshhold is last number below mean over neighbourhood
+
 
         blobs = self.blobDetector.detect(im)
 
