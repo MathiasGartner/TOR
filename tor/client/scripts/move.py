@@ -36,14 +36,15 @@ def find_die():
     cam = Camera()
     mm.setLed(200)
     image = cam.takePicture()
-    time.sleep(0.5)
+    #time.sleep(0.5)
     mm.setLed(0)
     cam.cam.close()
 
     dr = DieRecognizer()
     found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
-    dr.writeImage(processedImages[0])
-    dr.writeRGBArray(processedImages[0])
+    directory = "found" if found else "fail"
+    dr.writeImage(processedImages[0], directory=directory)
+    dr.writeRGBArray(processedImages[0], directory=directory)
     print(result)
     #found=False #for the moment finding doesn't work
     if (found):
@@ -177,7 +178,8 @@ def search_die():
 def start_script():
     if (os.path.isfile('startpoints.dat')):
         cos=np.loadtxt('startpoints.dat')
-        spos=cos[np.random.randint(0,4),:]
+        #spos=cos[np.random.randint(0,4),:]
+        spos = cos[0]
         mm.waitForMovementFinished()
         mm.moveToPos(Position(spos[0], spos[1]+20, 50), True)
         mm.waitForMovementFinished()

@@ -24,6 +24,19 @@ settings = [
 ]
 writeCustomFile(material, settings)
 
+material = "coffee"
+settings = [
+    "cs.RAMP_MATERIAL = \"" + material + "\"",
+    "cs.RAMP_MATERIAL_HEIGHT = 30",
+]
+writeCustomFile(material, settings)
+
+material = "empty"
+settings = [
+    "cs.RAMP_MATERIAL = \"" + material + "\"",
+    "cs.RAMP_MATERIAL_HEIGHT = 0",
+]
+writeCustomFile(material, settings)
 
 
 ################################
@@ -32,7 +45,7 @@ writeCustomFile(material, settings)
 
 #ips = range(101, 131) #[107]
 
-ips = [129]
+ips = [107, 129]
 
 path_key = r"C:\Users\Mathias\.ssh\tor"
 cmd_delete = r'ssh -i {0} pi@192.168.0.{1} "sudo rm -r tor"'

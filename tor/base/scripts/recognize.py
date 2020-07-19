@@ -55,8 +55,17 @@ tags = [4, 4, 1, 6, 1, 4, 5, 3, 4, 2, 3, 3 ,2, 5, 2, 4, 5, 1, 6, 5, 0, 1, 5]
 #path, start, end = directory + r"Elektronik\Raspi\2_4_leds\testled{:03d}.jpg", 1, 1
 #tags = [(3)]
 
-path, start, end = directory + r"c{}.jpg", 1, 4
-tags = [4, 4, 4, 4]
+directory = r"D:\AEC\DiceImages\20200719 - fail\\"
+path, start, end = directory + r"img ({}).npy", 1,3
+tags = [4, 4, 1, 6, 1, 4, 5, 3, 4, 2, 3, 3 ,2, 5, 2, 4, 5, 1, 6, 5, 0, 1, 5]
+
+
+directory = r"D:\AEC\DiceImages\20200719 - tests\\"
+path, start, end = directory + r"img ({}).npy", 1, 25
+tags = [4, 4, 1, 6, 1, 4, 5, 3, 4, 2, 3, 3 ,2, 5, 2, 4, 5, 1, 6, 5, 0, 1, 5]
+
+#path, start, end = directory + r"c{}.jpg", 1, 4
+#tags = [4, 4, 4, 4]
 
 borderSize = 10
 borderCol = (0, 0, 0)
@@ -66,9 +75,9 @@ results = []
 correct = 0
 i = 0
 for imNr in range(start, end+1):
-    im = dr.readDummyImage(imNr, path)
-    #im = dr.readDummyRGBArray(imNr, path)
-    found, posMM, result, resultImg = dr.getDiePosition(im, withUI=False, returnOriginalImg=True, alreadyCropped=False, alreadyGray=False)
+    #im = dr.readDummyImage(imNr, path)
+    im = dr.readDummyRGBArray(imNr, path)
+    found, posMM, result, resultImg = dr.getDiePosition(im, withUI=False, returnOriginalImg=True, alreadyCropped=True, alreadyGray=True)
     if len(tags) > i:
         if result == tags[i]:
             print("correct ({})".format(result))
