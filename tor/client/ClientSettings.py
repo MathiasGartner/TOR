@@ -79,6 +79,7 @@ BLOB_MAX_DIAMETER = 31
 
 # movement configuration:
 FEEDRATE_PERCENTAGE = 200
+G_HOMING = "G28 A0 S50 P130 F68 R8 D1.05 B1.15"
 
 # LED strip configuration:
 LED_COUNT      = 81      # Number of LED pixels.

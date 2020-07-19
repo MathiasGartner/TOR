@@ -13,6 +13,12 @@ db = mysql.connect(
 
 cursor = db.cursor(named_tuple=True)
 
+def getClientSettings(clientId):
+    query = "SELECT Name, Value FROM clientsettings WHERE ClientId = %(clientId)s"
+    cursor.execute(query, { "clientId" : clientId })
+    data = cursor.fetchall()
+    return data
+
 def writeResult(clientId, result):
     query = "INSERT INTO diceresult (ClientId, Result) VALUES ({}, {})".format(clientId, result)
     cursor.execute(query)

@@ -13,6 +13,10 @@ def log(*msg):
     print('{0:%Y-%m-%d %H:%M:%S}: '.format(datetime.datetime.now()), end='')
     print(msg)
 
+def getClientSettings(clientId):
+    settings = DBManager.getClientSettings(clientId)
+    return settings
+
 def handleRequest(conn):
     request = NetworkUtils.recvData(conn)
     if "C" in request: #request from client C
@@ -49,6 +53,9 @@ def handleRequest(conn):
             #     NetworkUtils.sendData(conn, {"M": 1, "P" : "CE"})
             # elif job == 8: #do homing
             #     NetworkUtils.sendData(conn, {"H": 1})
+        elif "S" in request:
+            settings = getClientSettings(clientId)
+            NetworkUtils.sendData(conn, settings)
     elif "MAC" in request:
         cId = DBManager.getClientIdentity(request["MAC"])
         NetworkUtils.sendData(conn, {"Id": cId.Id,
