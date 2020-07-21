@@ -49,6 +49,7 @@ def find_die():
     print(result)
     #found=False #for the moment finding doesn't work
     if (found):
+        if (args.led):  lm.showResult(result)
         print(diePosition)
         mm.setFeedratePercentage(300)
         mm.moveToPos(cs.BEFORE_PICKUP_POSITION,True)
@@ -352,7 +353,6 @@ if args.start:
             result_old=result
             found,result=start_script()
             print(result)
-            if (args.led and found):  lm.showResult(result)
 
             if ((not found) or (result_old==result)):
                 err+=1
