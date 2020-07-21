@@ -6,9 +6,9 @@ class Camera:
     def __init__(self):
         self.cam = PiCamera(resolution=(2592, 1944))
         #self.cam.led = False
-        self.cam.iso = 400
+        self.cam.iso = 100
         time.sleep(2)
-        self.cam.shutter_speed = 50000
+        self.cam.shutter_speed = 30000
         self.cam.exposure_mode = 'off'
         self.cam.contrast = 20
         self.cam.awb_mode = 'off'
