@@ -11,14 +11,14 @@ from tor.client.MovementManager import MovementManager
 from tor.client.Position import Position
 from tor.base.DieRecognizer import DieRecognizer
 from tor.client.Camera import Camera
-
-
+from tor.client.LedManager import LedManager
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("position", nargs='*', default=[cs.CENTER_TOP.x, cs.CENTER_TOP.y, cs.CENTER_TOP.z], type=float)
 parser.add_argument("-f", dest="feedratePercentage", default=cs.FEEDRATE_PERCENTAGE, type=int)
 parser.add_argument("-c", dest="doHoming", action="store_true")
+parser.add_argument("-l", dest="led", action="store_true")
 parser.add_argument("-s", dest="segmented", action="store_true")
 parser.add_argument("-start", dest='start', action="store_true")
 parser.add_argument("-find", dest='find', action="store_true")
@@ -29,6 +29,7 @@ parser.add_argument("-cor", dest="cal_on_run", default=0, type=int)
 args = parser.parse_args()
 
 mm = MovementManager()
+if (args.led): lm = LedManager(brightness=100)
 mm.initBoard()
 time.sleep(0.5)
 
@@ -49,32 +50,41 @@ def find_die():
     #found=False #for the moment finding doesn't work
     if (found):
         print(diePosition)
-        #mm.moveToPos(Position(120,200,100), True)
-        #mm.waitForMovementFinished()
-        #mm.moveToPos(Position(min(diePosition.x , 241), diePosition.y, 50), True)
-        #mm.waitForMovementFinished()
-        mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
+        mm.setFeedratePercentage(300)
+        mm.moveToPos(cs.BEFORE_PICKUP_POSITION,True)
         mm.waitForMovementFinished()
-        mm.moveToPos(Position(min(diePosition.x , 241), diePosition.y, cs.PICKUP_Z), True)
+        print('Position trafo')
+        print(diePosition)
+        px=1.*diePosition.x/cs.LX
+        ylim_ramp=155
+        py=(1.*diePosition.y-ylim_ramp)/(cs.LY-ylim_ramp)
+        print(co_trafo(px,py))
+        mm.moveToPos(co_trafo(px, py), True)
+        #mm.moveToPos(Position(min(diePosition.x , 241), diePosition.y, cs.PICKUP_Z), True)
         mm.waitForMovementFinished()
-        mm.moveToPos(cs.AFTER_PICKUP_POSITION)
+        mm.moveToPos(cs.AFTER_PICKUP_POSITION,True)
         mm.waitForMovementFinished()
-        #mm.moveToPos(Position(120,200,100), True)
-        #mm.waitForMovementFinished()
     else:
         print('Die not found')
         search_die()
+    return found,result
 
-def search_die():
-    #starting position
-    '''
-    1  2  3
-    4  5  6
-    --------
-    7  8  9
-    10 11 12
-    M      M
-    '''
+def co_trafo(px,py):
+    p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12 = load_pts()
+    if(px<0.5):
+        x=(1-py)*(p4[0]+px*(p6[0]-p4[0]))+py*(p1[0]+px*(p3[0]-p1[0]))
+        y=(1-2*px)*(p4[1]+py*(p1[1]-p4[1]))+2*px*(p5[1]+py*(p2[1]-p5[1]))
+        z=(1-2*px)*((1-py)*p4[2]+py*p1[2])+2*px*((1-py)*p5[2]+py*p2[2])
+    else:
+        x=(1-py)*(p6[0]+(1-px)*(p4[0]-p6[0]))+py*(p3[0]+(1-px)*(p1[0]-p3[0]))
+        y=2*(1-px)*(p5[1]+py*(p2[1]-p5[1]))+(2*px-1)*(p6[1]+py*(p3[1]-p6[1]))
+        z=2*(1-px)*((1-py)*p5[2]+py*p2[2])+(2*px-1)*((1-py)*p6[2]+py*p3[2])
+    if(px<0 or px>1 or py<-0.1 or py>1):
+        print('Out of range!:',x,y,z)
+        return Position(100,100,100)
+    return Position(x,y,z)
+
+def load_pts():
     if(os.path.isfile('meshpoints.dat')):
         print('Custom configuration found')
         co=np.loadtxt('meshpoints.dat')
@@ -104,10 +114,25 @@ def search_die():
         p10=(0, 40, 65)
         p11=(121,40,65)
         p12 = (242, 40, 65)
+    return p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12
+
+def search_die():
+    #starting position
+    '''
+    1  2  3
+    4  5  6
+    --------
+    7  8  9
+    10 11 12
+    M      M
+    '''
+    p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12 = load_pts()
     n_rows=4 # rows per area
     ramp=False # Does ramp need search?
-    mm.moveToPos(Position(p1[0],p1[1], 100))
+    mm.moveToPos(Position(p1[0],p1[1], 100),True)
+    mm.waitForMovementFinished()
     mm.moveToPos(Position(p1[0],p1[1], p1[2]))
+    mm.waitForMovementFinished()
     #raster bottom
     # mesh left side
     x_mesh_l=np.linspace(p1[0],p4[0],n_rows)
@@ -174,12 +199,11 @@ def search_die():
     mm.setFeedratePercentage(250)
     mm.moveToPos(Position(100,200,100),True)
 
-
 def start_script():
     if (os.path.isfile('startpoints.dat')):
         cos=np.loadtxt('startpoints.dat')
-        #spos=cos[np.random.randint(0,4),:]
-        spos = cos[0]
+        spos=cos[np.random.randint(0,4),:]
+        #spos = cos[0]
         mm.waitForMovementFinished()
         mm.moveToPos(Position(spos[0], spos[1]+20, 50), True)
         mm.waitForMovementFinished()
@@ -204,7 +228,8 @@ def start_script():
     mm.rollDie()
     if (args.find):
         time.sleep(2)
-        find_die()
+        found,result=find_die()
+        return found,result
 
 if args.points:
     if(os.path.isfile('meshpoints.dat')):
@@ -247,7 +272,7 @@ if args.points:
     exit(0)
 
 if args.spoints:
-    mm.setFeedratePercentage(50)
+    mm.setFeedratePercentage(300)
     mm.moveToPos(Position(120, 100, 100), True)
     mm.waitForMovementFinished()
     if(os.path.isfile('startpoints.dat')):
@@ -260,25 +285,26 @@ if args.spoints:
                     [160,20,25],
                     [220,20,25]])
     for i in range(4):
-        mm.setFeedratePercentage(50)
+
         print('Searching point', i+1)
         searching=True
         while(searching):
-            mm.moveToPos(Position(co[i,0], co[i,1]+20, co[i,2]+10), True)
-            mm.waitForMovementFinished()
-            mm.moveToPos(Position(co[i, 0], co[i, 1] , co[i, 2]), True)
+            mm.moveToPos(Position(co[i,0], co[i,1]+20, co[i,2]+20), True)
             mm.waitForMovementFinished()
             mm.setFeedratePercentage(30)
+            mm.moveToPos(Position(co[i, 0], co[i, 1] , co[i, 2]), True)
+            mm.waitForMovementFinished()
+            #mm.setFeedratePercentage(30)
             time.sleep(2)
             mm.rollDie()
             print('Position OK? (y/n/c)')
             answ=input()
             if (answ=='y'):
                 searching=False
-                mm.setFeedratePercentage(100)
-                mm.moveToPos(Position(120, 150, 100), True)
-                mm.waitForMovementFinished()
-                search_die()
+                mm.setFeedratePercentage(200)
+                #mm.moveToPos(Position(120, 150, 100), True)
+                #mm.waitForMovementFinished()
+                find_die()
                 mm.waitForMovementFinished()
             elif (answ=='n'):
                 print('Current position')
@@ -311,14 +337,28 @@ if args.doHoming:
 
 #args.start=True
 
-
-
 if args.start:
     if (args.infinity):
         i=0
+        err=0
+        result=-1
         while(True):
             i+=1
-            start_script()
+            if (err == 3):  # prevents bad runs
+                err = 0
+                i = 1
+                mm.doHoming()
+
+            result_old=result
+            found,result=start_script()
+            print(result)
+            if (args.led and found):  lm.showResult(result)
+
+            if ((not found) or (result_old==result)):
+                err+=1
+            else:
+                err=0
+
             if(args.cal_on_run>0):
                 if(np.mod(i,args.cal_on_run)==0):
                     mm.doHoming()
@@ -326,7 +366,6 @@ if args.start:
     else:
         start_script()
     exit(0)
-
 
 pos = Position(args.position[0], args.position[1], args.position[2])
 if pos.isValid():
