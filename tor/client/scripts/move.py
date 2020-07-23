@@ -203,8 +203,8 @@ def search_die():
 def start_script():
     if (os.path.isfile('startpoints.dat')):
         cos=np.loadtxt('startpoints.dat')
-        spos=cos[np.random.randint(0,4),:]
-        #spos = cos[0]
+        #spos=cos[np.random.randint(0,4),:]
+        spos = cos[2]
         mm.waitForMovementFinished()
         mm.moveToPos(Position(spos[0], spos[1]+20, 50), True)
         mm.waitForMovementFinished()
@@ -261,14 +261,14 @@ if args.points:
             mm.moveToPos(Position(co[i,0], co[i,1], co[i,2]), True)
             mm.waitForMovementFinished()
             print('Position OK? (y/n)')
-            if (input()=='y'): searching=False
+            if ((input() or 'y') == 'y'): searching=False
             else:
                 print('Current position')
                 print(mm.getCurrentPosition())
                 print('New position')
-                co[i, 0] = input('x:')
-                co[i, 1] = input('y:')
-                co[i, 2] = input('z:')
+                co[i, 0] = input('x:') or co[i, 0]
+                co[i, 1] = input('y:') or co[i, 1]
+                co[i, 2] = input('z:') or co[i, 2]
     np.savetxt('meshpoints.dat',co)
     exit(0)
 
@@ -299,7 +299,7 @@ if args.spoints:
             time.sleep(2)
             mm.rollDie()
             print('Position OK? (y/n/c)')
-            answ=input()
+            answ=input() or 'y'
             if (answ=='y'):
                 searching=False
                 mm.setFeedratePercentage(200)
@@ -313,9 +313,9 @@ if args.spoints:
                 mm.moveToPos(Position(co[i, 0], co[i, 1] + 20, co[i, 2] + 20), True)
                 mm.waitForMovementFinished()
                 print('New position')
-                co[i, 0] = input('x:')
-                co[i, 1] = input('y:')
-                co[i, 2] = input('z:')
+                co[i, 0] = input('x:') or co[i, 0]
+                co[i, 1] = input('y:') or co[i, 1]
+                co[i, 2] = input('z:') or co[i, 2]
             else:
                 mm.doHoming()
                 mm.setFeedratePercentage(400)
@@ -323,9 +323,9 @@ if args.spoints:
                 mm.waitForMovementFinished()
                 mm.setFeedratePercentage(50)
                 print('New position')
-                co[i, 0] = input('x:')
-                co[i, 1] = input('y:')
-                co[i, 2] = input('z:')
+                co[i, 0] = input('x:') or co[i, 0]
+                co[i, 1] = input('y:') or co[i, 1]
+                co[i, 2] = input('z:') or co[i, 2]
     np.savetxt('startpoints.dat',co)
     exit(0)
 
