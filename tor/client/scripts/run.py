@@ -186,6 +186,17 @@ elif mode == 17: # take pictures forever
         print("waiting...")
         time.sleep(10)
 
+elif mode == 18: # move forever between two positions
+    mm.doHoming()
+    pos1 = Position(float(sys.argv[2]), float(sys.argv[3]), float(sys.argv[4]))
+    pos2 = Position(float(sys.argv[5]), float(sys.argv[6]), float(sys.argv[7]))
+    mm.setFeedratePercentage(float(sys.argv[8]))
+    while True:
+        mm.moveToPos(pos1, segmented=True)
+        mm.waitForMovementFinished(0.5)
+        mm.moveToPos(pos2, segmented=True)
+        mm.waitForMovementFinished(0.5)
+
 if mm is not None:
     mm.waitForMovementFinished(2)
     #mm.moveHome()

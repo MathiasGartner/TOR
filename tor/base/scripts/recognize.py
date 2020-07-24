@@ -69,6 +69,14 @@ directory = r"D:\AEC\DiceImages\20200721 - tests\\"
 path, start, end = directory + r"img ({}).npy", 1, 10
 tags = [4, 4, 1, 6, 1, 4, 5, 3, 4, 2, 3, 3 ,2, 5, 2, 4, 5, 1, 6, 5, 0, 1, 5]
 
+directory = r"D:\AEC\DiceImages\20200723 - mitte\\"
+path, start, end = directory + r"img ({}).npy", 1, 10
+tags = [4, 4, 1, 6, 1, 4, 5, 3, 4, 2, 3, 3 ,2, 5, 2, 4, 5, 1, 6, 5, 0, 1, 5]
+
+directory = r"D:\AEC\DiceImages\20200724 - mitte\\"
+path, start, end = directory + r"img ({}).npy", 1, 2
+tags = [4, 4, 1, 6, 1, 4, 5, 3, 4, 2, 3, 3 ,2, 5, 2, 4, 5, 1, 6, 5, 0, 1, 5]
+
 #path, start, end = directory + r"c{}.jpg", 1, 4
 #tags = [4, 4, 4, 4]
 
