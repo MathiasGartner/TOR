@@ -40,6 +40,17 @@ class DieRecognizer:
             raise Exception("Could not open image: ", imgPath)
         return image
 
+    def readDummyImageGeneralized(self, path=r"C:\\Users\\Michaela\\Documents\\physik\\AEC_Projekt\\topled\\test{"
+                                             r":03d}.jpg", filename_extension=".jpg", *params):
+        imgPath = path.format(*params, filename_extension)
+        if filename_extension == '.npy':
+            image = np.load(imgPath)
+        else:
+            image = cv2.imread(imgPath)
+        if image is None:
+            raise Exception("Could not open image: ", imgPath)
+        return image
+
     def writeImage(self, im, fileName = ""):
         if fileName == "":
             fileName = "run_{}.jpg".format(datetime.now().strftime("%Y%m%d%H%M%S"))
@@ -77,7 +88,8 @@ class DieRecognizer:
             im_color = cv2.rectangle(im_color, (minX, minY), (maxX, maxY), (0, 0, 255), thickness=10)
         return im_color
 
-    def getDiePosition(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False, alreadyGray=False):
+    def getDiePosition(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False,
+                       alreadyGray=False, threshold = 110):
         if not alreadyGray:
             im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
         if not alreadyCropped:
@@ -91,18 +103,63 @@ class DieRecognizer:
         #im = cv2.GaussianBlur(im, (blurSize, blurSize), 13, 13)
         #im = cv2.bilateralFilter(im, blurSize, blurSize / 2, blurSize / 2)
 
-        # print('im color max', im.max())
-        # print('im color min', im.min())
-        # th = (int(im.min())+int(np.mean(im)))/2.
-        threshold_min = 120 # sorted(im.reshape(-1))[10000]
-        # print('threshold', th)
 
-        # retVal, im = cv2.threshold(im, threshold_min, 255, cv2.THRESH_BINARY)  #45
-        im = cv2.adaptiveThreshold(im, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 51, 40)
+        retVal, im = cv2.threshold(im, threshold, 255, cv2.THRESH_BINARY)  #45
+        # im = cv2.adaptiveThreshold(im, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 51, 40)
         #second to last number is size of neighbourhood, threshhold is last number below mean over neighbourhood
 
 
         blobs = self.blobDetector.detect(im)
+
+        if len(blobs) > 0:
+            maxdist = 60
+            too_far_away = True
+            while too_far_away:
+                    meanX = np.mean([blob.pt[0] for blob in blobs])
+                    meanY = np.mean([blob.pt[1] for blob in blobs])
+
+                    coordinates = [blob.pt for blob in blobs]
+                    dist_from_mean = [np.linalg.norm(np.array([x-meanX, y-meanY])) for x,y in coordinates]
+                    too_far_away = np.array([(dist > maxdist) for dist in dist_from_mean]).any()
+
+                    if too_far_away:
+                        index = dist_from_mean.index(max(dist_from_mean))
+                        del blobs[index]
+            
+            if len(blobs) > 6:
+                #TODO: choose the correct ones
+                found = False
+                diePositionPX = Point2D(-1, -1)
+                diePositionMM = Point2D(-1, -1)
+                result = 0
+            else:
+
+                #TODO: check if the detected blobs correspond to the face of a die
+                #      eg. distance between blobs, arrangement, ...
+                
+                diePositionPX = Point2D(meanX, meanY)
+                # print("diePositionPX:", diePositionPX)
+                #diePositionMM = self.px_to_mm(diePositionPX)
+                #print("diePositionMM (raw):", diePositionMM)
+                #diePositionMM.y = cs.LY - diePositionMM.y + 15 #TODO: check mapping of y value from pixel to %
+                #print("diePositionMM:", diePositionMM)
+                diePositionMM = Point2D(-1, -1)
+                diePositionMM.x = max(diePositionPX.x - 110.0, 0.1) / (2350.0 / 237.0)
+                diePositionMM.y = max(diePositionPX.y - 187.0, 0.1) / (1069.0 / 91.0)
+                diePositionMM.y = cs.LY - diePositionMM.y - 1
+                # print("diePositionMM (new):", diePositionMM)
+                found = True
+                result = min(len(blobs), 6)
+                if len(blobs)==2:
+                    mindist = 35
+                    too_close = np.array([(dist < mindist) for dist in dist_from_mean]).any()
+                    if too_close:
+                        result = 0
+        else:
+            found = False
+            diePositionPX = Point2D(-1, -1)
+            diePositionMM = Point2D(-1, -1)
+            result = 0
 
         #im_with_blobs = cv2.drawKeypoints(im, blobs, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
         if returnOriginalImg:
@@ -124,37 +181,7 @@ class DieRecognizer:
             cv2.waitKey(10000)
             cv2.destroyAllWindows()
 
-        if len(blobs) > 0:
-            if len(blobs) > 6:
-                #TODO: choose the correct ones
-                found = False
-                diePositionPX = Point2D(-1, -1)
-                diePositionMM = Point2D(-1, -1)
-                result = 0
-            else:
-                #TODO: check if the detected blobs correspond to the face of a die
-                #      eg. distance between blobs, arrangement, ...
-                meanX = np.mean([blob.pt[0] for blob in blobs])
-                meanY = np.mean([blob.pt[1] for blob in blobs])
 
-                diePositionPX = Point2D(meanX, meanY)
-                print("diePositionPX:", diePositionPX)
-                #diePositionMM = self.px_to_mm(diePositionPX)
-                #print("diePositionMM (raw):", diePositionMM)
-                #diePositionMM.y = cs.LY - diePositionMM.y + 15 #TODO: check mapping of y value from pixel to mm
-                #print("diePositionMM:", diePositionMM)
-                diePositionMM = Point2D(-1, -1)
-                diePositionMM.x = max(diePositionPX.x - 110.0, 0.1) / (2350.0 / 237.0)
-                diePositionMM.y = max(diePositionPX.y - 187.0, 0.1) / (1069.0 / 91.0)
-                diePositionMM.y = cs.LY - diePositionMM.y - 1
-                print("diePositionMM (new):", diePositionMM)
-                found = True
-                result = min(len(blobs), 6)
-        else:
-            found = False
-            diePositionPX = Point2D(-1, -1)
-            diePositionMM = Point2D(-1, -1)
-            result = 0
         return (found, diePositionMM, result, (im_original, im_with_blobs))
 
     def getDieResult(self):
