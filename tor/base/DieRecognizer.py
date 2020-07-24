@@ -124,12 +124,11 @@ class DieRecognizer:
             cv2.waitKey(10000)
             cv2.destroyAllWindows()
 
+        diePositionRelative = Point2D(-1, -1)
         if len(blobs) > 0:
             if len(blobs) > 6:
                 #TODO: choose the correct ones
                 found = False
-                diePositionPX = Point2D(-1, -1)
-                diePositionMM = Point2D(-1, -1)
                 result = 0
             else:
                 #TODO: check if the detected blobs correspond to the face of a die
@@ -138,25 +137,14 @@ class DieRecognizer:
                 meanY = np.mean([blob.pt[1] for blob in blobs])
 
                 diePositionPX = Point2D(meanX, meanY)
-                print("diePositionPX:", diePositionPX)
-                #diePositionMM = self.px_to_mm(diePositionPX)
-                #print("diePositionMM (raw):", diePositionMM)
-                #diePositionMM.y = cs.LY - diePositionMM.y + 15 #TODO: check mapping of y value from pixel to mm
-                #print("diePositionMM:", diePositionMM)
-                diePositionRelative = Point2D(-1, -1)
                 diePositionRelative.x = diePositionPX.x / im.shape[1]
                 diePositionRelative.y = 1.0 - diePositionPX.y / im.shape[0]
-                #diePositionMM = Point2D(-1, -1)
-                #diePositionMM.x = max(diePositionPX.x - 110.0, 0.1) / (2350.0 / 237.0)
-                #diePositionMM.y = max(diePositionPX.y - 187.0, 0.1) / (1069.0 / 91.0)
-                #diePositionMM.y = cs.LY - diePositionMM.y - 1
-                #print("diePositionMM (new):", diePositionMM)
+                print("diePositionPX:", diePositionPX)
+                print("diePositionRelative:", diePositionRelative)
                 found = True
                 result = len(blobs)
         else:
             found = False
-            diePositionPX = Point2D(-1, -1)
-            diePositionMM = Point2D(-1, -1)
             result = 0
         return (found, diePositionRelative, result, (im_original, im_with_blobs))
 
