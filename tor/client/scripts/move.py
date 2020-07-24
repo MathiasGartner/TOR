@@ -11,51 +11,28 @@ from tor.client.MovementManager import MovementManager
 from tor.client.Position import Position
 from tor.base.DieRecognizer import DieRecognizer
 from tor.client.Camera import Camera
+from tor.client.ClientManager import ClientManager
 from tor.client.LedManager import LedManager
-from tor.base import NetworkUtils
-import socket
-import tor.TORSettings as ts
 
-#########identity
-def createConnection():
-    conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    conn.connect((ts.SERVER_IP, ts.SERVER_PORT))
-    return conn
+###########################
+### get client identity ###
+###########################
 
-def sendAndGetAnswer(msg):
-    conn = createConnection()
-    NetworkUtils.sendData(conn, msg)
-    answer = NetworkUtils.recvData(conn)
-    conn.close()
-    return answer
-
-def askForClientIdentity(macAddress):
-    msg = {"MAC" : macAddress}
-    answer = sendAndGetAnswer(msg);
-    return answer
-
-
-
-
-clientMacAddress = NetworkUtils.getMAC()
-clientIdentity = askForClientIdentity(clientMacAddress)
-clientId = clientIdentity["Id"]
-welcomeMessage = "I am client with ID {} and IP {}. My ramp is made out of {}, mounted on position {}"
+cm = ClientManager()
+welcomeMessage = "I am client \"{}\" with ID {} and IP {}. My ramp is made out of {}, mounted on position {}"
 print("#######################")
-print(welcomeMessage.format( clientId, clientIdentity["IP"], clientIdentity["Material"], clientIdentity["Position"]))
+print(welcomeMessage.format(cm.clientIdentity["Name"], cm.clientId, cm.clientIdentity["IP"], cm.clientIdentity["Material"], cm.clientIdentity["Position"]))
 print("#######################")
 
-ccsModuleName = "tor.client.CustomClientSettings." + clientIdentity["Material"]
+### load custom settings from file and server
+ccsModuleName = "tor.client.CustomClientSettings." + cm.clientIdentity["Material"]
 try:
     import importlib
     customClientSettings = importlib.import_module(ccsModuleName)
 except:
     print("No CustomClientSettings found.")
 
-
-
-
-##################
+meshBed, meshRamp, meshMagnet = cm.getMeshpoints()
 
 
 
@@ -81,7 +58,7 @@ time.sleep(0.5)
 
 
 
-def save_croped_picture(path):
+def save_cropped_picture(path):
     cam=Camera()
     dr = DieRecognizer()
     if (args.led): lm.showResult(6)
@@ -323,7 +300,7 @@ if args.points:
         while(searching):
             mm.moveToPos(Position(co[i,0], co[i,1], co[i,2]), True)
             mm.waitForMovementFinished()
-            if((i+1<7) and args.take_picture): save_croped_picture('/var/www/html')
+            if((i+1<7) and args.take_picture): save_cropped_picture('/var/www/html')
             print('Position OK? (y/n)')
             if ((input() or 'y') == 'y'): searching=False
             else:

@@ -1,78 +1,31 @@
 import datetime
+import numpy as np
 from random import randint
 from random import seed
-import socket
 import sys
 import time
 import threading
 
 from tor.base import NetworkUtils
 from tor.base.DieRecognizer import DieRecognizer
+from tor.client.ClientManager import ClientManager
 import tor.client.ClientSettings as cs
 
 if cs.ON_RASPI:
     from tor.client.Camera import Camera
     from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
-import tor.TORSettings as ts
-
-def createConnection():
-    conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    conn.connect((ts.SERVER_IP, ts.SERVER_PORT))
-    return conn
-
-def sendAndGetAnswer(msg):
-    conn = createConnection()
-    NetworkUtils.sendData(conn, msg)
-    answer = NetworkUtils.recvData(conn)
-    conn.close()
-    return answer
-
-def askForClientIdentity(macAddress):
-    msg = {"MAC" : macAddress}
-    answer = sendAndGetAnswer(msg);
-    return answer
-
-def askForJob():
-    msg = {"C" : clientId, "J" : "waiting"}
-    answer = sendAndGetAnswer(msg)
-    return answer
 
 def keepAskingForNextJob(askEveryNthSecond = 10):
     global nextJob
     while True:
         nextTime = time.time() + askEveryNthSecond
-        nextJob = askForJob()
+        nextJob = cm.askForJob()
         print("nextJob", nextJob)
         sleepFor = nextTime - time.time()
         #print("sleep for", sleepFor)
         if sleepFor > 0:
             time.sleep(sleepFor)
-
-def sendDieRollResult(result):
-    msg = {
-        "C" : clientId,
-        "D" : result
-    }
-    answer = sendAndGetAnswer(msg)
-    if "STATUS" in answer:
-        print("server responds", answer["STATUS"])
-
-def sendDieNotFound():
-    msg = {
-        "C" : clientId,
-        "E" : 1,
-        "MESSAGE" : "Could not locate die."
-    }
-    answer = sendAndGetAnswer(msg)
-
-def sendDieResultNotRecognized():
-    msg = {
-        "C" : clientId,
-        "E" : 2,
-        "MESSAGE" : "Could not recognize die result."
-    }
-    answer = sendAndGetAnswer(msg)
 
 def doDieRoll():
     print("doDieRoll()")
@@ -115,16 +68,16 @@ def doDieRoll():
         if result > 0:
             print("die result:", result)
             #lm.showResult(result)
-            sendDieRollResult(result)
+            cm.sendDieRollResult(result)
         else:
-            sendDieResultNotRecognized()
+            cm.sendDieResultNotRecognized()
         mm.moveToXYPosDie(diePosition.x, diePosition.y)
         mm.moveToPos(cs.CENTER_TOP)
         if not dr.checkIfDiePickedUp():
             mm.searchForDie()
             mm.waitForMovementFinished()
     else:
-        sendDieNotFound()
+        cm.sendDieNotFound()
         mm.searchForDie()
     #mm.moveToXPosRamp(cs.LX/2)
     mm.moveToPos(cs.DROPOFF_ADVANCE_POSITION)
@@ -190,25 +143,32 @@ def doJobs():
     print("finished")
 
 ####################
+###    tests     ###
+####################
+
+
+####################
 ### main program ###
 ####################
 
 seed(12345)
 
-clientMacAddress = NetworkUtils.getMAC()
-clientIdentity = askForClientIdentity(clientMacAddress)
-clientId = clientIdentity["Id"]
+#get client identity
+cm = ClientManager()
 welcomeMessage = "I am client \"{}\" with ID {} and IP {}. My ramp is made out of {}, mounted on position {}"
 print("#######################")
-print(welcomeMessage.format(clientIdentity["Name"], clientId, clientIdentity["IP"], clientIdentity["Material"], clientIdentity["Position"]))
+print(welcomeMessage.format(cm.clientIdentity["Name"], cm.clientId, cm.clientIdentity["IP"], cm.clientIdentity["Material"], cm.clientIdentity["Position"]))
 print("#######################")
 
-ccsModuleName = "tor.client.CustomClientSettings." + clientIdentity["Material"]
+#load custom settings from file and server
+ccsModuleName = "tor.client.CustomClientSettings." + cm.clientIdentity["Material"]
 try:
     import importlib
     customClientSettings = importlib.import_module(ccsModuleName)
 except:
     print("No CustomClientSettings found.")
+
+meshBed, meshRamp, meshMagnet = cm.getMeshpoints()
 
 if cs.ON_RASPI:
     try:

@@ -33,7 +33,7 @@ def getClientIdentity(clientMAC):
     return data
 
 def getNextJobForClientId(clientId):
-    query = "select j.Code, q.JobParameters FROM tor.jobqueue q LEFT JOIN tor.job j ON q.JobId = j.Id WHERE q.ClientId = %(clientId)s ORDER BY q.ExecuteAt, q.Id"
+    query = "SELECT j.Code, q.JobParameters FROM jobqueue q LEFT JOIN job j ON q.JobId = j.Id WHERE q.ClientId = %(clientId)s ORDER BY q.ExecuteAt, q.Id"
     cursor.execute(query, { "clientId" : clientId })
     data = cursor.fetchone()
     if data is None:
@@ -41,3 +41,14 @@ def getNextJobForClientId(clientId):
         data.Code = "W"
         data.JobParameters = 1
     return data
+
+def getMeshpoints(clientId):
+    query = "SELECT Type, No, X, Y, Z FROM meshpoints WHERE ClientId = %(clientId)s ORDER BY Type, No"
+    cursor.execute(query, { "clientId" : clientId })
+    data = cursor.fetchall()
+    return data
+
+def saveMeshpoints(clientId, type, points):
+    query = "INSERT INTO meshpoints (ClientId, Type, No, X, Y, Z) VALUES (%s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE X = VALUES(X), Y = VALUES(Y), Z = VALUES(Z)"
+    data = [(clientId, type, i, p[0], p[1], p[2]) for (i, p) in enumerate(points)]
+    cursor.executemany(query, data)

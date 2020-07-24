@@ -1,4 +1,5 @@
 import datetime
+import itertools
 import json
 import random
 import socket
@@ -16,6 +17,19 @@ def log(*msg):
 def getClientSettings(clientId):
     settings = DBManager.getClientSettings(clientId)
     return settings
+
+def getMeshpoints(clientId):
+    meshpoints = DBManager.getMeshpoints(clientId)
+    meshTypes = ["B", "R", "M"]
+    groupedPoints = {}
+    for t in meshTypes:
+        points = [(float(x), float(y), float(z)) for (ty, no, x, y, z) in meshpoints if ty == t]
+        if len(points) > 0:
+            groupedPoints[t] = points
+    return groupedPoints
+
+def saveMeshpoints(clientId, type, points):
+    DBManager.saveMeshpoints(clientId, type, points)
 
 def handleRequest(conn):
     request = NetworkUtils.recvData(conn)
@@ -53,6 +67,13 @@ def handleRequest(conn):
             #     NetworkUtils.sendData(conn, {"M": 1, "P" : "CE"})
             # elif job == 8: #do homing
             #     NetworkUtils.sendData(conn, {"H": 1})
+        elif "GET" in request:
+            if request["GET"] == "MESH":
+                meshpoints = getMeshpoints(clientId)
+                NetworkUtils.sendData(conn, meshpoints)
+        elif "PUT" in request:
+            if request["PUT"] == "MESH":
+                saveMeshpoints(clientId, request["TYPE"], request["POINTS"])
         elif "S" in request:
             settings = getClientSettings(clientId)
             NetworkUtils.sendData(conn, settings)
