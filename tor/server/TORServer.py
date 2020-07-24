@@ -53,7 +53,6 @@ def handleRequest(conn):
         cId = DBManager.getClientIdentity(request["MAC"])
         NetworkUtils.sendData(conn, {"Id": cId.Id,
                                      "IP": cId.IP,
-                                     "Name": cId.Name,
                                      "Material": cId.Material,
                                      "Position": cId.Position
                                      })

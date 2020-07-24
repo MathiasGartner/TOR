@@ -19,7 +19,7 @@ def writeResult(clientId, result):
     db.commit()
 
 def getClientIdentity(clientMAC):
-    query = "SELECT Id, IP, Name, Material, Position FROM client WHERE MAC = %(clientMAC)s"
+    query = "SELECT Id, IP, Material, Position FROM client WHERE MAC = %(clientMAC)s"
     cursor.execute(query, { "clientMAC" : clientMAC })
     data = cursor.fetchone()
     if data is None:
