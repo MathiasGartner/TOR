@@ -1,5 +1,8 @@
 #custom
 tor/TORSettingsPrivate.py
+/scratches/update_tor.cmd
+/venv_38/
+/venv_conda/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -140,4 +143,3 @@ dmypy.json
 
 # Generated files
 .idea/**/contentModel.xml
-/scratches/update_tor.cmd

@@ -61,7 +61,7 @@ class LedManager:
 
     def showResult(self, result):
         for i in range(self.strip.numPixels()):
-            self.strip.setPixelColor(i, self.R if (i < result) else self.col_off)
+            self.strip.setPixelColor(i, self.R if (i < result*self.strip.numPixels()/6.) else self.col_off)
         self.strip.show()
 
     def setLeds(self, leds, r, g, b):

@@ -2,6 +2,7 @@ import cv2
 from datetime import datetime
 import math
 import numpy as np
+import os
 
 from tor.base.utils.Point2D import Point2D
 import tor.client.ClientSettings as cs
@@ -40,14 +41,18 @@ class DieRecognizer:
             raise Exception("Could not open image: ", imgPath)
         return image
 
-    def writeImage(self, im, fileName = ""):
+    def writeImage(self, im, fileName="", directory=""):
         if fileName == "":
             fileName = "run_{}.jpg".format(datetime.now().strftime("%Y%m%d%H%M%S"))
+        if directory != "":
+            fileName = os.path.join(directory, fileName)
         cv2.imwrite(fileName, im)
 
-    def writeRGBArray(self, im, fileName = ""):
+    def writeRGBArray(self, im, fileName="", directory=""):
         if fileName == "":
             fileName = "run_{}.npy".format(datetime.now().strftime("%Y%m%d%H%M%S"))
+        if directory != "":
+            fileName = os.path.join(directory, fileName)
         np.save(fileName, im)
 
     def cropToSearchableArea(self, im):
@@ -61,8 +66,11 @@ class DieRecognizer:
             mm = px / pxpmm
         return mm
 
-    def markDieOnImage(self, im, keypoints):
-        im_color = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
+    def markDieOnImage(self, im, keypoints, isGray=False):
+        if isGray:
+            im_color = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
+        else:
+            im_color = im.copy()
         if len(keypoints) > 0:
             padding = 50
             minX = max(int(np.min([k.pt[0] for k in keypoints])) - padding, 0)
@@ -78,11 +86,11 @@ class DieRecognizer:
         return im_color
 
     def getDiePosition(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False, alreadyGray=False):
-        if not alreadyGray:
-            im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
         if not alreadyCropped:
             im = self.cropToSearchableArea(im)
         im_original = im
+        if not alreadyGray:
+            im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
 
         #Blur the image
         blurSize = 13
@@ -116,12 +124,11 @@ class DieRecognizer:
             cv2.waitKey(10000)
             cv2.destroyAllWindows()
 
+        diePositionRelative = Point2D(-1, -1)
         if len(blobs) > 0:
             if len(blobs) > 6:
                 #TODO: choose the correct ones
                 found = False
-                diePositionPX = Point2D(-1, -1)
-                diePositionMM = Point2D(-1, -1)
                 result = 0
             else:
                 #TODO: check if the detected blobs correspond to the face of a die
@@ -129,25 +136,18 @@ class DieRecognizer:
                 meanX = np.mean([blob.pt[0] for blob in blobs])
                 meanY = np.mean([blob.pt[1] for blob in blobs])
 
+                offset = 60
                 diePositionPX = Point2D(meanX, meanY)
+                diePositionRelative.x = (diePositionPX.x - offset) / (im.shape[1] - 2 * offset)
+                diePositionRelative.y = 1.0 - (diePositionPX.y - offset) / (im.shape[0] - 2 * offset)
                 print("diePositionPX:", diePositionPX)
-                #diePositionMM = self.px_to_mm(diePositionPX)
-                #print("diePositionMM (raw):", diePositionMM)
-                #diePositionMM.y = cs.LY - diePositionMM.y + 15 #TODO: check mapping of y value from pixel to mm
-                #print("diePositionMM:", diePositionMM)
-                diePositionMM = Point2D(-1, -1)
-                diePositionMM.x = max(diePositionPX.x - 110.0, 0.1) / (2350.0 / 237.0)
-                diePositionMM.y = max(diePositionPX.y - 187.0, 0.1) / (1069.0 / 91.0)
-                diePositionMM.y = cs.LY - diePositionMM.y - 1
-                print("diePositionMM (new):", diePositionMM)
+                print("diePositionRelative:", diePositionRelative)
                 found = True
-                result = min(len(blobs), 6)
+                result = len(blobs)
         else:
             found = False
-            diePositionPX = Point2D(-1, -1)
-            diePositionMM = Point2D(-1, -1)
             result = 0
-        return (found, diePositionMM, result, (im_original, im_with_blobs))
+        return (found, diePositionRelative, result, (im_original, im_with_blobs))
 
     def getDieResult(self):
         #TODO: not implemented yet
