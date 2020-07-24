@@ -99,5 +99,10 @@ RAMP_MATERIAL = "plain"
 RAMP_MATERIAL_HEIGHT = 0
 
 
+#additional properties
+TRY_FINDING = True
+SEARCH_RAMP = False
+
+
 
 

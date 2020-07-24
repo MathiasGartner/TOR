@@ -136,7 +136,7 @@ class DieRecognizer:
                 meanX = np.mean([blob.pt[0] for blob in blobs])
                 meanY = np.mean([blob.pt[1] for blob in blobs])
 
-                offset = 50
+                offset = 60
                 diePositionPX = Point2D(meanX, meanY)
                 diePositionRelative.x = (diePositionPX.x - offset) / (im.shape[1] - 2 * offset)
                 diePositionRelative.y = 1.0 - (diePositionPX.y - offset) / (im.shape[0] - 2 * offset)

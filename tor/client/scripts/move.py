@@ -12,6 +12,51 @@ from tor.client.Position import Position
 from tor.base.DieRecognizer import DieRecognizer
 from tor.client.Camera import Camera
 from tor.client.LedManager import LedManager
+from tor.base import NetworkUtils
+import socket
+import tor.TORSettings as ts
+
+#########identity
+def createConnection():
+    conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    conn.connect((ts.SERVER_IP, ts.SERVER_PORT))
+    return conn
+
+def sendAndGetAnswer(msg):
+    conn = createConnection()
+    NetworkUtils.sendData(conn, msg)
+    answer = NetworkUtils.recvData(conn)
+    conn.close()
+    return answer
+
+def askForClientIdentity(macAddress):
+    msg = {"MAC" : macAddress}
+    answer = sendAndGetAnswer(msg);
+    return answer
+
+
+
+
+clientMacAddress = NetworkUtils.getMAC()
+clientIdentity = askForClientIdentity(clientMacAddress)
+clientId = clientIdentity["Id"]
+welcomeMessage = "I am client with ID {} and IP {}. My ramp is made out of {}, mounted on position {}"
+print("#######################")
+print(welcomeMessage.format( clientId, clientIdentity["IP"], clientIdentity["Material"], clientIdentity["Position"]))
+print("#######################")
+
+ccsModuleName = "tor.client.CustomClientSettings." + clientIdentity["Material"]
+try:
+    import importlib
+    customClientSettings = importlib.import_module(ccsModuleName)
+except:
+    print("No CustomClientSettings found.")
+
+
+
+
+##################
+
 
 
 parser = argparse.ArgumentParser()
@@ -19,6 +64,7 @@ parser.add_argument("position", nargs='*', default=[cs.CENTER_TOP.x, cs.CENTER_T
 parser.add_argument("-f", dest="feedratePercentage", default=cs.FEEDRATE_PERCENTAGE, type=int)
 parser.add_argument("-c", dest="doHoming", action="store_true")
 parser.add_argument("-l", dest="led", action="store_true")
+parser.add_argument("-p", dest="take_picture", action="store_true")
 parser.add_argument("-s", dest="segmented", action="store_true")
 parser.add_argument("-start", dest='start', action="store_true")
 parser.add_argument("-find", dest='find', action="store_true")
@@ -33,20 +79,37 @@ if (args.led): lm = LedManager(brightness=100)
 mm.initBoard()
 time.sleep(0.5)
 
-def find_die():
-    cam = Camera()
-    mm.setLed(200)
-    image = cam.takePicture()
-    #time.sleep(0.5)
-    mm.setLed(0)
-    cam.cam.close()
 
+
+def save_croped_picture(path):
+    cam=Camera()
     dr = DieRecognizer()
-    found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
-    directory = "found" if found else "fail"
-    dr.writeImage(processedImages[0], directory=directory)
-    dr.writeRGBArray(processedImages[0], directory=directory)
-    print(result)
+    if (args.led): lm.showResult(6)
+    mm.setLed(200)
+    image=cam.takePicture()
+    mm.setLed(0)
+    image=dr.cropToSearchableArea(image)
+    dr.writeImage(image,"current_view.jpg", directory=path)
+    cam.cam.close()
+    if (args.led): lm.showResult(0)
+
+def find_die():
+    found = False
+    result = -1
+    if (cs.TRY_FINDING):
+        cam = Camera()
+        mm.setLed(200)
+        image = cam.takePicture()
+        #time.sleep(0.5)
+        mm.setLed(0)
+        cam.cam.close()
+
+        dr = DieRecognizer()
+        found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
+        directory = "found" if found else "fail"
+        dr.writeImage(processedImages[0], directory=directory)
+        dr.writeRGBArray(processedImages[0], directory=directory)
+        print(result)
     #found=False #for the moment finding doesn't work
     if (found):
         if (args.led):  lm.showResult(result)
@@ -54,13 +117,13 @@ def find_die():
         mm.setFeedratePercentage(300)
         mm.moveToPos(cs.BEFORE_PICKUP_POSITION,True)
         mm.waitForMovementFinished()
-        print('Position trafo')
+        #print('Position trafo')
         print(diePosition)
-        px=1.*diePosition.x/cs.LX
-        ylim_ramp=155
-        py=(1.*diePosition.y-ylim_ramp)/(cs.LY-ylim_ramp)
-        print(co_trafo(px,py))
-        mm.moveToPos(co_trafo(px, py), True)
+        #px=1.*diePosition.x/cs.LX
+        #ylim_ramp=155
+        #py=(1.*diePosition.y-ylim_ramp)/(cs.LY-ylim_ramp)
+        print(co_trafo(diePosition.x,diePosition.y))
+        mm.moveToPos(co_trafo(diePosition.x, diePosition.y), True)
         #mm.moveToPos(Position(min(diePosition.x , 241), diePosition.y, cs.PICKUP_Z), True)
         mm.waitForMovementFinished()
         mm.moveToPos(cs.AFTER_PICKUP_POSITION,True)
@@ -203,8 +266,8 @@ def search_die():
 def start_script():
     if (os.path.isfile('startpoints.dat')):
         cos=np.loadtxt('startpoints.dat')
-        #spos=cos[np.random.randint(0,4),:]
-        spos = cos[2]
+        spos=cos[np.random.randint(0,4),:]
+        #spos = cos[2]
         mm.waitForMovementFinished()
         mm.moveToPos(Position(spos[0], spos[1]+20, 50), True)
         mm.waitForMovementFinished()
@@ -260,6 +323,7 @@ if args.points:
         while(searching):
             mm.moveToPos(Position(co[i,0], co[i,1], co[i,2]), True)
             mm.waitForMovementFinished()
+            if((i+1<7) and args.take_picture): save_croped_picture('/var/www/html')
             print('Position OK? (y/n)')
             if ((input() or 'y') == 'y'): searching=False
             else:
@@ -321,6 +385,7 @@ if args.spoints:
                 mm.setFeedratePercentage(400)
                 mm.moveToPos(Position(120, 100, 50), True)
                 mm.waitForMovementFinished()
+                print(co[i,0],co[i,1],co[i,2])
                 mm.setFeedratePercentage(50)
                 print('New position')
                 co[i, 0] = input('x:') or co[i, 0]
@@ -328,6 +393,8 @@ if args.spoints:
                 co[i, 2] = input('z:') or co[i, 2]
     np.savetxt('startpoints.dat',co)
     exit(0)
+
+
 
 if args.feedratePercentage != cs.FEEDRATE_PERCENTAGE:
     mm.setFeedratePercentage(args.feedratePercentage)
@@ -349,6 +416,7 @@ if args.start:
                 err = 0
                 i = 1
                 mm.doHoming()
+                search_die()
 
             result_old=result
             found,result=start_script()
