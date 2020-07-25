@@ -1,4 +1,5 @@
 import argparse
+import cv2
 import time
 import numpy as np
 import os
@@ -26,9 +27,10 @@ parser.add_argument("-s", dest="segmented", action="store_true")
 parser.add_argument("-start", dest='start', action="store_true")
 parser.add_argument("-find", dest='find', action="store_true")
 parser.add_argument("-points", dest='points', action="store_true")
-parser.add_argument("-infinity",dest='infinity', action="store_true")
+parser.add_argument("-infinity", dest='infinity', action="store_true")
 parser.add_argument("-spoints", dest='spoints',action='store_true') #validate starting points
 parser.add_argument("-cor", dest="cal_on_run", default=0, type=int)
+parser.add_argument("-camera", dest='camera', action="store_true")
 args = parser.parse_args()
 
 
@@ -50,6 +52,7 @@ try:
 except:
     print("No CustomClientSettings found.")
 
+cm.loadSettings()
 meshBed, meshRamp, meshMagnet = cm.getMeshpoints()
 
 mm = MovementManager()
@@ -58,12 +61,13 @@ mm.initBoard()
 time.sleep(0.5)
 
 def save_cropped_picture(path):
-    cam=Camera()
+    cam = Camera()
     dr = DieRecognizer()
-    if (args.led): lm.showResult(6)
-    mm.setLed(200)
+    if (args.led):
+        lm.setAllLeds()
+    mm.setLed(cs.LED_TOP_BRIGHTNESS)
     image=cam.takePicture()
-    mm.setLed(0)
+    mm.setLed(cs.LED_TOP_BRIGHTNESS_OFF)
     image=dr.cropToSearchableArea(image)
     dr.writeImage(image,"current_view.jpg", directory=path)
     cam.cam.close()
@@ -74,10 +78,9 @@ def find_die():
     result = -1
     if (cs.TRY_FINDING):
         cam = Camera()
-        mm.setLed(200)
+        mm.setLed(cs.LED_TOP_BRIGHTNESS)
         image = cam.takePicture()
-        #time.sleep(0.5)
-        mm.setLed(0)
+        mm.setLed(cs.LED_TOP_BRIGHTNESS_OFF)
         cam.cam.close()
 
         dr = DieRecognizer()
@@ -335,6 +338,82 @@ if args.spoints:
     calibrateMeshpoints("M", meshMagnet)
     cm.saveMeshpoints("M", meshMagnet)
 
+    exit(0)
+
+if args.camera:
+    #############
+    # TL ### TR #
+    # BL ### BR #
+    #############
+    ### RAMP  ###
+    #############
+    finish = False
+    cm.loadSettings()
+    needsWarping = cs.IMG_USE_WARPING
+    tl = cs.IMG_TL
+    bl = cs.IMG_BL
+    tr = cs.IMG_TR
+    br = cs.IMG_BR
+    while not finish:
+        cam = Camera()
+        dr = DieRecognizer()
+        if (args.led):
+            lm.setAllLeds()
+            mm.setLed(cs.LED_TOP_BRIGHTNESS)
+        image = cam.takePicture()
+        cam.close()
+        if (args.led):
+            lm.clear()
+            mm.setLed(cs.LED_TOP_BRIGHTNESS_OFF)
+
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        if not needsWarping:
+            transformedImage = dr.cropImage(image, tl, br)
+            markedImage = dr.markCropLines(image, tl, br, isGray=True)
+        else:
+            dr.createWarpMatrix(tl, bl, tr, br)
+            transformedImage = dr.warpImage(image)
+            markedImage = dr.markLines(image, [[tl, tr], [tl, bl], [bl, br], [tr, br]], isGray=True)
+
+        dr.writeImage(markedImage, "marked.jpg", directory="/var/www/html")
+        dr.writeImage(transformedImage, "transformed.jpg", directory="/var/www/html")
+
+        print("http://" + cm.clientIdentity["IP"] + "/camera.html")
+        print('Image OK? (y/c/w) [yes/crop/warp]')
+        answ = input() or 'y'
+        if answ == "y":
+            finish = True
+            cs.IMG_USE_WARPING = needsWarping
+            cs.IMG_TL = tl
+            cs.IMG_BL = bl
+            cs.IMG_TR = tr
+            cs.IMG_BR = br
+            if needsWarping:
+                cm.saveCameraSettingsWarping(tl, bl, tr, br)
+            else:
+                cm.saveCameraSettingsCropping(tl, br)
+        elif answ == "c":
+            needsWarping = False
+            print('Current top left:', tl)
+            tl[0] = int(input("x:") or tl[0])
+            tl[1] = int(input("y:") or tl[1])
+            print('Current bottom right:', br)
+            br[0] = int(input("x:") or br[0])
+            br[1] = int(input("y:") or br[1])
+        elif answ == "w":
+            needsWarping = True
+            print('Current top left:', tl)
+            tl[0] = int(input("x:") or tl[0])
+            tl[1] = int(input("y:") or tl[1])
+            print('Current bottom left:', bl)
+            bl[0] = int(input("x:") or bl[0])
+            bl[1] = int(input("y:") or bl[1])
+            print('Current top right:', tr)
+            tr[0] = int(input("x:") or tr[0])
+            tr[1] = int(input("y:") or tr[1])
+            print('Current bottom right:', br)
+            br[0] = int(input("x:") or br[0])
+            br[1] = int(input("y:") or br[1])
     exit(0)
 
 if args.feedratePercentage != cs.FEEDRATE_PERCENTAGE:

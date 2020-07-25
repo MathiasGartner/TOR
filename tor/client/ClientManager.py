@@ -84,3 +84,70 @@ class ClientManager:
         }
         answer = self.sendAndGetAnswer(msg)
         # TODO: check server response
+
+    def loadSettings(self):
+        msg = {
+            "C": self.clientId,
+            "GET": "SETTINGS"
+        }
+        settings = self.sendAndGetAnswer(msg)
+        print(settings)
+        availableSettingTypes = {
+            "IMAGE_CROP_X_LEFT": "INT",
+            "IMAGE_CROP_X_RIGHT": "INT",
+            "IMAGE_CROP_Y_TOP": "INT",
+            "IMAGE_CROP_Y_BOTTOM": "INT",
+            "TRY_FINDING": "BOOL",
+            "IMG_USE_WARPING": "BOOL",
+            "IMG_TL": "LIST",
+            "IMG_BL": "LIST",
+            "IMG_TR": "LIST",
+            "IMG_BR": "LIST",
+        }
+        for name, raw_value in settings:
+            value = None
+            if name in availableSettingTypes:
+                datatype = availableSettingTypes[name]
+                if datatype == "INT":
+                    value = int(raw_value)
+                elif datatype == "FLOAT":
+                    value = float(raw_value)
+                elif datatype == "STRING":
+                    value = str(raw_value)
+                elif datatype == "BOOL":
+                    value = bool(int(raw_value))
+                elif datatype == "LIST":
+                    value = eval(raw_value)
+                if value is not None:
+                    print("Set", name, "=", value)
+                    setattr(cs, name, value)
+                else:
+                    print("ERROR setting", name, "=", raw_value)
+
+    def saveCameraSettingsWarping(self, tl, bl, tr, br):
+        msg = {
+            "C": self.clientId,
+            "PUT": "SETTINGS",
+            "SETTINGS": [
+                ["IMG_USE_WARPING", True],
+                ["IMG_TL", tl],
+                ["IMG_BL", bl],
+                ["IMG_TR", tr],
+                ["IMG_BR", br]
+            ]
+        }
+        answer = self.sendAndGetAnswer(msg)
+        # TODO: check server response
+
+    def saveCameraSettingsCropping(self, tl, br):
+        msg = {
+            "C": self.clientId,
+            "PUT": "SETTINGS",
+            "SETTINGS": [
+                ["IMG_USE_WARPING", False],
+                ["IMG_TL", tl],
+                ["IMG_BR", br]
+            ]
+        }
+        answer = self.sendAndGetAnswer(msg)
+        # TODO: check server response

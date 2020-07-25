@@ -21,3 +21,6 @@ class Camera:
         self.cam.capture(rawCapture, format="bgr")
         image = rawCapture.array
         return image
+
+    def close(self):
+        self.cam.close()

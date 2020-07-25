@@ -16,6 +16,9 @@ def getClientSettings(clientId):
     settings = DBManager.getClientSettings(clientId)
     return settings
 
+def saveClientSettings(clientId, settings):
+    DBManager.saveClientSettings(clientId, settings)
+
 def getMeshpoints(clientId):
     meshpoints = DBManager.getMeshpoints(clientId)
     meshTypes = ["B", "R", "M"]
@@ -69,13 +72,16 @@ def handleRequest(conn):
             if request["GET"] == "MESH":
                 meshpoints = getMeshpoints(clientId)
                 NetworkUtils.sendData(conn, meshpoints)
+            elif request["GET"] == "SETTINGS":
+                settings = getClientSettings(clientId)
+                NetworkUtils.sendData(conn, settings)
         elif "PUT" in request:
             if request["PUT"] == "MESH":
                 NetworkUtils.sendOK(conn)
                 saveMeshpoints(clientId, request["TYPE"], request["POINTS"])
-        elif "S" in request:
-            settings = getClientSettings(clientId)
-            NetworkUtils.sendOK(conn)
+            elif request["PUT"] == "SETTINGS":
+                NetworkUtils.sendOK(conn)
+                saveClientSettings(clientId, request["SETTINGS"])
     elif "MAC" in request:
         cId = DBManager.getClientIdentity(request["MAC"])
         NetworkUtils.sendData(conn, {"Id": cId.Id,

@@ -19,6 +19,11 @@ def getClientSettings(clientId):
     data = cursor.fetchall()
     return data
 
+def saveClientSettings(clientId, settings):
+    query = "INSERT INTO clientsettings (ClientId, Name, Value) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE Value = VALUES(Value)"
+    data = [(clientId, s[0], str(s[1]) if type(s[1]) is list else s[1]) for s in settings]
+    cursor.executemany(query, data)
+
 def writeResult(clientId, result):
     query = "INSERT INTO diceresult (ClientId, Result) VALUES ({}, {})".format(clientId, result)
     cursor.execute(query)

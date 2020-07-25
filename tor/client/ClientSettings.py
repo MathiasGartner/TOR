@@ -80,22 +80,13 @@ MESH_MAGNET_DEFAULT = [(60,20,25),
                        (220,20,25)]
 
 # dice recognition configuration:
-IMAGE_CROP_X_LEFT = 10
-IMAGE_CROP_X_RIGHT = 0
-IMAGE_CROP_Y_TOP = 325
-IMAGE_CROP_Y_BOTTOM = 247
-IMAGE_PX_X = 2592
-IMAGE_PX_Y = 1944 #PiCameraResolutionRounded: frame size rounded up from 2592x1944 to 2592x1952. should I use 1952 here?
-
-LED_THICKNESS_LEFT = 11
-LED_THICKNESS_RIGHT = 11
-LED_THICKNESS_FRONT = 11
-AREA_X = LX - LED_THICKNESS_LEFT - LED_THICKNESS_RIGHT
-AREA_Y = LY - RAMP_END_Y - LED_THICKNESS_FRONT
-AREA_PX_X = IMAGE_PX_X - IMAGE_CROP_X_LEFT - IMAGE_CROP_X_RIGHT
-AREA_PX_Y = IMAGE_PX_Y - IMAGE_CROP_Y_TOP - IMAGE_CROP_Y_BOTTOM
-AREA_PX_PER_MM_X = AREA_PX_X / AREA_X
-AREA_PX_PER_MM_Y = AREA_PX_Y / AREA_Y
+IMG_USE_WARPING = False
+IMG_TL = [0, 330] # top left
+IMG_BL = [0, 1600] # bottom left
+IMG_TR = [2540, 360] # top right
+IMG_BR = [2520, 1620] # bottom right
+IMG_PX_X = 2592
+IMG_PX_Y = 1944 #PiCameraResolutionRounded: frame size rounded up from 2592x1944 to 2592x1952. should I use 1952 here?
 
 BLOB_MIN_DIAMETER = 18
 BLOB_MAX_DIAMETER = 31
@@ -109,12 +100,18 @@ LED_COUNT      = 81      # Number of LED pixels.
 LED_PIN        = 18      # GPIO pin connected to the pixels (18 uses PWM!).
 LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
 LED_DMA        = 10      # DMA channel to use for generating signal (try 10)
-LED_BRIGHTNESS = 150     # Set to 0 for darkest and 255 for brightest
+#LED_BRIGHTNESS = 150     # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 LEDS_RIGHT = range(0, 20)
 LEDS_BACK = range(21, 60)
 LEDS_LEFT = range(61, 80)
+
+# LED properties
+LED_TOP_BRIGHTNESS = 150
+LED_TOP_BRIGHTNESS_OFF = 0
+LED_STRIP_BRIGHTNESS = 100
+LED_STRIP_DEFAULT_COLOR = (20, 170, 20)
 
 # properties of natural materials on ramp
 RAMP_MATERIAL = "plain"
