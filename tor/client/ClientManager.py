@@ -1,3 +1,4 @@
+import numpy as np
 import socket
 
 from tor.base import NetworkUtils
@@ -72,7 +73,7 @@ class ClientManager:
             meshRamp = answer["R"]
         if "M" in answer:
             meshMagnet = answer["M"]
-        return meshBed, meshRamp, meshMagnet
+        return np.array(meshBed), np.array(meshRamp), np.array(meshMagnet)
 
     def saveMeshpoints(self, type, points):
         msg = {

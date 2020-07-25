@@ -1,4 +1,5 @@
 import json
+import numpy as np
 
 import tor.client.ClientSettings as cs
 
@@ -29,6 +30,12 @@ def getMAC(interface='wlan0'):
     mac = "00:00:00:00:00:00"
   return mac
 
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
 def recvData(conn):
     msgReceived = conn.recv(4096)
     msg = msgReceived.decode()
@@ -36,5 +43,9 @@ def recvData(conn):
     return msgData
 
 def sendData(conn, data):
-    msgToSend = json.dumps(data)
+    msgToSend = json.dumps(data, cls=NumpyEncoder)
     conn.send(msgToSend.encode())
+
+def sendOK(conn):
+    msgOK = json.dumps({"STATUS" : "OK"})
+    conn.send(msgOK.encode())

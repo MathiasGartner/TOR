@@ -8,8 +8,6 @@ from tor.base import DBManager
 from tor.base import NetworkUtils
 import tor.TORSettings as ts
 
-msgOK = json.dumps({"STATUS" : "OK"})
-
 def log(*msg):
     print('{0:%Y-%m-%d %H:%M:%S}: '.format(datetime.datetime.now()), end='')
     print(msg)
@@ -38,12 +36,12 @@ def handleRequest(conn):
         if "D" in request: #die roll result
             dieResult = request["D"]
             log("Client", clientId, "rolled", dieResult)
-            conn.send(msgOK.encode())
+            NetworkUtils.sendOK(conn)
             DBManager.writeResult(clientId, dieResult)
         elif "E" in request: #error on client
             log("ERROR", request["E"], "@ client", clientId)
             log(request["MESSAGE"])
-            conn.send(msgOK.encode())
+            NetworkUtils.sendOK(conn)
         elif "J" in request: #client asks for job
             #jobIds = [1, 1, 1, 1, 1, 1, 3, 4, 5, 6, 7, 8]
             #jobIds = [1]
@@ -73,10 +71,11 @@ def handleRequest(conn):
                 NetworkUtils.sendData(conn, meshpoints)
         elif "PUT" in request:
             if request["PUT"] == "MESH":
+                NetworkUtils.sendOK(conn)
                 saveMeshpoints(clientId, request["TYPE"], request["POINTS"])
         elif "S" in request:
             settings = getClientSettings(clientId)
-            NetworkUtils.sendData(conn, settings)
+            NetworkUtils.sendOK(conn)
     elif "MAC" in request:
         cId = DBManager.getClientIdentity(request["MAC"])
         NetworkUtils.sendData(conn, {"Id": cId.Id,

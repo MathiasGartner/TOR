@@ -1,6 +1,3 @@
-import sys
-#sys.path.append("C:\\Users\\David\\Documents\\TOR")
-
 import argparse
 import time
 import numpy as np
@@ -14,27 +11,10 @@ from tor.client.Camera import Camera
 from tor.client.ClientManager import ClientManager
 from tor.client.LedManager import LedManager
 
-###########################
-### get client identity ###
-###########################
 
-cm = ClientManager()
-welcomeMessage = "I am client \"{}\" with ID {} and IP {}. My ramp is made out of {}, mounted on position {}"
-print("#######################")
-print(welcomeMessage.format(cm.clientIdentity["Name"], cm.clientId, cm.clientIdentity["IP"], cm.clientIdentity["Material"], cm.clientIdentity["Position"]))
-print("#######################")
-
-### load custom settings from file and server
-ccsModuleName = "tor.client.CustomClientSettings." + cm.clientIdentity["Material"]
-try:
-    import importlib
-    customClientSettings = importlib.import_module(ccsModuleName)
-except:
-    print("No CustomClientSettings found.")
-
-meshBed, meshRamp, meshMagnet = cm.getMeshpoints()
-
-
+#################
+### arguments ###
+#################
 
 parser = argparse.ArgumentParser()
 parser.add_argument("position", nargs='*', default=[cs.CENTER_TOP.x, cs.CENTER_TOP.y, cs.CENTER_TOP.z], type=float)
@@ -51,12 +31,31 @@ parser.add_argument("-spoints", dest='spoints',action='store_true') #validate st
 parser.add_argument("-cor", dest="cal_on_run", default=0, type=int)
 args = parser.parse_args()
 
+
+###########################
+### get client identity ###
+###########################
+
+cm = ClientManager()
+welcomeMessage = "I am client with ID {} and IP {}. My ramp is made out of {}, mounted on position {}"
+print("#######################")
+print(welcomeMessage.format(cm.clientId, cm.clientIdentity["IP"], cm.clientIdentity["Material"], cm.clientIdentity["Position"]))
+print("#######################")
+
+### load custom settings from file and server
+ccsModuleName = "tor.client.CustomClientSettings." + cm.clientIdentity["Material"]
+try:
+    import importlib
+    customClientSettings = importlib.import_module(ccsModuleName)
+except:
+    print("No CustomClientSettings found.")
+
+meshBed, meshRamp, meshMagnet = cm.getMeshpoints()
+
 mm = MovementManager()
 if (args.led): lm = LedManager(brightness=100)
 mm.initBoard()
 time.sleep(0.5)
-
-
 
 def save_cropped_picture(path):
     cam=Camera()
@@ -110,52 +109,23 @@ def find_die():
         search_die()
     return found,result
 
+def load_pts():
+    return np.concatenate((meshBed, meshRamp))
+
 def co_trafo(px,py):
     p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12 = load_pts()
-    if(px<0.5):
-        x=(1-py)*(p4[0]+px*(p6[0]-p4[0]))+py*(p1[0]+px*(p3[0]-p1[0]))
-        y=(1-2*px)*(p4[1]+py*(p1[1]-p4[1]))+2*px*(p5[1]+py*(p2[1]-p5[1]))
-        z=(1-2*px)*((1-py)*p4[2]+py*p1[2])+2*px*((1-py)*p5[2]+py*p2[2])
+    if (px < 0.5):
+        x = (1-py)*(p4[0]+px*(p6[0]-p4[0]))+py*(p1[0]+px*(p3[0]-p1[0]))
+        y = (1-2*px)*(p4[1]+py*(p1[1]-p4[1]))+2*px*(p5[1]+py*(p2[1]-p5[1]))
+        z = (1-2*px)*((1-py)*p4[2]+py*p1[2])+2*px*((1-py)*p5[2]+py*p2[2])
     else:
-        x=(1-py)*(p6[0]+(1-px)*(p4[0]-p6[0]))+py*(p3[0]+(1-px)*(p1[0]-p3[0]))
-        y=2*(1-px)*(p5[1]+py*(p2[1]-p5[1]))+(2*px-1)*(p6[1]+py*(p3[1]-p6[1]))
-        z=2*(1-px)*((1-py)*p5[2]+py*p2[2])+(2*px-1)*((1-py)*p6[2]+py*p3[2])
-    if(px<0 or px>1 or py<-0.1 or py>1):
-        print('Out of range!:',x,y,z)
-        return Position(100,100,100)
-    return Position(x,y,z)
-
-def load_pts():
-    if(os.path.isfile('meshpoints.dat')):
-        print('Custom configuration found')
-        co=np.loadtxt('meshpoints.dat')
-        p1 = co[0, :]
-        p2 = co[1, :]
-        p3 = co[2, :]
-        p4 = co[3, :]
-        p5 = co[4, :]
-        p6 = co[5, :]
-        p7 = co[6, :]
-        p8 = co[7, :]
-        p9 = co[8, :]
-        p10 = co[9, :]
-        p11 = co[10, :]
-        p12 = co[11, :]
-    else:
-        print('No configuration found')
-        p1 = (0, 242, 198)
-        p2 = (121,242,200)
-        p3 = (242, 242, 203)
-        p4 = (0, 150, 201)
-        p5 = (121,150.5,204)
-        p6 = (242, 150, 203)
-        p7=(0,130,140)
-        p8 = (121, 130, 140)
-        p9=(242,130,140)
-        p10=(0, 40, 65)
-        p11=(121,40,65)
-        p12 = (242, 40, 65)
-    return p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12
+        x = (1-py)*(p6[0]+(1-px)*(p4[0]-p6[0]))+py*(p3[0]+(1-px)*(p1[0]-p3[0]))
+        y = 2*(1-px)*(p5[1]+py*(p2[1]-p5[1]))+(2*px-1)*(p6[1]+py*(p3[1]-p6[1]))
+        z = 2*(1-px)*((1-py)*p5[2]+py*p2[2])+(2*px-1)*((1-py)*p6[2]+py*p3[2])
+    if (px < 0 or px > 1 or py < -0.1 or py > 1):
+        print('Out of range!:', x, y, z)
+        return Position(100, 100, 100)
+    return Position(x, y, z)
 
 def search_die():
     #starting position
@@ -272,106 +242,100 @@ def start_script():
         found,result=find_die()
         return found,result
 
-if args.points:
-    if(os.path.isfile('meshpoints.dat')):
-        print('Load coordinates')
-        co=np.loadtxt('meshpoints.dat')
+def loadMeshpoints():
+    meshBed, meshRamp, meshMagnet = cm.getMeshpoints()
+
+def calibrateMeshpoints(type, p):
+    if type == "B" or type == "R":
+        for i in range(len(p)):
+            searching = True
+            while (searching):
+                pos = Position(p[i, 0], p[i, 1], p[i, 2])
+                mm.moveToPos(pos, True)
+                mm.waitForMovementFinished()
+                if ((type == "B") and args.take_picture):
+                    save_cropped_picture('/var/www/html')
+                print('Position OK? (y/n)')
+                if ((input() or 'y') == 'y'):
+                    searching = False
+                else:
+                    print('Current position')
+                    print(pos)
+                    print('New position')
+                    p[i, 0] = input('x:') or p[i, 0]
+                    p[i, 1] = input('y:') or p[i, 1]
+                    p[i, 2] = input('z:') or p[i, 2]
+    elif type == "M":
+        for i in range(len(p)):
+            print('Searching point', i + 1)
+            searching = True
+            while (searching):
+                mm.moveToPos(Position(p[i, 0], p[i, 1] + 20, p[i, 2] + 20), True)
+                mm.waitForMovementFinished()
+                mm.setFeedratePercentage(30)
+                mm.moveToPos(Position(p[i, 0], p[i, 1], p[i, 2]), True)
+                mm.waitForMovementFinished()
+                # mm.setFeedratePercentage(30)
+                time.sleep(2)
+                mm.rollDie()
+                print('Position OK? (y/n/c)')
+                answ = input() or 'y'
+                if (answ == 'y'):
+                    searching = False
+                    mm.setFeedratePercentage(200)
+                    mm.moveToPos(Position(p[i, 0], p[i, 1] + 30, p[i, 2] + 20), True)
+                    mm.waitForMovementFinished()
+                    find_die()
+                    mm.waitForMovementFinished()
+                elif (answ == 'n'):
+                    print('Current position')
+                    print(mm.getCurrentPosition())
+                    mm.moveToPos(Position(p[i, 0], p[i, 1] + 20, p[i, 2] + 20), True)
+                    mm.waitForMovementFinished()
+                    print('New position')
+                    p[i, 0] = input('x:') or p[i, 0]
+                    p[i, 1] = input('y:') or p[i, 1]
+                    p[i, 2] = input('z:') or p[i, 2]
+                else:
+                    mm.doHoming()
+                    mm.setFeedratePercentage(400)
+                    mm.moveToPos(Position(120, 100, 50), True)
+                    mm.waitForMovementFinished()
+                    print(p[i, 0], p[i, 1], p[i, 2])
+                    mm.setFeedratePercentage(50)
+                    print('New position')
+                    p[i, 0] = input('x:') or p[i, 0]
+                    p[i, 1] = input('y:') or p[i, 1]
+                    p[i, 2] = input('z:') or p[i, 2]
     else:
-        #default settings
-        co=np.array([[0, 242, 198],
-                     [121,242,200],
-                     [242, 242, 203],
-                     [0, 150, 201],
-                     [121,150.5,204],
-                     [242, 150, 203],
-                     [0,130,140],
-                     [121, 130, 140],
-                     [242,130,140],
-                     [0, 40, 65],
-                     [121,40,65],
-                     [242, 40, 65]])
-    for i in range(12):
-        if(i+1==7):
-            #overcome ramp
-            mm.moveToPos(Position(co[5, 0], co[5, 1], 60), True)
-            mm.waitForMovementFinished()
-        print('Searching point', i+1)
-        searching=True
-        while(searching):
-            mm.moveToPos(Position(co[i,0], co[i,1], co[i,2]), True)
-            mm.waitForMovementFinished()
-            if((i+1<7) and args.take_picture): save_cropped_picture('/var/www/html')
-            print('Position OK? (y/n)')
-            if ((input() or 'y') == 'y'): searching=False
-            else:
-                print('Current position')
-                print(mm.getCurrentPosition())
-                print('New position')
-                co[i, 0] = input('x:') or co[i, 0]
-                co[i, 1] = input('y:') or co[i, 1]
-                co[i, 2] = input('z:') or co[i, 2]
-    np.savetxt('meshpoints.dat',co)
+        print("mesh type " + type + " not known.")
+
+if args.points:
+    loadMeshpoints()
+
+    calibrateMeshpoints("B", meshBed)
+    cm.saveMeshpoints("B", meshBed)
+
+    # overcome ramp
+    mm.moveToPos(Position(meshBed[5, 0], meshBed[5, 1]+30, 180), True)
+    mm.moveToPos(Position(meshBed[5, 0], meshBed[5, 1], 60), True)
+    mm.waitForMovementFinished()
+    calibrateMeshpoints("R", meshRamp)
+    cm.saveMeshpoints("R", meshRamp)
+
     exit(0)
 
 if args.spoints:
     mm.setFeedratePercentage(300)
     mm.moveToPos(Position(120, 100, 100), True)
     mm.waitForMovementFinished()
-    if(os.path.isfile('startpoints.dat')):
-        print('Load coordinates')
-        co=np.loadtxt('startpoints.dat')
-    else:
-        #default settings
-        co=np.array([[60,20,25],
-                    [110,20,25],
-                    [160,20,25],
-                    [220,20,25]])
-    for i in range(4):
 
-        print('Searching point', i+1)
-        searching=True
-        while(searching):
-            mm.moveToPos(Position(co[i,0], co[i,1]+20, co[i,2]+20), True)
-            mm.waitForMovementFinished()
-            mm.setFeedratePercentage(30)
-            mm.moveToPos(Position(co[i, 0], co[i, 1] , co[i, 2]), True)
-            mm.waitForMovementFinished()
-            #mm.setFeedratePercentage(30)
-            time.sleep(2)
-            mm.rollDie()
-            print('Position OK? (y/n/c)')
-            answ=input() or 'y'
-            if (answ=='y'):
-                searching=False
-                mm.setFeedratePercentage(200)
-                #mm.moveToPos(Position(120, 150, 100), True)
-                #mm.waitForMovementFinished()
-                find_die()
-                mm.waitForMovementFinished()
-            elif (answ=='n'):
-                print('Current position')
-                print(mm.getCurrentPosition())
-                mm.moveToPos(Position(co[i, 0], co[i, 1] + 20, co[i, 2] + 20), True)
-                mm.waitForMovementFinished()
-                print('New position')
-                co[i, 0] = input('x:') or co[i, 0]
-                co[i, 1] = input('y:') or co[i, 1]
-                co[i, 2] = input('z:') or co[i, 2]
-            else:
-                mm.doHoming()
-                mm.setFeedratePercentage(400)
-                mm.moveToPos(Position(120, 100, 50), True)
-                mm.waitForMovementFinished()
-                print(co[i,0],co[i,1],co[i,2])
-                mm.setFeedratePercentage(50)
-                print('New position')
-                co[i, 0] = input('x:') or co[i, 0]
-                co[i, 1] = input('y:') or co[i, 1]
-                co[i, 2] = input('z:') or co[i, 2]
-    np.savetxt('startpoints.dat',co)
+    loadMeshpoints()
+
+    calibrateMeshpoints("M", meshMagnet)
+    cm.saveMeshpoints("M", meshMagnet)
+
     exit(0)
-
-
 
 if args.feedratePercentage != cs.FEEDRATE_PERCENTAGE:
     mm.setFeedratePercentage(args.feedratePercentage)
@@ -379,8 +343,6 @@ if args.feedratePercentage != cs.FEEDRATE_PERCENTAGE:
 if args.doHoming:
     mm.doHoming()
     exit(0)
-
-#args.start=True
 
 if args.start:
     if (args.infinity):
@@ -414,5 +376,5 @@ if args.start:
 
 pos = Position(args.position[0], args.position[1], args.position[2])
 if pos.isValid():
-    mm.moveToPos(pos,args.segmented)
+    mm.moveToPos(pos, args.segmented)
 
