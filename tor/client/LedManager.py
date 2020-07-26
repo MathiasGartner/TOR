@@ -3,8 +3,10 @@ import time
 import tor.client.ClientSettings as cs
 
 class LedManager:
-    def __init__(self, brightness=cs.LED_STRIP_BRIGHTNESS):
+    def __init__(self, brightness=None):
         from rpi_ws281x import Adafruit_NeoPixel, Color
+        if brightness == None:
+            brightness = cs.LED_STRIP_BRIGHTNESS
         if brightness < 0:
             brightness = 0
         elif brightness > 255:

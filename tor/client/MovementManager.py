@@ -133,6 +133,9 @@ class MovementManager:
     def moveHome(self, segmented=False):
         self.moveToPos(cs.HOME_POSITION, segmented)
 
+    def moveToParkingPosition(self, segmented=False):
+        self.moveToPos(cs.PARKING_POSITION, segmented)
+
     def moveToAllCorners(self, segmented=False):
         self.moveToPos(cs.CORNER_X, segmented)
         time.sleep(0.5)
@@ -153,32 +156,6 @@ class MovementManager:
     def rollDie(self):
         print("die is now rolled...")
         self.pulseMagnet()
-
-    def searchForDie(self):
-        x = 0
-        minY = 20
-        dy = 40
-        y = cs.LY
-        magnetToRampOffsetY = 5
-        z = cs.PICKUP_Z
-        xToZero = True
-        self.moveToXYZ(x, y, z)
-        self.waitForMovementFinished()
-        while y > (dy + minY):
-            x = 0 if xToZero else cs.LX
-            self.moveToXYZ(x, y, z, segmented=True)
-            self.waitForMovementFinished()
-            #time.sleep(1)
-            xToZero = not xToZero
-            x = 0 if xToZero else cs.LX
-            self.moveToXYZ(x, y, z, segmented=True)
-            self.waitForMovementFinished()
-            time.sleep(1)
-            y -= dy
-            overRampY = (cs.RAMP_END_Y + cs.MAGNET_RADIUS + magnetToRampOffsetY) - y
-            if overRampY > 0:
-                z = cs.RAMP_END_Z - overRampY * np.tan(cs.RAMP_ALPHA)
-        self.moveToPos(cs.CENTER_TOP)
 
     def waitForMovementFinished(self, sleepTime=0):
         self.sendGCode("M400")

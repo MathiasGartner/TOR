@@ -112,7 +112,7 @@ def calibrateMeshpoints(type, p):
                     mm.setFeedratePercentage(200)
                     mm.moveToPos(Position(p[i, 0], p[i, 1] + 30, p[i, 2] + 20), True)
                     mm.waitForMovementFinished()
-                    mr.findDie()
+                    mr.pickupDie()
                     mm.waitForMovementFinished()
                 elif (answ == 'n'):
                     print('Current position')

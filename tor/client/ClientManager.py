@@ -33,7 +33,7 @@ class ClientManager:
             "C": self.clientId,
             "D": result
         }
-        answer = self.sendAndGetAnswer(self, msg)
+        answer = self.sendAndGetAnswer(msg)
         if "STATUS" in answer:
             print("server responds", answer["STATUS"])
 

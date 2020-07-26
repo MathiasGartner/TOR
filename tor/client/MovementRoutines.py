@@ -43,7 +43,6 @@ class MovementRoutines:
         oldFeedratePercentage = self.mm.feedratePercentage
         p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12 = self.loadPoints()
         n_rows = 4 # rows per area
-        self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
         self.mm.moveToPos(Position(p1[0], p1[1], 100), True)
         self.mm.moveToPos(Position(p1[0], p1[1], p1[2]), True)
         self.mm.waitForMovementFinished()
@@ -112,11 +111,12 @@ class MovementRoutines:
 
         self.mm.setFeedratePercentage(oldFeedratePercentage)
         self.mm.moveToPos(cs.AFTER_PICKUP_POSITION, True)
+        self.mm.waitForMovementFinished()
 
-
-    def findDie(self):
+    def pickupDie(self):
         found = False
         result = -1
+        diePosition = None
         if cs.USE_IMAGE_RECOGNITION:
             cam = Camera()
             self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
@@ -149,4 +149,7 @@ class MovementRoutines:
         else:
             print('Die not found, now searching...')
             self.searchForDie()
-        return found, result
+        return found, result, diePosition
+
+    def run(self):
+        pass

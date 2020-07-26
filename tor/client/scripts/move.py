@@ -74,7 +74,7 @@ def start_script():
     mm.rollDie()
     if (args.find):
         time.sleep(2)
-        found, result = mr.findDie()
+        found, result = mr.pickupDie()
         return found, result
 
 
@@ -90,7 +90,7 @@ if args.doHoming:
     exit(0)
 
 if args.pickup:
-    mr.findDie()
+    mr.pickupDie()
     exit(0)
 
 if args.start:

@@ -44,7 +44,7 @@ def getNextJobForClientId(clientId):
     if data is None:
         data = Job()
         data.Code = "W"
-        data.JobParameters = 1
+        data.JobParameters = 5
     return data
 
 def getMeshpoints(clientId):

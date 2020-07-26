@@ -1,20 +1,17 @@
 import datetime
 import numpy as np
-from random import randint
-from random import seed
-import sys
 import time
 import threading
 
-from tor.base import NetworkUtils
 from tor.base.DieRecognizer import DieRecognizer
 from tor.client.ClientManager import ClientManager
 import tor.client.ClientSettings as cs
 
 if cs.ON_RASPI:
-    from tor.client.Camera import Camera
     from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
+from tor.client.MovementRoutines import MovementRoutines
+from tor.client.Position import Position
 
 def keepAskingForNextJob(askEveryNthSecond = 10):
     global nextJob
@@ -27,53 +24,65 @@ def keepAskingForNextJob(askEveryNthSecond = 10):
         if sleepFor > 0:
             time.sleep(sleepFor)
 
-def doDieRoll():
-    print("doDieRoll()")
-    mm.moveToPos(cs.DROPOFF_ADVANCE_POSITION)
-    mm.waitForMovementFinished()
-    mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE)
-    mm.moveToPos(cs.DROPOFF_POSITION, segmented=True)
-    mm.setFeedratePercentage(cs.FR_DEFAULT)
+def run():
+    global runsSinceLastHoming
+    global lastPickupX
+    global countNotFound
+    global countSameResult
+    global lastResult
 
+    # move to dropoff position
+    #TODO: remove random, interpolate dropoffPos for lastPickupX
+    mm.setFeedratePercentage(cs.FR_DEFAULT)
+    dropoffPos = cs.MESH_MAGNET[np.random.randint(0, len(cs.MESH_MAGNET)), :]
+    mm.moveToPos(Position(dropoffPos[0], dropoffPos[1] + 20, 30), True)
+    mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE)
+    mm.moveToPos(Position(dropoffPos[0], dropoffPos[1] + 10, dropoffPos[2] + 10), True)
+    mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE_SLOW)
+    mm.moveToPos(Position(dropoffPos[0], dropoffPos[1], dropoffPos[2]), True)
     mm.waitForMovementFinished()
-    time.sleep(2)
+
+    # roll die
+    time.sleep(cs.WAIT_BEFORE_ROLL_TIME)
+    mm.setFeedratePercentage(cs.FR_FAST_MOVES)
     mm.rollDie()
-    time.sleep(cs.DIE_ROLL_TIME / 2)
+    time.sleep(cs.DIE_ROLL_TIME / 2.0)
     mm.moveToPos(cs.CENTER_TOP)
-    mm.waitForMovementFinished()
-    time.sleep(cs.DIE_ROLL_TIME / 2)
-    print("take picture...")
-    if cs.ON_RASPI:
-        image = cam.takePicture()
-    else:
-        image = dr.readDummyImage()
-    print("analyze picture...")
-    found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
-    print("write image...")
-    dr.writeImage(processedImages[1])
-    print("send result...")
+    time.sleep(cs.DIE_ROLL_TIME / 2.0)
+
+    # pickup die
+    found, result, diePosition = mr.pickupDie()
     if found:
-        print("found @", diePosition)
-        if not result > 0:
-            result = dr.getDieResult()
-        if not result > 0:
-            result = dr.getDieResultWithExtensiveProcessing()
-        if result > 0:
-            print("die result:", result)
-            #lm.showResult(result)
-            cm.sendDieRollResult(result)
+        lastPickupX = diePosition.x
+        cm.sendDieRollResult(result)
+        if lastResult == result:
+            countSameResult += 1
         else:
-            cm.sendDieResultNotRecognized()
-        mm.moveToXYPosDie(diePosition.x, diePosition.y)
-        mm.moveToPos(cs.CENTER_TOP)
-        if not dr.checkIfDiePickedUp():
-            mm.searchForDie()
-            mm.waitForMovementFinished()
+            countSameResult = 0
+        lastResult = result
     else:
-        cm.sendDieNotFound()
-        mm.searchForDie()
-    #mm.moveToXPosRamp(cs.LX/2)
-    mm.moveToPos(cs.DROPOFF_ADVANCE_POSITION)
+        lastPickupX = cs.LX / 2.0
+        cm.sendDieResultNotRecognized()
+        countNotFound += 1
+
+    #check if homing is needed
+    runsSinceLastHoming += 1
+    if runsSinceLastHoming >= cs.HOME_EVERY_N_RUNS:
+        mm.doHoming()
+        runsSinceLastHoming = 0
+    elif countNotFound >= cs.HOME_AFTER_N_FAILS:
+        mm.doHoming()
+        mr.searchForDie()
+        countNotFound = 0
+    elif countSameResult >= cs.HOME_AFTER_N_SAME_RESULTS:
+        mm.doHoming()
+        #TODO: while homing, check if image recognition finds die
+        #      for this, add option "waitForHomingFinished" to mm.doHoming()
+        #      then eihter call mr.searchForDie() or mr.pickupDie() or nothing?
+        mr.searchForDie()
+        countSameResult = 0
+
+    mm.moveToPos(cs.CENTER_TOP)
     mm.waitForMovementFinished()
 
 def doJobsDummy():
@@ -97,12 +106,12 @@ def doJobs():
         print(nextJob)
         if "R" in nextJob:
             for _ in range(int(nextJob["R"])):
-                doDieRoll()
+                run()
         elif "C" in nextJob:
             mm.moveToAllCorners()
             mm.waitForMovementFinished()
-        elif "M" in nextJob:
-            if "P" in nextJob:
+        elif "M" in nextJob: # M...move
+            if "P" in nextJob: # P...to position
                 pos = None
                 if nextJob["P"] == "BOTTOM_CENTER":
                     pos = cs.CENTER_BOTTOM
@@ -118,20 +127,22 @@ def doJobs():
                     mm.moveToPos(pos)
                     mm.waitForMovementFinished()
                     time.sleep(1)
-            elif "H" in nextJob:
+            elif "H" in nextJob: # H...homing
                 mm.doHoming()
                 mm.moveToPos(cs.CENTER_TOP)
                 mm.waitForMovementFinished()
-        elif "W" in nextJob:
+        elif "W" in nextJob: # W...wait
             if "T" in nextJob:
                 waitUntil = nextJob["T"]
                 while datetime.datetime.now() < waitUntil:
                     time.sleep(1)
-            if "S" in nextJob:
+            elif "S" in nextJob:
                 time.sleep(nextJob["S"])
-        elif "Q" in nextJob:
+            else:
+                time.sleep(nextJob["W"])
+        elif "Q" in nextJob: # Q...quit
             done = True
-    mm.moveHome()
+    mm.moveToParkingPosition()
     print("finished")
 
 ####################
@@ -139,20 +150,17 @@ def doJobs():
 ####################
 
 
-####################
-### main program ###
-####################
+###########################
+### get client identity ###
+###########################
 
-seed(12345)
-
-#get client identity
 cm = ClientManager()
-welcomeMessage = "I am client \"{}\" with ID {} and IP {}. My ramp is made out of {}, mounted on position {}"
+welcomeMessage = "I am client with ID {} and IP {}. My ramp is made out of {}, mounted on position {}"
 print("#######################")
-print(welcomeMessage.format(cm.clientIdentity["Name"], cm.clientId, cm.clientIdentity["IP"], cm.clientIdentity["Material"], cm.clientIdentity["Position"]))
+print(welcomeMessage.format(cm.clientId, cm.clientIdentity["IP"], cm.clientIdentity["Material"], cm.clientIdentity["Position"]))
 print("#######################")
 
-#load custom settings from file and server
+### load custom settings from file and server
 ccsModuleName = "tor.client.CustomClientSettings." + cm.clientIdentity["Material"]
 try:
     import importlib
@@ -160,27 +168,34 @@ try:
 except:
     print("No CustomClientSettings found.")
 
-meshBed, meshRamp, meshMagnet = cm.getMeshpoints()
+cm.loadSettings()
+cm.loadMeshpoints()
+
+dr = DieRecognizer()
+mm = MovementManager()
+mr = MovementRoutines()
 
 if cs.ON_RASPI:
     try:
-        cam = Camera()
-    except:
-        raise Exception("Could not connect to camera.")
-    try:
         lm = LedManager()
     except:
-        raise Exception("Could not connect to LED strip.")
+        raise Exception("Could not create LedManager.")
 
-dr = DieRecognizer()
 
-mm = MovementManager()
+####################
+### main program ###
+####################
 
 nextJob = ""
 
 jobScheduler = threading.Thread(target=keepAskingForNextJob)
 jobScheduler.start()
 
+runsSinceLastHoming = 0
+lastPickupX = cs.LX / 2.0
+countNotFound = 0
+countSameResult = 0
+lastResult = -1
 if cs.ON_RASPI:
     worker = threading.Thread(target=doJobs)
 else:

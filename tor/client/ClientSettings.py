@@ -41,6 +41,7 @@ AFTER_PICKUP_POSITION = Position(LX/2, 200, 50)
 PARKING_POSITION = Position(LX/2, 200, 50)
 
 PULSE_MAGNET_TIME_MS = 100
+WAIT_BEFORE_ROLL_TIME = 1
 DIE_ROLL_TIME = 1
 
 #special positions
@@ -49,7 +50,7 @@ CORNER_Z = Position(0, 0, 0)
 CORNER_Y = Position(LX, 0, 0)
 CORNER_X = Position(LX, LY, 0)
 CORNER_E = Position(0, LY, 0)
-CENTER_TOP = Position(LX/2, LY/2, MIN_Z)
+CENTER_TOP = Position(LX/2, LY/2, 50) #use min_z for z coordinate
 CENTER_BOTTOM = Position(LX/2, LY/2, PICKUP_Z)
 #DROPOFF_ADVANCE_POSITION = Position(LX/2, 30, 30)
 #DROPOFF_POSITION = Position(85, 8, 17)
@@ -60,7 +61,9 @@ HOME_CORDS =  HOME_POSITION.toCordLengths()
 
 #feedrates
 FR_DEFAULT = 200
+FR_FAST_MOVES = 450
 FR_DROPOFF_ADVANCE = 50
+FR_DROPOFF_ADVANCE_SLOW = 30
 FR_SEARCH_BED = 200
 FR_SEARCH_RAMP = 200
 
@@ -133,10 +136,13 @@ RAMP_MATERIAL = "plain"
 RAMP_MATERIAL_HEIGHT = 0
 
 #options for die pickup
+HOME_EVERY_N_RUNS = 5
+HOME_AFTER_N_FAILS = 3
+HOME_AFTER_N_SAME_RESULTS = 3
 USE_IMAGE_RECOGNITION = True
 SEARCH_RAMP = False
 STORE_IMAGES = True
-SHOW_DIE_RESULT_WITH_LEDS = True
+SHOW_DIE_RESULT_WITH_LEDS = False
 
 #web pages directory
 WEB_DIRECTORY = "/home/pi/tor/base/html"
