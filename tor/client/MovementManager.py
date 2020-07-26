@@ -9,20 +9,29 @@ from tor.client.Cords import Cords
 from tor.client.Position import Position
 
 class MovementManager:
+    isInitialized = False
+
     def __init__(self):
         self.com = Communicator()
+        self.feedratePercentage = 0
+        self.currentPosition = Position(-1, -1, -1)
+        if not self.isInitialized:
+            self.__initBoard()
+            self.isInitialized = True
 
-    def initBoard(self):
+    def __initBoard(self):
         # Restore Settings
         #self.sendGCode("M501")
         # Set Feedrate Percentage
-        self.setFeedratePercentage(cs.FEEDRATE_PERCENTAGE)
+        self.setFeedratePercentage(cs.FR_DEFAULT)
         # enable all steppers
         self.sendGCode("M17")
         self.updateCurrentPosition()
+        self.waitForMovementFinished()
 
     def setFeedratePercentage(self, fr):
         self.sendGCode("M220 S{}".format(fr))
+        self.feedratePercentage = fr
 
     def sendGCode(self, cmd):
         print("SEND: " + cmd)
@@ -91,7 +100,7 @@ class MovementManager:
         self.waitForMovementFinished()
         self.updateCurrentPosition()
 
-    def moveToCords(self, cords, segmented=False):
+    def __moveToCords(self, cords, segmented=False):
         cmd = "G1 " + self.getCordLengthGCode(cords) + (" S" if segmented else "")
         self.sendGCode(cmd)
 
@@ -101,28 +110,8 @@ class MovementManager:
         for p in pos:
             print("MOVE{}:".format(" SEG" if segmented else ""), p.x, p.y, p.z)
             cords = p.toCordLengths()
-            self.moveToCords(cords, segmented)
+            self.__moveToCords(cords, segmented)
             self.currentPosition = p
-
-    #TODO: remove, should only be done in Marlin and not on external client. use "G1 S ..." command
-    def moveToPosSegmented(self, pos):
-        self.moveToPos(pos, True)
-        """
-        startPos = self.currentPosition
-        diffPos = pos - startPos
-        unitsPerSegment = 10.0
-        length = diffPos.norm()
-        segmentCount = math.floor(length / unitsPerSegment)
-        segmentCount = max(segmentCount, 1)
-        segmentChange = diffPos / segmentCount
-        nextPos = startPos + segmentChange
-        segmentedPositions = []
-        for i in range(1, segmentCount):
-            segmentedPositions.append(nextPos)
-            nextPos = nextPos + segmentChange
-        segmentedPositions.append(pos)
-        self.moveToPos(segmentedPositions)
-        """
 
     def moveToXYZ(self, x, y, z, segmented=False):
         pos = Position(x, y, z)

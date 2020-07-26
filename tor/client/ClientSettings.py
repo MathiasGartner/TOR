@@ -38,6 +38,7 @@ PICKUP_ABOVE_GROUND = DICE_HEIGHT
 PICKUP_Z = LZ - MAGNET_HEIGHT - PICKUP_ABOVE_GROUND
 BEFORE_PICKUP_POSITION = Position(LX/2, 200, 50)
 AFTER_PICKUP_POSITION = Position(LX/2, 200, 50)
+PARKING_POSITION = Position(LX/2, 200, 50)
 
 PULSE_MAGNET_TIME_MS = 100
 DIE_ROLL_TIME = 1
@@ -53,10 +54,15 @@ CENTER_BOTTOM = Position(LX/2, LY/2, PICKUP_Z)
 #DROPOFF_ADVANCE_POSITION = Position(LX/2, 30, 30)
 #DROPOFF_POSITION = Position(85, 8, 17)
 DROPOFF_ADVANCE_POSITION = Position(60, 30, 30)
-DROPOFF_ADVANCE_FEEDRATE = 50
 DROPOFF_POSITION = Position(60, 8, 11)
 HOME_POSITION = CORNER_X
 HOME_CORDS =  HOME_POSITION.toCordLengths()
+
+#feedrates
+FR_DEFAULT = 200
+FR_DROPOFF_ADVANCE = 50
+FR_SEARCH_BED = 200
+FR_SEARCH_RAMP = 200
 
 #Calibration meshpoints for bed, ramp and magnet
 MESH_BED_TYPE = "B"
@@ -66,6 +72,7 @@ MESH_BED_DEFAULT = [(0, 242, 198),
                     (0, 150, 201),
                     (121, 150.5, 204),
                     (242, 150, 203)]
+MESH_BED = np.array(MESH_BED_DEFAULT)
 MESH_RAMP_TYPE = "R"
 MESH_RAMP_DEFAULT = [(0, 130, 140),
                      (121, 130, 140),
@@ -73,11 +80,13 @@ MESH_RAMP_DEFAULT = [(0, 130, 140),
                      (0, 40, 65),
                      (121, 40, 65),
                      (242, 40, 65)]
+MESH_RAMP = np.array(MESH_RAMP_DEFAULT)
 MESH_MAGNET_TYPE = "M"
 MESH_MAGNET_DEFAULT = [(60, 20, 25),
                        (110, 20, 25),
                        (160, 20, 25),
                        (220, 20, 25)]
+MESH_MAGNET = np.array(MESH_MAGNET_DEFAULT)
 
 #camera settings
 CAM_ISO = 400
@@ -88,10 +97,10 @@ CAM_AWBB = 1.5781
 
 # dice recognition configuration:
 IMG_USE_WARPING = False
-IMG_TL = [0, 330] # top left
-IMG_BL = [0, 1600] # bottom left
-IMG_TR = [2540, 360] # top right
-IMG_BR = [2520, 1620] # bottom right
+IMG_TL = [20, 420] # top left
+IMG_BL = [20, 1675] # bottom left
+IMG_TR = [2570, 420] # top right
+IMG_BR = [2570, 1675] # bottom right
 IMG_PX_X = 2592
 IMG_PX_Y = 1944 #PiCameraResolutionRounded: frame size rounded up from 2592x1944 to 2592x1952. should I use 1952 here?
 
@@ -99,7 +108,6 @@ BLOB_MIN_DIAMETER = 18
 BLOB_MAX_DIAMETER = 31
 
 # movement configuration:
-FEEDRATE_PERCENTAGE = 200
 G_HOMING = "G28 A0 S50 P130 F68 R8 D1.05 B1.15"
 
 # LED strip configuration:
@@ -124,10 +132,14 @@ LED_STRIP_DEFAULT_COLOR = (20, 170, 20)
 RAMP_MATERIAL = "plain"
 RAMP_MATERIAL_HEIGHT = 0
 
-#additional properties
-TRY_FINDING = True
+#options for die pickup
+USE_IMAGE_RECOGNITION = True
 SEARCH_RAMP = False
+STORE_IMAGES = True
+SHOW_DIE_RESULT_WITH_LEDS = True
 
+#web pages directory
+WEB_DIRECTORY = "/home/pi/tor/base/html"
 
 
 

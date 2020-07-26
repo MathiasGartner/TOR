@@ -31,16 +31,9 @@ def doDieRoll():
     print("doDieRoll()")
     mm.moveToPos(cs.DROPOFF_ADVANCE_POSITION)
     mm.waitForMovementFinished()
-    mm.setFeedratePercentage(cs.DROPOFF_ADVANCE_FEEDRATE)
+    mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE)
     mm.moveToPos(cs.DROPOFF_POSITION, segmented=True)
-    mm.setFeedratePercentage(cs.FEEDRATE_PERCENTAGE)
-
-    #dropoff_cords = cs.DROPOFF_POSITION.toCordLengths()
-    #print(dropoff_cords)
-    #dropoff_cords.lengths[0] += 1
-    #dropoff_cords.lengths[3] += 1
-    #print(dropoff_cords)
-    #mm.moveToCords(dropoff_cords)
+    mm.setFeedratePercentage(cs.FR_DEFAULT)
 
     mm.waitForMovementFinished()
     time.sleep(2)
@@ -93,7 +86,6 @@ def doJobsDummy():
 
 def doJobs():
     global nextJob
-    mm.initBoard()
     mm.doHoming()
     mm.moveToPos(cs.CENTER_TOP)
     mm.waitForMovementFinished()

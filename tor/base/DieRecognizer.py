@@ -85,7 +85,11 @@ class DieRecognizer:
             im = cv2.line(im, tuple(l[0]), tuple(l[1]), (0, 0, 255), thickness=1)
         return im
 
-    def cropImage(self, image, tl = cs.IMG_TL, br = cs.IMG_BR):
+    def cropImage(self, image, tl=None, br=None):
+        if tl is None:
+            tl = cs.IMG_TL
+        if br is None:
+            br = cs.IMG_BR
         cropped = image[tl[1]:br[1], tl[0]:br[0]]
         return cropped
 
@@ -120,7 +124,7 @@ class DieRecognizer:
 
     def getDiePosition(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False, alreadyGray=False):
         if not alreadyCropped:
-            im = self.cropToSearchableArea(im)
+            im = self.transformImage(im)
         im_original = im
         if not alreadyGray:
             im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)

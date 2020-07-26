@@ -22,7 +22,6 @@ try:
     if mode != 17 and mode != 15 and mode != 11 and mode != 12 and mode != 10:
         print("init board...")
         mm = MovementManager()
-        mm.initBoard()
         time.sleep(0.5)
     else:
         mm = None
@@ -77,9 +76,9 @@ elif mode == 7: #test dropoff
         mm.waitForMovementFinished(0.5)
         mm.moveToPos(cs.DROPOFF_ADVANCE_POSITION)
         mm.waitForMovementFinished(0.5)
-        mm.setFeedratePercentage(cs.DROPOFF_ADVANCE_FEEDRATE)
+        mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE)
         mm.moveToPos(cs.DROPOFF_POSITION, segmented=True)
-        mm.setFeedratePercentage(cs.FEEDRATE_PERCENTAGE)
+        mm.setFeedratePercentage(cs.FR_DEFAULT)
         mm.waitForMovementFinished(2)
         mm.moveToPos(cs.DROPOFF_ADVANCE_POSITION)
         mm.waitForMovementFinished(0.5)
@@ -162,13 +161,7 @@ elif mode == 15: #set led strip segments
         lm.setLeds(leds, r, g, b)
 
 elif mode == 16: # move forever
-    mm.setCurrentPosition(Cords([0, 0, 0, 0]))
-    while True:
-        length = 50
-        mm.moveToCords(Cords([length, length, length, length]))
-        mm.waitForMovementFinished(0.5)
-        mm.moveToCords(Cords([0, 0, 0, 0]))
-        mm.waitForMovementFinished(0.5)
+    print("not supported anymore. use mode 18 or motorTest.py")
 
 elif mode == 17: # take pictures forever
     i = 0

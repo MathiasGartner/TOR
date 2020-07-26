@@ -58,22 +58,21 @@ class ClientManager:
         answer = self.sendAndGetAnswer(msg)
         return answer
 
-    def getMeshpoints(self):
-        meshBed = cs.MESH_BED_DEFAULT
-        meshRamp = cs.MESH_BED_DEFAULT
-        meshMagnet = cs.MESH_BED_DEFAULT
+    def loadMeshpoints(self):
+        cs.MESH_BED = cs.MESH_BED_DEFAULT
+        cs.MESH_RAMP = cs.MESH_RAMP_DEFAULT
+        cs.MESH_MAGNET = cs.MESH_MAGNET_DEFAULT
         msg = {
             "C": self.clientId,
             "GET": "MESH"
         }
         answer = self.sendAndGetAnswer(msg)
         if "B" in answer:
-            meshBed = answer["B"]
+            cs.MESH_BED = np.array(answer["B"])
         if "R" in answer:
-            meshRamp = answer["R"]
+            cs.MESH_RAMP = np.array(answer["R"])
         if "M" in answer:
-            meshMagnet = answer["M"]
-        return np.array(meshBed), np.array(meshRamp), np.array(meshMagnet)
+            cs.MESH_MAGNET = np.array(answer["M"])
 
     def saveMeshpoints(self, type, points):
         msg = {

@@ -20,11 +20,10 @@ def move(direction):
 
     dest = 200 * direction
     pos = Cords([0, 0, dest, dest])
-    mm.moveToCords(pos)
+    mm.__moveToCords(pos)
 
 
 mm = MovementManager()
-mm.initBoard()
 time.sleep(0.5)
 mm.setFeedratePercentage(500)
 
