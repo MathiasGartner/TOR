@@ -61,23 +61,23 @@ HOME_CORDS =  HOME_POSITION.toCordLengths()
 #Calibration meshpoints for bed, ramp and magnet
 MESH_BED_TYPE = "B"
 MESH_BED_DEFAULT = [(0, 242, 198),
-                    (121,242,200),
+                    (121, 242, 200),
                     (242, 242, 203),
                     (0, 150, 201),
-                    (121,150.5,204),
+                    (121, 150.5, 204),
                     (242, 150, 203)]
 MESH_RAMP_TYPE = "R"
-MESH_RAMP_DEFAULT = [(0,130,140),
+MESH_RAMP_DEFAULT = [(0, 130, 140),
                      (121, 130, 140),
-                     (242,130,140),
+                     (242, 130, 140),
                      (0, 40, 65),
-                     (121,40,65),
+                     (121, 40, 65),
                      (242, 40, 65)]
 MESH_MAGNET_TYPE = "M"
-MESH_MAGNET_DEFAULT = [(60,20,25),
-                       (110,20,25),
-                       (160,20,25),
-                       (220,20,25)]
+MESH_MAGNET_DEFAULT = [(60, 20, 25),
+                       (110, 20, 25),
+                       (160, 20, 25),
+                       (220, 20, 25)]
 
 #camera settings
 CAM_ISO = 400

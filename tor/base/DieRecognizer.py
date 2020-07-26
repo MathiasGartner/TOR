@@ -93,6 +93,12 @@ class DieRecognizer:
         warped = cv2.warpPerspective(image, self.warpMatrix, (self.warpWidth, self.warpHeight))
         return warped
 
+    def transformImage(self, image):
+        if cs.IMG_USE_WARPING:
+            return self.warpImage(image)
+        else:
+            return self.cropImage(image)
+
     def markDieOnImage(self, im, keypoints, isGray=False):
         if isGray:
             im_color = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)

@@ -61,18 +61,19 @@ lm = LedManager()
 mm.initBoard()
 time.sleep(0.5)
 
-def save_cropped_picture(path):
+def saveCurrentView(path):
     cam = Camera()
     dr = DieRecognizer()
     if (args.led):
         lm.setAllLeds()
     mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
-    image=cam.takePicture()
+    image = cam.takePicture()
+    cam.close()
+    if (args.led):
+        lm.clear()
     mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
-    image=dr.cropToSearchableArea(image)
+    image = dr.transformImage(image)
     dr.writeImage(image,"current_view.jpg", directory=path)
-    cam.cam.close()
-    if (args.led): lm.showResult(0)
 
 def find_die():
     found = False
@@ -82,7 +83,7 @@ def find_die():
         mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
         image = cam.takePicture()
         mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
-        cam.cam.close()
+        cam.close()
 
         dr = DieRecognizer()
         found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
@@ -90,7 +91,6 @@ def find_die():
         dr.writeImage(processedImages[0], directory=directory)
         dr.writeRGBArray(processedImages[0], directory=directory)
         print(result)
-    #found=False #for the moment finding doesn't work
     if (found):
         if (args.led):  lm.showResult(result)
         print(diePosition)
@@ -215,29 +215,16 @@ def search_die():
     mm.moveToPos(Position(100,200,100),True)
 
 def start_script():
-    if (os.path.isfile('startpoints.dat')):
-        cos=np.loadtxt('startpoints.dat')
-        spos=cos[np.random.randint(0,4),:]
-        #spos = cos[2]
-        mm.waitForMovementFinished()
-        mm.moveToPos(Position(spos[0], spos[1]+20, 50), True)
-        mm.waitForMovementFinished()
-        mm.setFeedratePercentage(50)
-        mm.moveToPos(Position(spos[0], spos[1]+10, spos[2]+10), True)
-        mm.waitForMovementFinished()
-        mm.setFeedratePercentage(30)
-        mm.moveToPos(Position(spos[0], spos[1], spos[2]), True)
-        mm.waitForMovementFinished()
-    else:
-        mm.waitForMovementFinished()
-        mm.moveToPos(Position(140, 30, 50), True)
-        mm.waitForMovementFinished()
-        mm.setFeedratePercentage(50)
-        mm.moveToPos(Position(140, 10, 8), True)
-        mm.waitForMovementFinished()
-        mm.setFeedratePercentage(30)
-        mm.moveToPos(Position(140, 3, 0), True)
-        mm.waitForMovementFinished()
+    spos = meshMagnet[np.random.randint(0, 4), :]
+    mm.waitForMovementFinished()
+    mm.moveToPos(Position(spos[0], spos[1]+20, 50), True)
+    mm.waitForMovementFinished()
+    mm.setFeedratePercentage(50)
+    mm.moveToPos(Position(spos[0], spos[1]+10, spos[2]+10), True)
+    mm.waitForMovementFinished()
+    mm.setFeedratePercentage(30)
+    mm.moveToPos(Position(spos[0], spos[1], spos[2]), True)
+    mm.waitForMovementFinished()
     mm.setFeedratePercentage(450)
     time.sleep(1)
     mm.rollDie()
@@ -258,7 +245,8 @@ def calibrateMeshpoints(type, p):
                 mm.moveToPos(pos, True)
                 mm.waitForMovementFinished()
                 if ((type == "B") and args.take_picture):
-                    save_cropped_picture('/var/www/html')
+                    saveCurrentView('/var/www/html')
+                    print("http://" + cm.clientIdentity["IP"])
                 print('Position OK? (y/n)')
                 if ((input() or 'y') == 'y'):
                     searching = False
