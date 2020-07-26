@@ -98,6 +98,11 @@ class ClientManager:
             "IMAGE_CROP_Y_TOP": "INT",
             "IMAGE_CROP_Y_BOTTOM": "INT",
             "TRY_FINDING": "BOOL",
+            "CAM_ISO": "INT",
+            "CAM_SHUTTER_SPEED": "INT",
+            "CAM_CONTRAST": "INT",
+            "CAM_AWBR": "FLOAT",
+            "CAM_AWBB": "FLOAT",
             "IMG_USE_WARPING": "BOOL",
             "IMG_TL": "LIST",
             "IMG_BL": "LIST",
@@ -124,7 +129,22 @@ class ClientManager:
                 else:
                     print("ERROR setting", name, "=", raw_value)
 
-    def saveCameraSettingsWarping(self, tl, bl, tr, br):
+    def saveCameraSettings(self):
+        msg = {
+            "C": self.clientId,
+            "PUT": "SETTINGS",
+            "SETTINGS": [
+                ["CAM_ISO", cs.CAM_ISO],
+                ["CAM_SHUTTER_SPEED", cs.CAM_SHUTTER_SPEED],
+                ["CAM_CONTRAST", cs.CAM_CONTRAST],
+                ["CAM_AWBR", cs.CAM_AWBR],
+                ["CAM_AWBB", cs.CAM_AWBB]
+            ]
+        }
+        answer = self.sendAndGetAnswer(msg)
+        # TODO: check server response
+
+    def saveImageSettingsWarping(self, tl, bl, tr, br):
         msg = {
             "C": self.clientId,
             "PUT": "SETTINGS",
@@ -139,7 +159,7 @@ class ClientManager:
         answer = self.sendAndGetAnswer(msg)
         # TODO: check server response
 
-    def saveCameraSettingsCropping(self, tl, br):
+    def saveImageSettingsCropping(self, tl, br):
         msg = {
             "C": self.clientId,
             "PUT": "SETTINGS",

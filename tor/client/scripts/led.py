@@ -13,7 +13,7 @@ args = parser.parse_args()
 if args.topLed:
     from tor.client.MovementManager import MovementManager
     mm = MovementManager()
-    mm.setLed(args.brightness)
+    mm.setTopLed(args.brightness)
 else:
     from tor.client.LedManager import LedManager
     lm = LedManager(args.brightness)

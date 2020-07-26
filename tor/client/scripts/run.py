@@ -132,9 +132,9 @@ elif mode == 13: # test magnet pulse
 
 elif mode == 14: #test top led
     for i in range(10):
-        mm.setLed(int(sys.argv[2]))
+        mm.setTopLed(int(sys.argv[2]))
         time.sleep(0.3)
-        mm.setLed(0)
+        mm.setTopLed(0)
         time.sleep(0.3)
 
 elif mode == 15: #set led strip segments

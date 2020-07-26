@@ -30,7 +30,9 @@ class DieRecognizer:
     def createWarpMatrix(self, tl, bl, tr, br):
         w = max((tr[0] - tl[0]), (br[0] - bl[0]))
         h = max((bl[1] - tl[1]), (br[1] - tr[1]))
-        print("w:", w, "h:", h)
+        #w = int(w / 2)
+        #h = int(h / 2)
+        #print("warp matrix with w:", w, "h:", h)
         src = np.array([tl, bl, tr, br], dtype="float32")
         dst = np.array([[0, 0],
                         [0, h - 1],

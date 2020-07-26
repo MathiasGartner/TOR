@@ -79,6 +79,13 @@ MESH_MAGNET_DEFAULT = [(60,20,25),
                        (160,20,25),
                        (220,20,25)]
 
+#camera settings
+CAM_ISO = 400
+CAM_SHUTTER_SPEED = 50000
+CAM_CONTRAST = 20
+CAM_AWBR = 1.2851
+CAM_AWBB = 1.5781
+
 # dice recognition configuration:
 IMG_USE_WARPING = False
 IMG_TL = [0, 330] # top left
@@ -116,7 +123,6 @@ LED_STRIP_DEFAULT_COLOR = (20, 170, 20)
 # properties of natural materials on ramp
 RAMP_MATERIAL = "plain"
 RAMP_MATERIAL_HEIGHT = 0
-
 
 #additional properties
 TRY_FINDING = True

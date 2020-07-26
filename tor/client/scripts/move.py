@@ -31,6 +31,7 @@ parser.add_argument("-infinity", dest='infinity', action="store_true")
 parser.add_argument("-spoints", dest='spoints',action='store_true') #validate starting points
 parser.add_argument("-cor", dest="cal_on_run", default=0, type=int)
 parser.add_argument("-camera", dest='camera', action="store_true")
+parser.add_argument("-image", dest='image', action="store_true")
 args = parser.parse_args()
 
 
@@ -56,7 +57,7 @@ cm.loadSettings()
 meshBed, meshRamp, meshMagnet = cm.getMeshpoints()
 
 mm = MovementManager()
-if (args.led): lm = LedManager(brightness=100)
+lm = LedManager()
 mm.initBoard()
 time.sleep(0.5)
 
@@ -65,9 +66,9 @@ def save_cropped_picture(path):
     dr = DieRecognizer()
     if (args.led):
         lm.setAllLeds()
-    mm.setLed(cs.LED_TOP_BRIGHTNESS)
+    mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
     image=cam.takePicture()
-    mm.setLed(cs.LED_TOP_BRIGHTNESS_OFF)
+    mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
     image=dr.cropToSearchableArea(image)
     dr.writeImage(image,"current_view.jpg", directory=path)
     cam.cam.close()
@@ -78,9 +79,9 @@ def find_die():
     result = -1
     if (cs.TRY_FINDING):
         cam = Camera()
-        mm.setLed(cs.LED_TOP_BRIGHTNESS)
+        mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
         image = cam.takePicture()
-        mm.setLed(cs.LED_TOP_BRIGHTNESS_OFF)
+        mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
         cam.cam.close()
 
         dr = DieRecognizer()
@@ -341,6 +342,36 @@ if args.spoints:
     exit(0)
 
 if args.camera:
+    finish = False
+    dr = DieRecognizer()
+    cm.loadSettings()
+    lm.setAllLeds()
+    mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
+    while not finish:
+        cam = Camera()
+        image = cam.takePicture()
+        cam.close()
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        dr.writeImage(image, "camera.jpg", directory="/var/www/html")
+        print("http://" + cm.clientIdentity["IP"] + "/camera.html")
+        print('Camera settings OK? (y/n)')
+        answ = input() or 'y'
+        if answ == "y":
+            finish = True
+            cm.saveCameraSettings()
+        else:
+            #print("current settings:", cs.CAM_ISO, cs.CAM_SHUTTER_SPEED, cs.CAM_CONTRAST, cs.CAM_AWBR, cs.CAM_AWBB)
+            print("current settings:", cs.CAM_ISO, cs.CAM_SHUTTER_SPEED, cs.CAM_CONTRAST)
+            cs.CAM_ISO = int(input("ISO {100,200,400,800}:") or cs.CAM_ISO)
+            cs.CAM_SHUTTER_SPEED = int(input("Shutter [µs]:") or cs.CAM_SHUTTER_SPEED)
+            cs.CAM_CONTRAST = int(input("contrast [-100,100]:") or cs.CAM_CONTRAST)
+            #cs.CAM_AWBR = float(input("awbr [0.0,8.0]:") or cs.CAM_AWBR)
+            #cs.CAM_AWBB = float(input("awbb [0.0,8.0]:") or cs.CAM_AWBB)
+    lm.clear()
+    mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
+    exit(0)
+
+if args.image:
     #############
     # TL ### TR #
     # BL ### BR #
@@ -354,17 +385,17 @@ if args.camera:
     bl = cs.IMG_BL
     tr = cs.IMG_TR
     br = cs.IMG_BR
+    dr = DieRecognizer()
     while not finish:
         cam = Camera()
-        dr = DieRecognizer()
         if (args.led):
             lm.setAllLeds()
-            mm.setLed(cs.LED_TOP_BRIGHTNESS)
+            mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
         image = cam.takePicture()
         cam.close()
         if (args.led):
             lm.clear()
-            mm.setLed(cs.LED_TOP_BRIGHTNESS_OFF)
+            mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
 
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         if not needsWarping:
@@ -378,7 +409,11 @@ if args.camera:
         dr.writeImage(markedImage, "marked.jpg", directory="/var/www/html")
         dr.writeImage(transformedImage, "transformed.jpg", directory="/var/www/html")
 
-        print("http://" + cm.clientIdentity["IP"] + "/camera.html")
+        print("http://" + cm.clientIdentity["IP"] + "/image.html")
+        if needsWarping:
+            print("currently warping, use this only if really needed (processing time of ~1 second)")
+        else:
+            print("currently cropping, switch to warping only if really needed (processing time of ~1 second)")
         print('Image OK? (y/c/w) [yes/crop/warp]')
         answ = input() or 'y'
         if answ == "y":
@@ -389,9 +424,9 @@ if args.camera:
             cs.IMG_TR = tr
             cs.IMG_BR = br
             if needsWarping:
-                cm.saveCameraSettingsWarping(tl, bl, tr, br)
+                cm.saveImageSettingsWarping(tl, bl, tr, br)
             else:
-                cm.saveCameraSettingsCropping(tl, br)
+                cm.saveImageSettingsCropping(tl, br)
         elif answ == "c":
             needsWarping = False
             print('Current top left:', tl)
