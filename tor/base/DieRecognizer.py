@@ -56,6 +56,17 @@ class DieRecognizer:
             raise Exception("Could not open image: ", imgPath)
         return image
 
+    def readDummyImageGeneralized(self, path=r"C:\\Users\\Michaela\\Documents\\physik\\AEC_Projekt\\topled\\test{"
+                                             r":03d}.jpg", filename_extension=".jpg", *params):
+        imgPath = path.format(*params, filename_extension)
+        if filename_extension == '.npy':
+            image = np.load(imgPath)
+        else:
+            image = cv2.imread(imgPath)
+        if image is None:
+            raise Exception("Could not open image: ", imgPath)
+        return image
+
     def writeImage(self, im, fileName="", directory=""):
         if fileName == "":
             fileName = "run_{}.jpg".format(datetime.now().strftime("%Y%m%d%H%M%S"))
@@ -122,7 +133,9 @@ class DieRecognizer:
             im_color = cv2.rectangle(im_color, (minX, minY), (maxX, maxY), (0, 0, 255), thickness=10)
         return im_color
 
-    def getDiePosition(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False, alreadyGray=False):
+
+    def getDiePosition(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False,
+                       alreadyGray=False, threshold = 110):
         if not alreadyCropped:
             im = self.transformImage(im)
         im_original = im
@@ -136,10 +149,57 @@ class DieRecognizer:
         #im = cv2.GaussianBlur(im, (blurSize, blurSize), 13, 13)
         #im = cv2.bilateralFilter(im, blurSize, blurSize / 2, blurSize / 2)
 
-        threshold_min = 70
-        retVal, im = cv2.threshold(im, threshold_min, 255, cv2.THRESH_BINARY)
+
+        retVal, im = cv2.threshold(im, threshold, 255, cv2.THRESH_BINARY)  #45
+        # im = cv2.adaptiveThreshold(im, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 51, 40)
+        #second to last number is size of neighbourhood, threshhold is last number below mean over neighbourhood
+
 
         blobs = self.blobDetector.detect(im)
+
+        diePositionRelative = Point2D(-1, -1)
+        if len(blobs) > 0:
+            maxdist = 60
+            too_far_away = True
+            while too_far_away:
+                    meanX = np.mean([blob.pt[0] for blob in blobs])
+                    meanY = np.mean([blob.pt[1] for blob in blobs])
+
+                    coordinates = [blob.pt for blob in blobs]
+                    dist_from_mean = [np.linalg.norm(np.array([x-meanX, y-meanY])) for x,y in coordinates]
+                    too_far_away = np.array([(dist > maxdist) for dist in dist_from_mean]).any()
+
+                    if too_far_away:
+                        index = dist_from_mean.index(max(dist_from_mean))
+                        del blobs[index]
+            
+            if len(blobs) > 6:
+                #TODO: choose the correct ones
+                found = False
+                result = 0
+            else:
+                #TODO: check if the detected blobs correspond to the face of a die
+                #      eg. distance between blobs, arrangement, ...               
+                diePositionPX = Point2D(meanX, meanY)
+                
+                px=diePositionPX.x/im.shape[1]
+                py=diePositionPX.y/im.shape[0]
+                #new edge trafo
+                print(im.shape)
+                #input()
+                diePositionRelative.x=px+cs.DIE_SIZE_X/(2.*im.shape[1])*(2*px-1)
+                diePositionRelative.y=1-(py+cs.DIE_SIZE_Y/(2.*im.shape[0])*(2*py-1))
+
+                found = True
+                result = min(len(blobs), 6)
+                if len(blobs)==2:
+                    mindist = 35
+                    too_close = np.array([(dist < mindist) for dist in dist_from_mean]).any()
+                    if too_close:
+                        result = 0
+        else:
+            found = False
+            result = 0
 
         #im_with_blobs = cv2.drawKeypoints(im, blobs, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
         if returnOriginalImg:
@@ -160,38 +220,6 @@ class DieRecognizer:
 
             cv2.waitKey(10000)
             cv2.destroyAllWindows()
-
-        diePositionRelative = Point2D(-1, -1)
-        if len(blobs) > 0:
-            if len(blobs) > 6:
-                #TODO: choose the correct ones
-                found = False
-                result = 0
-            else:
-                #TODO: check if the detected blobs correspond to the face of a die
-                #      eg. distance between blobs, arrangement, ...
-                meanX = np.mean([blob.pt[0] for blob in blobs])
-                meanY = np.mean([blob.pt[1] for blob in blobs])
-
-                offset = 60
-                diePositionPX = Point2D(meanX, meanY)
-                #diePositionRelative.x = (diePositionPX.x - offset) / (im.shape[1] - 2 * offset)
-                #diePositionRelative.y = 1.0 - (diePositionPX.y - offset) / (im.shape[0] - 2 * offset)
-                px=diePositionPX.x/im.shape[1]
-                py=diePositionPX.y/im.shape[0]
-                #new edge trafo
-                print(im.shape)
-                #input()
-                diePositionRelative.x=px+cs.DIE_SIZE_X/(2.*im.shape[1])*(2*px-1)
-                diePositionRelative.y=1-(py+cs.DIE_SIZE_Y/(2.*im.shape[0])*(2*py-1))
-
-                print("diePositionPX:", diePositionPX)
-                print("diePositionRelative:", diePositionRelative)
-                found = True
-                result = len(blobs)
-        else:
-            found = False
-            result = 0
         return (found, diePositionRelative, result, (im_original, im_with_blobs))
 
     def getDieResult(self):

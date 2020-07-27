@@ -4,6 +4,8 @@ import random
 import sys
 import time
 
+import numpy as np
+
 from tor.base.DieRecognizer import DieRecognizer
 import tor.client.ClientSettings as cs
 from tor.client.Cords import Cords
@@ -11,7 +13,7 @@ from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
 from tor.client.Position import Position
 
-mode = 4
+mode = 18
 if len(sys.argv) > 1:
     mode=int(sys.argv[1])
 print("mode: ", mode)
@@ -19,7 +21,7 @@ print("mode: ", mode)
 try:
     if mode == 17:
         from tor.client.Camera import Camera
-    if mode != 17 and mode != 15 and mode != 11 and mode != 12 and mode != 10:
+    if mode != 17 and mode != 18 and mode != 15 and mode != 11 and mode != 12 and mode != 10:
         print("init board...")
         mm = MovementManager()
         time.sleep(0.5)
@@ -161,7 +163,7 @@ elif mode == 15: #set led strip segments
         lm.setLeds(leds, r, g, b)
 
 elif mode == 16: # move forever
-    print("not supported anymore. use mode 18 or motorTest.py")
+    print("not supported anymore. use mode 19 or motorTest.py")
 
 elif mode == 17: # take pictures forever
     i = 0
@@ -179,7 +181,25 @@ elif mode == 17: # take pictures forever
         print("waiting...")
         time.sleep(10)
 
-elif mode == 18: # move forever between two positions
+elif mode == 18: # read and search dice dots #like mode 9 but read image and test timing on device...
+    filename = 'test001'
+    if len(sys.argv) > 2:
+        filename = sys.argv[2]
+    print("filename: ", filename)
+
+    from tor.base.DieRecognizer import DieRecognizer
+    dr = DieRecognizer()
+    image = np.load(filename.format(".npy"))
+    print("analyze picture...")
+    t0 = time.time()
+    found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
+    print('timing of image analysis:', time.time()-t0)
+    print("write image...")
+    dr.writeImage(processedImages[1], filename.format("_result.jpg"))
+    print("result:", result)
+    #lm.showResult(result)
+
+elif mode == 19: # move forever between two positions
     mm.doHoming()
     pos1 = Position(float(sys.argv[2]), float(sys.argv[3]), float(sys.argv[4]))
     pos2 = Position(float(sys.argv[5]), float(sys.argv[6]), float(sys.argv[7]))
