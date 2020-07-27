@@ -107,7 +107,7 @@ IMG_BR = [2570, 1675] # bottom right
 IMG_PX_X = 2592
 IMG_PX_Y = 1944 #PiCameraResolutionRounded: frame size rounded up from 2592x1944 to 2592x1952. should I use 1952 here?
 
-BLOB_MIN_DIAMETER = 18
+BLOB_MIN_DIAMETER = 20 #18
 BLOB_MAX_DIAMETER = 31
 
 # movement configuration:
