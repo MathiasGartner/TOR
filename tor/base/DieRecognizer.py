@@ -9,6 +9,7 @@ import tor.client.ClientSettings as cs
 
 class DieRecognizer:
     def __init__(self):
+        self.warpMatrix, self.warpWidth, self.warpHeight = self.createWarpMatrix(cs.IMG_TL, cs.IMG_BL, cs.IMG_TR, cs.IMG_BR)
         self.blobParams = cv2.SimpleBlobDetector_Params()
         self.blobParams.filterByColor = True
         self.blobParams.blobColor = 0
@@ -25,6 +26,20 @@ class DieRecognizer:
         self.blobParams.minInertiaRatio = 0.5
         self.blobParams.maxInertiaRatio = 1.0
         self.blobDetector = cv2.SimpleBlobDetector_create(self.blobParams)
+
+    def createWarpMatrix(self, tl, bl, tr, br):
+        w = max((tr[0] - tl[0]), (br[0] - bl[0]))
+        h = max((bl[1] - tl[1]), (br[1] - tr[1]))
+        #w = int(w / 2)
+        #h = int(h / 2)
+        #print("warp matrix with w:", w, "h:", h)
+        src = np.array([tl, bl, tr, br], dtype="float32")
+        dst = np.array([[0, 0],
+                        [0, h - 1],
+                        [w - 1, 0],
+                        [w - 1, h - 1]], dtype="float32")
+        mat = cv2.getPerspectiveTransform(src, dst)
+        return mat, w, h
 
     def readDummyImage(self, imNr=1, path=r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_2_neue Kamera testen\test{:03d}.jpg"):
         #image = cv2.imread(r"D:\Dropbox\Uni\AEC\Elektronik\Raspi\2_2_neue Kamera testen\test{:03d}.jpg".format(imNr))
@@ -55,16 +70,38 @@ class DieRecognizer:
             fileName = os.path.join(directory, fileName)
         np.save(fileName, im)
 
-    def cropToSearchableArea(self, im):
-        cropped = im[cs.IMAGE_CROP_Y_TOP:(im.shape[0] - cs.IMAGE_CROP_Y_BOTTOM), cs.IMAGE_CROP_X_LEFT:(im.shape[1] - cs.IMAGE_CROP_X_RIGHT)]
+    def markCropLines(self, im, tl, br, isGray=False):
+        if not isGray:
+            im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+        im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
+        im = cv2.rectangle(im, tuple(tl), tuple(br), (0, 0, 255), thickness=1)
+        return im
+
+    def markLines(self, im, lines, isGray=False):
+        if not isGray:
+            im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+        im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
+        for l in lines:
+            im = cv2.line(im, tuple(l[0]), tuple(l[1]), (0, 0, 255), thickness=1)
+        return im
+
+    def cropImage(self, image, tl=None, br=None):
+        if tl is None:
+            tl = cs.IMG_TL
+        if br is None:
+            br = cs.IMG_BR
+        cropped = image[tl[1]:br[1], tl[0]:br[0]]
         return cropped
 
-    def px_to_mm(self, px, pxpmm=1):
-        if type(px) == Point2D:
-            mm = Point2D(self.px_to_mm(px.x, cs.AREA_PX_PER_MM_X), self.px_to_mm(px.y, cs.AREA_PX_PER_MM_Y))
+    def warpImage(self, image):
+        warped = cv2.warpPerspective(image, self.warpMatrix, (self.warpWidth, self.warpHeight))
+        return warped
+
+    def transformImage(self, image):
+        if cs.IMG_USE_WARPING:
+            return self.warpImage(image)
         else:
-            mm = px / pxpmm
-        return mm
+            return self.cropImage(image)
 
     def markDieOnImage(self, im, keypoints, isGray=False):
         if isGray:
@@ -87,7 +124,7 @@ class DieRecognizer:
 
     def getDiePosition(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False, alreadyGray=False):
         if not alreadyCropped:
-            im = self.cropToSearchableArea(im)
+            im = self.transformImage(im)
         im_original = im
         if not alreadyGray:
             im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)

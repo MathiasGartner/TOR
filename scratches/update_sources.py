@@ -2,13 +2,15 @@
 #######################################
 ### generate custom client settings ###
 #######################################
+writeCustomFiles = False
 
 def writeCustomFile(material, settings):
-    filename = "../tor/client/CustomClientSettings/{}.py".format(material)
-    with open(filename, 'w') as f:
-        f.write("import tor.client.ClientSettings as cs" + "\n")
-        for s in settings:
-            f.write(s + "\n")
+	if writeCustomFiles:
+		filename = "../tor/client/CustomClientSettings/{}.py".format(material)
+		with open(filename, 'w') as f:
+			f.write("import tor.client.ClientSettings as cs" + "\n")
+			for s in settings:
+				f.write(s + "\n")
 
 material = "orange"
 settings = [
@@ -45,7 +47,7 @@ writeCustomFile(material, settings)
 
 #ips = range(101, 131) #[107]
 
-ips = [107, 112, 129]
+ips = [107, 112]
 
 path_key = r"C:\Users\Mathias\.ssh\tor"
 cmd_delete = r'ssh -i {0} pi@192.168.0.{1} "sudo rm -r tor"'

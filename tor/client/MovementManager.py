@@ -9,20 +9,29 @@ from tor.client.Cords import Cords
 from tor.client.Position import Position
 
 class MovementManager:
+    isInitialized = False
+
     def __init__(self):
         self.com = Communicator()
+        self.feedratePercentage = 0
+        self.currentPosition = Position(-1, -1, -1)
+        if not self.isInitialized:
+            self.__initBoard()
+            self.isInitialized = True
 
-    def initBoard(self):
+    def __initBoard(self):
         # Restore Settings
         #self.sendGCode("M501")
         # Set Feedrate Percentage
-        self.setFeedratePercentage(cs.FEEDRATE_PERCENTAGE)
+        self.setFeedratePercentage(cs.FR_DEFAULT)
         # enable all steppers
         self.sendGCode("M17")
         self.updateCurrentPosition()
+        self.waitForMovementFinished()
 
     def setFeedratePercentage(self, fr):
         self.sendGCode("M220 S{}".format(fr))
+        self.feedratePercentage = fr
 
     def sendGCode(self, cmd):
         print("SEND: " + cmd)
@@ -77,7 +86,7 @@ class MovementManager:
         cmd = "M43 T I S41 L41 R1 W{}".format(cs.PULSE_MAGNET_TIME_MS)
         self.sendGCode(cmd)
 
-    def setLed(self, brightness):
+    def setTopLed(self, brightness):
         if brightness < 0:
             brightness = 0
         elif brightness > 255:
@@ -86,12 +95,12 @@ class MovementManager:
         self.sendGCode(cmd)
 
     def doHoming(self):
-        cmd = "G28 A0 S50 P130 F68 R8 D1.05 B1.15"
+        cmd = cs.G_HOMING
         self.sendGCode(cmd)
         self.waitForMovementFinished()
         self.updateCurrentPosition()
 
-    def moveToCords(self, cords, segmented=False):
+    def __moveToCords(self, cords, segmented=False):
         cmd = "G1 " + self.getCordLengthGCode(cords) + (" S" if segmented else "")
         self.sendGCode(cmd)
 
@@ -101,28 +110,8 @@ class MovementManager:
         for p in pos:
             print("MOVE{}:".format(" SEG" if segmented else ""), p.x, p.y, p.z)
             cords = p.toCordLengths()
-            self.moveToCords(cords, segmented)
+            self.__moveToCords(cords, segmented)
             self.currentPosition = p
-
-    #TODO: remove, should only be done in Marlin and not on external client. use "G1 S ..." command
-    def moveToPosSegmented(self, pos):
-        self.moveToPos(pos, True)
-        """
-        startPos = self.currentPosition
-        diffPos = pos - startPos
-        unitsPerSegment = 10.0
-        length = diffPos.norm()
-        segmentCount = math.floor(length / unitsPerSegment)
-        segmentCount = max(segmentCount, 1)
-        segmentChange = diffPos / segmentCount
-        nextPos = startPos + segmentChange
-        segmentedPositions = []
-        for i in range(1, segmentCount):
-            segmentedPositions.append(nextPos)
-            nextPos = nextPos + segmentChange
-        segmentedPositions.append(pos)
-        self.moveToPos(segmentedPositions)
-        """
 
     def moveToXYZ(self, x, y, z, segmented=False):
         pos = Position(x, y, z)
@@ -144,6 +133,9 @@ class MovementManager:
     def moveHome(self, segmented=False):
         self.moveToPos(cs.HOME_POSITION, segmented)
 
+    def moveToParkingPosition(self, segmented=False):
+        self.moveToPos(cs.PARKING_POSITION, segmented)
+
     def moveToAllCorners(self, segmented=False):
         self.moveToPos(cs.CORNER_X, segmented)
         time.sleep(0.5)
@@ -164,32 +156,6 @@ class MovementManager:
     def rollDie(self):
         print("die is now rolled...")
         self.pulseMagnet()
-
-    def searchForDie(self):
-        x = 0
-        minY = 20
-        dy = 40
-        y = cs.LY
-        magnetToRampOffsetY = 5
-        z = cs.PICKUP_Z
-        xToZero = True
-        self.moveToXYZ(x, y, z)
-        self.waitForMovementFinished()
-        while y > (dy + minY):
-            x = 0 if xToZero else cs.LX
-            self.moveToXYZ(x, y, z, segmented=True)
-            self.waitForMovementFinished()
-            #time.sleep(1)
-            xToZero = not xToZero
-            x = 0 if xToZero else cs.LX
-            self.moveToXYZ(x, y, z, segmented=True)
-            self.waitForMovementFinished()
-            time.sleep(1)
-            y -= dy
-            overRampY = (cs.RAMP_END_Y + cs.MAGNET_RADIUS + magnetToRampOffsetY) - y
-            if overRampY > 0:
-                z = cs.RAMP_END_Z - overRampY * np.tan(cs.RAMP_ALPHA)
-        self.moveToPos(cs.CENTER_TOP)
 
     def waitForMovementFinished(self, sleepTime=0):
         self.sendGCode("M400")

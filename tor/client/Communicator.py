@@ -35,6 +35,7 @@ class Communicator:
             return ""
 
     def recvUntilOk(self):
+        #TODO: implement option for timeout when waiting for "ok" message
         msg = ""
         msgs = []
         while (msg != "ok\n"):
