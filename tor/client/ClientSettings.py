@@ -145,7 +145,7 @@ STORE_IMAGES = True
 SHOW_DIE_RESULT_WITH_LEDS = False
 
 #web pages directory
-WEB_DIRECTORY = "/home/pi/tor/base/html"
+WEB_DIRECTORY = "/home/pi/tor/client/html"
 
 
 
