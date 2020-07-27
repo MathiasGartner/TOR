@@ -178,20 +178,13 @@ class DieRecognizer:
                 found = False
                 result = 0
             else:
-
                 #TODO: check if the detected blobs correspond to the face of a die
                 #      eg. distance between blobs, arrangement, ...               
+                offsetX = 40
+                offsetY = 60
                 diePositionPX = Point2D(meanX, meanY)
-                # print("diePositionPX:", diePositionPX)
-                #diePositionMM = self.px_to_mm(diePositionPX)
-                #print("diePositionMM (raw):", diePositionMM)
-                #diePositionMM.y = cs.LY - diePositionMM.y + 15 #TODO: check mapping of y value from pixel to %
-                #print("diePositionMM:", diePositionMM)
-                diePositionMM = Point2D(-1, -1)
-                diePositionMM.x = max(diePositionPX.x - 110.0, 0.1) / (2350.0 / 237.0)
-                diePositionMM.y = max(diePositionPX.y - 187.0, 0.1) / (1069.0 / 91.0)
-                diePositionMM.y = cs.LY - diePositionMM.y - 1
-                # print("diePositionMM (new):", diePositionMM)
+                diePositionRelative.x = (diePositionPX.x - offsetX) / (im.shape[1] - 2 * offsetX)
+                diePositionRelative.y = 1.0 - (diePositionPX.y - offsetY) / (im.shape[0] - 2 * offsetY)
                 found = True
                 result = min(len(blobs), 6)
                 if len(blobs)==2:
