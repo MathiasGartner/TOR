@@ -47,8 +47,8 @@ writeCustomFile(material, settings)
 
 #ips = range(101, 131) #[107]
 
-ips = [107, 112]
-
+#ips = [107, 112]
+ips =[107,112]
 path_key = r"C:\Users\David\.ssh\tor"
 cmd_delete = r'ssh -i {0} pi@192.168.0.{1} "sudo rm -r tor"'
 cmd_copy = r"scp -i {0} -r C:\Users\David\Documents\TOR\tor pi@192.168.0.{1}:/home/pi"

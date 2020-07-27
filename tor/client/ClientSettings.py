@@ -149,5 +149,5 @@ WEB_DIRECTORY = "/home/pi/tor/client/html"
 
 #die paramters
 DIE_SIZE_X=120
-DIE_SIZE_Y=120
+DIE_SIZE_Y=260
 

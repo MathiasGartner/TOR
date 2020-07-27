@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 from tor.base.DieRecognizer import DieRecognizer
 from tor.client import ClientSettings as cs
@@ -129,6 +130,7 @@ class MovementRoutines:
             if cs.STORE_IMAGES:
                 directory = "found" if found else "fail"
                 self.dr.writeImage(processedImages[0], directory=directory)
+                self.dr.writeImage(processedImages[0], directory=cs.WEB_DIRECTORY,fileName='current_view.jpg')
                 self.dr.writeRGBArray(processedImages[0], directory=directory)
 
         if found:
@@ -144,6 +146,7 @@ class MovementRoutines:
             print("pickupPos:", pickupPos)
             self.mm.moveToPos(pickupPos, True)
             self.mm.waitForMovementFinished()
+            time.sleep(0.2)
             self.mm.moveToPos(cs.AFTER_PICKUP_POSITION, True)
             self.mm.waitForMovementFinished()
         else:
