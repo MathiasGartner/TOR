@@ -175,8 +175,16 @@ class DieRecognizer:
 
                 offset = 60
                 diePositionPX = Point2D(meanX, meanY)
-                diePositionRelative.x = (diePositionPX.x - offset) / (im.shape[1] - 2 * offset)
-                diePositionRelative.y = 1.0 - (diePositionPX.y - offset) / (im.shape[0] - 2 * offset)
+                #diePositionRelative.x = (diePositionPX.x - offset) / (im.shape[1] - 2 * offset)
+                #diePositionRelative.y = 1.0 - (diePositionPX.y - offset) / (im.shape[0] - 2 * offset)
+                px=diePositionPX.x/im.shape[1]
+                py=diePositionPX.y/im.shape[0]
+                #new edge trafo
+                print(im.shape)
+                #input()
+                diePositionRelative.x=px+cs.DIE_SIZE_X/(2.*im.shape[1])*(2*px-1)
+                diePositionRelative.y=1-(py+cs.DIE_SIZE_Y/(2.*im.shape[0])*(2*py-1))
+
                 print("diePositionPX:", diePositionPX)
                 print("diePositionRelative:", diePositionRelative)
                 found = True

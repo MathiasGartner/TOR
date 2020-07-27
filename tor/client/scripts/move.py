@@ -74,7 +74,7 @@ def start_script():
     mm.rollDie()
     if (args.find):
         time.sleep(2)
-        found, result = mr.pickupDie()
+        found, result, diePosition = mr.pickupDie()
         return found, result
 
 

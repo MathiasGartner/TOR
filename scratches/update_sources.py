@@ -49,9 +49,9 @@ writeCustomFile(material, settings)
 
 ips = [107, 112]
 
-path_key = r"C:\Users\Mathias\.ssh\tor"
+path_key = r"C:\Users\David\.ssh\tor"
 cmd_delete = r'ssh -i {0} pi@192.168.0.{1} "sudo rm -r tor"'
-cmd_copy = r"scp -i {0} -r D:\Sources\TOR\tor pi@192.168.0.{1}:/home/pi"
+cmd_copy = r"scp -i {0} -r C:\Users\David\Documents\TOR\tor pi@192.168.0.{1}:/home/pi"
 
 filename = "update_tor.cmd"
 
