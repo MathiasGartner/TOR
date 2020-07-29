@@ -14,8 +14,9 @@ from tor.client.MovementRoutines import MovementRoutines
 from tor.client.Position import Position
 
 def keepAskingForNextJob(askEveryNthSecond = 10):
+    global exitTOR
     global nextJob
-    while True:
+    while not exitTOR:
         nextTime = time.time() + askEveryNthSecond
         nextJob = cm.askForJob()
         print("nextJob", nextJob)
@@ -86,14 +87,17 @@ def run():
     mm.waitForMovementFinished()
 
 def doJobsDummy():
+    global exitTOR
     global nextJob
     done = False
     while not done:
         print(nextJob)
         time.sleep(3)
     print("finished")
+    exitTOR = True
 
 def doJobs():
+    global exitTOR
     global nextJob
     mm.doHoming()
     mm.moveToPos(cs.CENTER_TOP)
@@ -105,45 +109,18 @@ def doJobs():
     while not done:
         print(nextJob)
         if "R" in nextJob:
-            for _ in range(int(nextJob["R"])):
-                run()
-        elif "C" in nextJob:
-            mm.moveToAllCorners()
+            run()
+        elif "H" in nextJob: # H...homing
+            mm.doHoming()
+            mm.moveToPos(cs.CENTER_TOP)
             mm.waitForMovementFinished()
-        elif "M" in nextJob: # M...move
-            if "P" in nextJob: # P...to position
-                pos = None
-                if nextJob["P"] == "BOTTOM_CENTER":
-                    pos = cs.CENTER_BOTTOM
-                elif nextJob["P"] == "CX":
-                    pos = [cs.CENTER_TOP, cs.CORNER_X, cs.CENTER_TOP]
-                elif nextJob["P"] == "CY":
-                    pos = [cs.CENTER_TOP, cs.CORNER_Y, cs.CENTER_TOP]
-                elif nextJob["P"] == "CZ":
-                    pos = [cs.CENTER_TOP, cs.CORNER_Z, cs.CENTER_TOP]
-                elif nextJob["P"] == "CE":
-                    pos = [cs.CENTER_TOP, cs.CORNER_E, cs.CENTER_TOP]
-                if pos is not None:
-                    mm.moveToPos(pos)
-                    mm.waitForMovementFinished()
-                    time.sleep(1)
-            elif "H" in nextJob: # H...homing
-                mm.doHoming()
-                mm.moveToPos(cs.CENTER_TOP)
-                mm.waitForMovementFinished()
         elif "W" in nextJob: # W...wait
-            if "T" in nextJob:
-                waitUntil = nextJob["T"]
-                while datetime.datetime.now() < waitUntil:
-                    time.sleep(1)
-            elif "S" in nextJob:
-                time.sleep(nextJob["S"])
-            else:
-                time.sleep(nextJob["W"])
+            time.sleep(nextJob["W"])
         elif "Q" in nextJob: # Q...quit
             done = True
     mm.moveToParkingPosition()
     print("finished")
+    exitTOR = True
 
 ####################
 ###    tests     ###
@@ -186,6 +163,7 @@ if cs.ON_RASPI:
 ### main program ###
 ####################
 
+exitTOR = False
 nextJob = ""
 
 jobScheduler = threading.Thread(target=keepAskingForNextJob)
@@ -202,3 +180,6 @@ else:
     worker = threading.Thread(target=doJobsDummy)
 worker.start()
 
+jobScheduler.join()
+worker.join()
+print("TORClient will now quit.")
