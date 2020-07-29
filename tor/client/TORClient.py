@@ -92,6 +92,8 @@ def doJobs():
     print("now in starting position.")
     time.sleep(0.5)
 
+    lm.setAllLeds()
+
     done = False
     while not done:
         print(nextJob)
@@ -167,6 +169,9 @@ else:
     worker = threading.Thread(target=doJobsDummy)
 worker.start()
 
-jobScheduler.join()
 worker.join()
+exitTOR = True # worker quitted accidentally
+mm.moveToParkingPosition()
+jobScheduler.join()
+lm.clear()
 print("TORClient will now quit.")

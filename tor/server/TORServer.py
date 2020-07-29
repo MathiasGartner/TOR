@@ -36,11 +36,13 @@ def handleRequest(conn):
     request = NetworkUtils.recvData(conn)
     if "C" in request: #request from client C
         clientId = request["C"]
-        if "D" in request: #die roll result
-            dieResult = request["D"]
-            log("Client", clientId, "rolled", dieResult)
+        if "RESULT" in request: #die roll result
+            dieResult = request["RESULT"]
+            x = request["POSX"]
+            y = request["POSY"]
+            log("Client", clientId, "rolled", dieResult, "at", x, y)
             NetworkUtils.sendOK(conn)
-            DBManager.writeResult(clientId, dieResult)
+            DBManager.writeResult(clientId, dieResult, x, y)
         elif "E" in request: #error on client
             log("ERROR", request["E"], "@ client", clientId)
             log(request["MESSAGE"])
@@ -51,7 +53,7 @@ def handleRequest(conn):
             #job = random.choice(jobIds)
             job = DBManager.getNextJobForClientId(clientId)
             log("client", clientId, "asks for job, send", job)
-            NetworkUtils.sendData(conn, {job.Code: job.JobParameters})
+            NetworkUtils.sendData(conn, {job.JobCode: job.JobParameters})
             # if job == 1:
             #     NetworkUtils.sendData(conn, {"R" : 1})
             # elif job == 2:

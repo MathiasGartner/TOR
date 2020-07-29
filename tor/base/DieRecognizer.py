@@ -222,7 +222,7 @@ class DieRecognizer:
 
             cv2.waitKey(10000)
             cv2.destroyAllWindows()
-        return DieRollResult(found, diePositionRelative, result), (im_original, im_with_blobs)
+        return (DieRollResult(found, result, diePositionRelative), (im_original, im_with_blobs))
 
     def getDieResult(self):
         #TODO: not implemented yet

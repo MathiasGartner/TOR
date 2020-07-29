@@ -1,4 +1,6 @@
 
+import json
+
 class DieRollResult:
     def __init__(self, found=False, result=-1, position=None):
         self.found = found

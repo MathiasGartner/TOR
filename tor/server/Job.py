@@ -1,7 +1,7 @@
 class Job:
     def __init__(self):
-        self.Code = ""
+        self.JobCode = ""
         self.JobParameters = ""
 
     def __str__(self):
-        return "<Job: (Code={}, JobParameters={})>".format(self.Code, self.JobParameters)
+        return "<Job: (JobCode={}, JobParameters={})>".format(self.JobCode, self.JobParameters)

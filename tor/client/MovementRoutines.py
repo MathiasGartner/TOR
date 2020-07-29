@@ -150,9 +150,11 @@ class MovementRoutines:
                 self.dr.writeRGBArray(processedImages[0], directory=directory)
 
         if dieRollResult.found:
+            print("dieRollResult", dieRollResult)
             if cs.SHOW_DIE_RESULT_WITH_LEDS:
                 lm = LedManager()
                 lm.showResult(dieRollResult.result)
+            #TODO: send dieRollResult here
             self.pickupDieFromPosition(dieRollResult.position)
         else:
             print('Die not found, now searching...')
@@ -184,6 +186,6 @@ class MovementRoutines:
         time.sleep(cs.DIE_ROLL_TIME / 2.0)
 
         # pickup die
-        dieRollResult = self.mr.pickupDie()
+        dieRollResult = self.pickupDie()
 
         return dieRollResult
