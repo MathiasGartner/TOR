@@ -147,5 +147,7 @@ SHOW_DIE_RESULT_WITH_LEDS = False
 #web pages directory
 WEB_DIRECTORY = "/home/pi/tor/client/html"
 
-
+#die paramters
+DIE_SIZE_X=120
+DIE_SIZE_Y=260
 

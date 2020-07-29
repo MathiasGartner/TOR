@@ -180,11 +180,16 @@ class DieRecognizer:
             else:
                 #TODO: check if the detected blobs correspond to the face of a die
                 #      eg. distance between blobs, arrangement, ...               
-                offsetX = 40
-                offsetY = 60
                 diePositionPX = Point2D(meanX, meanY)
-                diePositionRelative.x = (diePositionPX.x - offsetX) / (im.shape[1] - 2 * offsetX)
-                diePositionRelative.y = 1.0 - (diePositionPX.y - offsetY) / (im.shape[0] - 2 * offsetY)
+                
+                px=diePositionPX.x/im.shape[1]
+                py=diePositionPX.y/im.shape[0]
+                #new edge trafo
+                print(im.shape)
+                #input()
+                diePositionRelative.x=px+cs.DIE_SIZE_X/(2.*im.shape[1])*(2*px-1)
+                diePositionRelative.y=1-(py+cs.DIE_SIZE_Y/(2.*im.shape[0])*(2*py-1))
+
                 found = True
                 result = min(len(blobs), 6)
                 if len(blobs)==2:
@@ -215,9 +220,7 @@ class DieRecognizer:
 
             cv2.waitKey(10000)
             cv2.destroyAllWindows()
-
-
-        return (found, diePositionMM, result, (im_original, im_with_blobs))
+        return (found, diePositionRelative, result, (im_original, im_with_blobs))
 
     def getDieResult(self):
         #TODO: not implemented yet
