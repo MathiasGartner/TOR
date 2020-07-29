@@ -4,6 +4,7 @@ import time
 import threading
 
 from tor.base.DieRecognizer import DieRecognizer
+from tor.base.DieRollResult import DieRollResult
 from tor.client.ClientManager import ClientManager
 import tor.client.ClientSettings as cs
 
@@ -32,35 +33,15 @@ def run():
     global countSameResult
     global lastResult
 
-    # move to dropoff position
-    #TODO: remove random, interpolate dropoffPos for lastPickupX
-    mm.setFeedratePercentage(cs.FR_DEFAULT)
-    dropoffPos = cs.MESH_MAGNET[np.random.randint(0, len(cs.MESH_MAGNET)), :]
-    mm.moveToPos(Position(dropoffPos[0], dropoffPos[1] + 20, 30), True)
-    mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE)
-    mm.moveToPos(Position(dropoffPos[0], dropoffPos[1] + 10, dropoffPos[2] + 10), True)
-    mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE_SLOW)
-    mm.moveToPos(Position(dropoffPos[0], dropoffPos[1], dropoffPos[2]), True)
-    mm.waitForMovementFinished()
-
-    # roll die
-    time.sleep(cs.WAIT_BEFORE_ROLL_TIME)
-    mm.setFeedratePercentage(cs.FR_FAST_MOVES)
-    mm.rollDie()
-    time.sleep(cs.DIE_ROLL_TIME / 2.0)
-    mm.moveToPos(cs.CENTER_TOP)
-    time.sleep(cs.DIE_ROLL_TIME / 2.0)
-
-    # pickup die
-    found, result, diePosition = mr.pickupDie()
-    if found:
-        lastPickupX = diePosition.x
-        cm.sendDieRollResult(result)
-        if lastResult == result:
+    dieRollResult = mr.run(lastPickupX)
+    if dieRollResult.found:
+        lastPickupX = dieRollResult.position.x
+        cm.sendDieRollResult(dieRollResult)
+        if lastResult == dieRollResult.result:
             countSameResult += 1
         else:
             countSameResult = 0
-        lastResult = result
+        lastResult = dieRollResult.result
     else:
         lastPickupX = cs.LX / 2.0
         cm.sendDieResultNotRecognized()
@@ -76,11 +57,17 @@ def run():
         mr.searchForDie()
         countNotFound = 0
     elif countSameResult >= cs.HOME_AFTER_N_SAME_RESULTS:
-        mm.doHoming()
         #TODO: while homing, check if image recognition finds die
         #      for this, add option "waitForHomingFinished" to mm.doHoming()
         #      then eihter call mr.searchForDie() or mr.pickupDie() or nothing?
-        mr.searchForDie()
+        mm.doHoming(waitForHomingFinished=False)
+        dieRollResult, processedImages = mr.findDie()
+        mm.waitForMovementFinished()
+        mm.updateCurrentPosition()
+        if dieRollResult.found:
+            mr.pickupDieFromPosition(dieRollResult.position)
+        else:
+            mr.searchForDie()
         countSameResult = 0
 
     mm.moveToPos(cs.CENTER_TOP)

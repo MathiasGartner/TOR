@@ -3,6 +3,8 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
+import tor.TORSettingsLocal as tsl
+
 from tor.base.DieRecognizer import DieRecognizer
 
 def createImageTable(images, cols):
@@ -108,32 +110,32 @@ directory = r"C:\Users\Michaela\Documents\physik\AEC_Projekt\testimages\\"
 # params_iterator = range(1,20)
 # tags = (6,6,6,5,2,4,4,6,3,1,2,3,4,4,5,4,0,2,2)
 
-directory = r"D:\AEC\DiceImages\20200719 - fail\\"
+directory = tsl.DIRECTORY_TEST_IMAGES + r"\20200719 - fail\\"
 path, start, end = directory + r"img ({}).npy", 1,3
 tags = [4, 4, 1, 6, 1, 4, 5, 3, 4, 2, 3, 3 ,2, 5, 2, 4, 5, 1, 6, 5, 0, 1, 5]
 
 
-directory = r"D:\AEC\DiceImages\20200719 - tests\\"
+directory = tsl.DIRECTORY_TEST_IMAGES + r"\20200719 - tests\\"
 path, start, end = directory + r"img ({}).npy", 1, 25
 tags = [4, 4, 1, 6, 1, 4, 5, 3, 4, 2, 3, 3 ,2, 5, 2, 4, 5, 1, 6, 5, 0, 1, 5]
 
 
-directory = r"D:\AEC\DiceImages\20200721 - tests\\"
+directory = tsl.DIRECTORY_TEST_IMAGES + r"\20200721 - tests\\"
 path, start, end = directory + r"img ({}).npy", 1, 10
 tags = [4, 4, 1, 6, 1, 4, 5, 3, 4, 2, 3, 3 ,2, 5, 2, 4, 5, 1, 6, 5, 0, 1, 5]
 
-directory = r"D:\AEC\DiceImages\20200723 - mitte\\"
+directory = tsl.DIRECTORY_TEST_IMAGES + r"\20200723 - mitte\\"
 path, start, end = directory + r"img ({}).npy", 1, 10
 tags = [4, 4, 1, 6, 1, 4, 5, 3, 4, 2, 3, 3 ,2, 5, 2, 4, 5, 1, 6, 5, 0, 1, 5]
 
-directory = r"D:\AEC\DiceImages\20200724 - mitte\\"
+directory = tsl.DIRECTORY_TEST_IMAGES + r"\20200724 - mitte\\"
 path, start, end = directory + r"img ({}).npy", 1, 1
 tags = [4, 4, 1, 6, 1, 4, 5, 3, 4, 2, 3, 3 ,2, 5, 2, 4, 5, 1, 6, 5, 0, 1, 5]
 
 #path, start, end = directory + r"c{}.jpg", 1, 4
 #tags = [4, 4, 4, 4]
 
-path = directory+r'20200722 - oben\20200722 - oben\img ({}){}'
+path = tsl.DIRECTORY_TEST_IMAGES + r"20200722 - oben\img ({}){}"
 file_extension = ".npy"
 params_iterator = range(1,122) #1 to 122
 par_list = list(params_iterator)
@@ -173,7 +175,7 @@ for threshold in thresholds:
         except:
             params = (params,)
         im = dr.readDummyImageGeneralized(path, file_extension, *params)
-        found, posMM, result, resultImg = dr.getDiePosition(im, withUI=False, returnOriginalImg=True, alreadyCropped=True, alreadyGray=False, threshold=threshold)
+        found, posMM, result, resultImg = dr.getDieRollResult(im, withUI=False, returnOriginalImg=True, alreadyCropped=True, alreadyGray=False, threshold=threshold)
         if len(tags) > j:
             if result == tags[j]:
                 print("correct ({})".format(result))
@@ -191,7 +193,10 @@ for threshold in thresholds:
 
 
     print("recognized {}/{} ({}%)".format(correct, len(images), correct/len(images)*100))
-    allImages = createImageTable(images, math.ceil(math.sqrt(len(images))))
+    maxImages = 20
+    if len(images) > maxImages:
+        print("only show first", maxImages, "images")
+    allImages = createImageTable(images[:min(maxImages, len(images))], math.ceil(math.sqrt(len(images))))
     cv2.namedWindow("all", cv2.WINDOW_NORMAL)
     cv2.resizeWindow("all", 1600, 1000)
     print([result[0] for result in results])
