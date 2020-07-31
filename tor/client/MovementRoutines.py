@@ -1,13 +1,18 @@
+import logging
+log = logging.getLogger(__name__)
+
 import numpy as np
 import time
 
 from tor.base.DieRecognizer import DieRecognizer
 from tor.base.DieRollResult import DieRollResult
 from tor.client import ClientSettings as cs
-from tor.client.Camera import Camera
 from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
 from tor.client.Position import Position
+
+if cs.ON_RASPI:
+    from tor.client.Camera import Camera
 
 class MovementRoutines:
     def __init__(self):
@@ -20,7 +25,7 @@ class MovementRoutines:
     def relativeBedCoordinatesToPosition(self, px, py):
         p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12 = self.loadPoints()
         if (px < 0 or px > 1 or py < -0.1 or py > 1):
-            print("Out of range!:", px, py)
+            log.warning("Out of range in relativeBedCoordinatesToPosition: [x,y]=[{},{}]".format(px, py))
             return cs.BEFORE_PICKUP_POSITION
         if (px < 0.5):
             x = (1 - py) * (p4[0] + px * (p6[0] - p4[0])) + py * (p1[0] + px * (p3[0] - p1[0]))
@@ -116,13 +121,13 @@ class MovementRoutines:
         self.mm.waitForMovementFinished()
 
     def pickupDieFromPosition(self, pos):
-        print("die position:", pos)
+        log.info("die position: {}".format(pos))
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
         self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
         self.mm.waitForMovementFinished()
 
         pickupPos = self.relativeBedCoordinatesToPosition(pos.x, pos.y)
-        print("pickupPos:", pickupPos)
+        log.info("pickupPos: {}".format(pickupPos))
         self.mm.moveToPos(pickupPos, True)
         self.mm.waitForMovementFinished()
         time.sleep(cs.WAIT_ON_PICKUP_POS)
@@ -142,7 +147,7 @@ class MovementRoutines:
         dieRollResult = DieRollResult()
         if cs.USE_IMAGE_RECOGNITION:
             dieRollResult, processedImages = self.findDie()
-            print("result:", dieRollResult.result)
+            log.info("result: {}".format(dieRollResult.result))
             if cs.STORE_IMAGES:
                 directory = "found" if dieRollResult.found else "fail"
                 self.dr.writeImage(processedImages[0], directory=directory)
@@ -150,14 +155,14 @@ class MovementRoutines:
                 self.dr.writeRGBArray(processedImages[0], directory=directory)
 
         if dieRollResult.found:
-            print("dieRollResult", dieRollResult)
+            log.info("dieRollResult: {}".format(dieRollResult))
             if cs.SHOW_DIE_RESULT_WITH_LEDS:
                 lm = LedManager()
                 lm.showResult(dieRollResult.result)
             #TODO: send dieRollResult here
             self.pickupDieFromPosition(dieRollResult.position)
         else:
-            print('Die not found, now searching...')
+            log.info('Die not found, now searching...')
             self.searchForDie()
         return dieRollResult
 

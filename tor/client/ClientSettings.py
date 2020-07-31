@@ -1,3 +1,6 @@
+import logging
+log = logging.getLogger(__name__)
+
 import math
 import numpy as np
 import sys
@@ -44,6 +47,7 @@ PULSE_MAGNET_TIME_MS = 100
 WAIT_BEFORE_ROLL_TIME = 1
 DIE_ROLL_TIME = 1
 WAIT_ON_PICKUP_POS = 0.2
+STANDARD_CLIENT_SLEEP_TIME = 5
 
 #special positions
 BOX_SIZE = Position(LX, LY, LZ)
@@ -151,4 +155,7 @@ WEB_DIRECTORY = "/home/pi/tor/client/html"
 #die paramters
 DIE_SIZE_X=120
 DIE_SIZE_Y=260
+
+#logging
+LOG_LEVEL = logging.INFO
 

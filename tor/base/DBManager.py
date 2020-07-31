@@ -1,3 +1,6 @@
+import logging
+log = logging.getLogger(__name__)
+
 import mysql.connector as mysql
 
 import tor.TORSettings as ts

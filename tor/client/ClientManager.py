@@ -1,3 +1,6 @@
+import logging
+log = logging.getLogger(__name__)
+
 import numpy as np
 import socket
 
@@ -37,7 +40,7 @@ class ClientManager:
         }
         answer = self.sendAndGetAnswer(msg)
         if "STATUS" in answer:
-            print("server responds", answer["STATUS"])
+            log.info("server response: {}".format(answer["STATUS"]))
 
     def sendDieNotFound(self):
         msg = {
@@ -92,7 +95,7 @@ class ClientManager:
             "GET": "SETTINGS"
         }
         settings = self.sendAndGetAnswer(msg)
-        print(settings)
+        log.info("{}".format(settings))
         availableSettingTypes = {
             "IMAGE_CROP_X_LEFT": "INT",
             "IMAGE_CROP_X_RIGHT": "INT",
@@ -125,10 +128,10 @@ class ClientManager:
                 elif datatype == "LIST":
                     value = eval(raw_value)
                 if value is not None:
-                    print("Set", name, "=", value)
+                    log.info("Set {}={}".format(name, value))
                     setattr(cs, name, value)
                 else:
-                    print("ERROR setting", name, "=", raw_value)
+                    log.warning("Failed setting {}={}".format(name, raw_value))
 
     def saveCameraSettings(self):
         msg = {

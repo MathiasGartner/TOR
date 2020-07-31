@@ -1,3 +1,4 @@
+import logging
 
 import tor.TORSettingsPrivate as tsp
 import tor.TORSettingsLocal as tsl
@@ -8,3 +9,5 @@ DB_PASSWORD = tsp.DB_PASSWORD
 
 SERVER_IP = tsl.SERVER_IP
 SERVER_PORT = tsl.SERVER_PORT
+
+SERVER_LOG_LEVEL = logging.INFO

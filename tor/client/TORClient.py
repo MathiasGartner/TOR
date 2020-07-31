@@ -1,8 +1,10 @@
 import datetime
+import logging
 import numpy as np
 import time
 import threading
 
+import tor.TORSettings as ts
 from tor.base.DieRecognizer import DieRecognizer
 from tor.base.DieRollResult import DieRollResult
 from tor.client.ClientManager import ClientManager
@@ -20,9 +22,8 @@ def keepAskingForNextJob(askEveryNthSecond = 10):
     while not exitTOR:
         nextTime = time.time() + askEveryNthSecond
         nextJob = cm.askForJob()
-        print("nextJob", nextJob)
+        log.info("nextJob: {}".format(nextJob))
         sleepFor = nextTime - time.time()
-        #print("sleep for", sleepFor)
         if sleepFor > 0:
             time.sleep(sleepFor)
 
@@ -78,9 +79,9 @@ def doJobsDummy():
     global nextJob
     done = False
     while not done:
-        print(nextJob)
+        log.info("nextJob: {}".format(nextJob))
         time.sleep(3)
-    print("finished")
+    log.info("finished")
     exitTOR = True
 
 def doJobs():
@@ -89,14 +90,14 @@ def doJobs():
     mm.doHoming()
     mm.moveToPos(cs.CENTER_TOP)
     mm.waitForMovementFinished()
-    print("now in starting position.")
+    log.info("now in starting position.")
     time.sleep(0.5)
 
     lm.setAllLeds()
 
     done = False
     while not done:
-        print(nextJob)
+        log.info("nextJob: {}".format(nextJob))
         if "R" in nextJob:
             run()
         elif "H" in nextJob: # H...homing
@@ -104,11 +105,14 @@ def doJobs():
             mm.moveToPos(cs.CENTER_TOP)
             mm.waitForMovementFinished()
         elif "W" in nextJob: # W...wait
-            time.sleep(nextJob["W"])
+            sleepTime = int(nextJob["W"] or cs.STANDARD_CLIENT_SLEEP_TIME)
+            if sleepTime <= 0:
+                sleepTime = cs.STANDARD_CLIENT_SLEEP_TIME
+            time.sleep(sleepTime)
         elif "Q" in nextJob: # Q...quit
             done = True
     mm.moveToParkingPosition()
-    print("finished")
+    log.info("finished")
     exitTOR = True
 
 ####################
@@ -116,15 +120,34 @@ def doJobs():
 ####################
 
 
+###################
+###    main     ###
+###################
+
+logging.basicConfig(format='%(levelname)s: %(message)s', level=cs.LOG_LEVEL)
+log = logging.getLogger(__name__)
+
 ###########################
 ### get client identity ###
 ###########################
 
-cm = ClientManager()
+serverAvailable = False
+serverWaitTime = 1
+serverWaitTimeIncrease = 1
+
+while not serverAvailable:
+    try:
+        cm = ClientManager()
+        serverAvailable = True
+    except:
+        log.warning("Could not connect to TORServer@{}:{}".format(ts.SERVER_IP, ts.SERVER_PORT))
+        time.sleep(serverWaitTime)
+        serverWaitTime += serverWaitTimeIncrease
+
 welcomeMessage = "I am client with ID {} and IP {}. My ramp is made out of {}, mounted on position {}"
-print("#######################")
-print(welcomeMessage.format(cm.clientId, cm.clientIdentity["IP"], cm.clientIdentity["Material"], cm.clientIdentity["Position"]))
-print("#######################")
+log.info("#######################")
+log.info(welcomeMessage.format(cm.clientId, cm.clientIdentity["IP"], cm.clientIdentity["Material"], cm.clientIdentity["Position"]))
+log.info("#######################")
 
 ### load custom settings from file and server
 ccsModuleName = "tor.client.CustomClientSettings." + cm.clientIdentity["Material"]
@@ -132,10 +155,12 @@ try:
     import importlib
     customClientSettings = importlib.import_module(ccsModuleName)
 except:
-    print("No CustomClientSettings found.")
+    log.warning("No CustomClientSettings found.")
 
 cm.loadSettings()
 cm.loadMeshpoints()
+
+log.setLevel(cs.LOG_LEVEL)
 
 dr = DieRecognizer()
 mm = MovementManager()
@@ -174,4 +199,4 @@ exitTOR = True # worker quitted accidentally
 mm.moveToParkingPosition()
 jobScheduler.join()
 lm.clear()
-print("TORClient will now quit.")
+log.info("TORClient will now quit.")

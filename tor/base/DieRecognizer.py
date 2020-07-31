@@ -1,3 +1,6 @@
+import logging
+log = logging.getLogger(__name__)
+
 import cv2
 from datetime import datetime
 import math
@@ -33,7 +36,7 @@ class DieRecognizer:
         h = max((bl[1] - tl[1]), (br[1] - tr[1]))
         #w = int(w / 2)
         #h = int(h / 2)
-        #print("warp matrix with w:", w, "h:", h)
+        #log.info("warp matrix with w: {}, h: {}".format(w, h))
         src = np.array([tl, bl, tr, br], dtype="float32")
         dst = np.array([[0, 0],
                         [0, h - 1],
@@ -186,7 +189,7 @@ class DieRecognizer:
                 py = diePositionPX.y / im.shape[0]
 
                 #new edge trafo
-                print(im.shape)
+                log.info("shape: {}".format(im.shape))
                 diePositionRelative.x = px + cs.DIE_SIZE_X / (2.0 * im.shape[1]) * (2 * px - 1)
                 diePositionRelative.y = 1 - (py + cs.DIE_SIZE_Y / (2.0 * im.shape[0]) * (2 * py - 1))
 

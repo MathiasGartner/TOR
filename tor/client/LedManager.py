@@ -1,3 +1,6 @@
+import logging
+log = logging.getLogger(__name__)
+
 import time
 
 import tor.client.ClientSettings as cs

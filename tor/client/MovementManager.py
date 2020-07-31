@@ -1,3 +1,6 @@
+import logging
+log = logging.getLogger(__name__)
+
 import math
 import numpy as np
 import re
@@ -34,7 +37,7 @@ class MovementManager:
         self.feedratePercentage = fr
 
     def sendGCode(self, cmd):
-        print("SEND: " + cmd)
+        log.info("SEND: {}".format(cmd))
         self.com.send(cmd)
         msgs = self.com.recvUntilOk()
         return msgs
@@ -109,7 +112,7 @@ class MovementManager:
         if not isinstance(pos, list):
             pos = [pos]
         for p in pos:
-            print("MOVE{}:".format(" SEG" if segmented else ""), p.x, p.y, p.z)
+            log.info("MOVE{}: {} {} {}".format(" SEG" if segmented else "", p.x, p.y, p.z))
             cords = p.toCordLengths()
             self.__moveToCords(cords, segmented)
             self.currentPosition = p
@@ -155,7 +158,7 @@ class MovementManager:
         self.moveHome(segmented)
 
     def rollDie(self):
-        print("die is now rolled...")
+        log.info("die is now rolled...")
         self.pulseMagnet()
 
     def waitForMovementFinished(self, sleepTime=0):
