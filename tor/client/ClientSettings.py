@@ -18,8 +18,8 @@ L_ANCHOR_E_HOOK_Y = 15
 
 MIN_Z = 20
 
-LX = 242
-LY = 242
+LX = 245
+LY = 247
 LZ = 290 - 15 + 0 #height - hook + empiric value...
 LMAX = math.sqrt(LX**2 + LY**2 + LZ**2)
 
