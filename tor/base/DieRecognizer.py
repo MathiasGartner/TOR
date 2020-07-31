@@ -4,6 +4,7 @@ import math
 import numpy as np
 import os
 
+from tor.base.DieRollResult import DieRollResult
 from tor.base.utils.Point2D import Point2D
 import tor.client.ClientSettings as cs
 
@@ -134,8 +135,7 @@ class DieRecognizer:
         return im_color
 
 
-    def getDiePosition(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False,
-                       alreadyGray=False, threshold = 110):
+    def getDieRollResult(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False, alreadyGray=False, threshold = 110):
         if not alreadyCropped:
             im = self.transformImage(im)
         im_original = im
@@ -182,17 +182,19 @@ class DieRecognizer:
                 #      eg. distance between blobs, arrangement, ...               
                 diePositionPX = Point2D(meanX, meanY)
                 
-                px=diePositionPX.x/im.shape[1]
-                py=diePositionPX.y/im.shape[0]
+                px = diePositionPX.x / im.shape[1]
+                py = diePositionPX.y / im.shape[0]
+
                 #new edge trafo
                 print(im.shape)
-                #input()
-                diePositionRelative.x=px+cs.DIE_SIZE_X/(2.*im.shape[1])*(2*px-1)
-                diePositionRelative.y=1-(py+cs.DIE_SIZE_Y/(2.*im.shape[0])*(2*py-1))
+                diePositionRelative.x = px + cs.DIE_SIZE_X / (2.0 * im.shape[1]) * (2 * px - 1)
+                diePositionRelative.y = 1 - (py + cs.DIE_SIZE_Y / (2.0 * im.shape[0]) * (2 * py - 1))
 
                 found = True
                 result = min(len(blobs), 6)
-                if len(blobs)==2:
+
+                #extra checks
+                if len(blobs) == 2:
                     mindist = 35
                     too_close = np.array([(dist < mindist) for dist in dist_from_mean]).any()
                     if too_close:
@@ -220,7 +222,7 @@ class DieRecognizer:
 
             cv2.waitKey(10000)
             cv2.destroyAllWindows()
-        return (found, diePositionRelative, result, (im_original, im_with_blobs))
+        return (DieRollResult(found, result, diePositionRelative), (im_original, im_with_blobs))
 
     def getDieResult(self):
         #TODO: not implemented yet

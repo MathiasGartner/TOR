@@ -4,6 +4,7 @@ import time
 import threading
 
 from tor.base.DieRecognizer import DieRecognizer
+from tor.base.DieRollResult import DieRollResult
 from tor.client.ClientManager import ClientManager
 import tor.client.ClientSettings as cs
 
@@ -14,8 +15,9 @@ from tor.client.MovementRoutines import MovementRoutines
 from tor.client.Position import Position
 
 def keepAskingForNextJob(askEveryNthSecond = 10):
+    global exitTOR
     global nextJob
-    while True:
+    while not exitTOR:
         nextTime = time.time() + askEveryNthSecond
         nextJob = cm.askForJob()
         print("nextJob", nextJob)
@@ -31,35 +33,15 @@ def run():
     global countSameResult
     global lastResult
 
-    # move to dropoff position
-    #TODO: remove random, interpolate dropoffPos for lastPickupX
-    mm.setFeedratePercentage(cs.FR_DEFAULT)
-    dropoffPos = cs.MESH_MAGNET[np.random.randint(0, len(cs.MESH_MAGNET)), :]
-    mm.moveToPos(Position(dropoffPos[0], dropoffPos[1] + 20, 30), True)
-    mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE)
-    mm.moveToPos(Position(dropoffPos[0], dropoffPos[1] + 10, dropoffPos[2] + 10), True)
-    mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE_SLOW)
-    mm.moveToPos(Position(dropoffPos[0], dropoffPos[1], dropoffPos[2]), True)
-    mm.waitForMovementFinished()
-
-    # roll die
-    time.sleep(cs.WAIT_BEFORE_ROLL_TIME)
-    mm.setFeedratePercentage(cs.FR_FAST_MOVES)
-    mm.rollDie()
-    time.sleep(cs.DIE_ROLL_TIME / 2.0)
-    mm.moveToPos(cs.CENTER_TOP)
-    time.sleep(cs.DIE_ROLL_TIME / 2.0)
-
-    # pickup die
-    found, result, diePosition = mr.pickupDie()
-    if found:
-        lastPickupX = diePosition.x
-        cm.sendDieRollResult(result)
-        if lastResult == result:
+    dieRollResult = mr.run(lastPickupX)
+    if dieRollResult.found:
+        lastPickupX = dieRollResult.position.x
+        cm.sendDieRollResult(dieRollResult)
+        if lastResult == dieRollResult.result:
             countSameResult += 1
         else:
             countSameResult = 0
-        lastResult = result
+        lastResult = dieRollResult.result
     else:
         lastPickupX = cs.LX / 2.0
         cm.sendDieResultNotRecognized()
@@ -75,25 +57,34 @@ def run():
         mr.searchForDie()
         countNotFound = 0
     elif countSameResult >= cs.HOME_AFTER_N_SAME_RESULTS:
-        mm.doHoming()
         #TODO: while homing, check if image recognition finds die
         #      for this, add option "waitForHomingFinished" to mm.doHoming()
         #      then eihter call mr.searchForDie() or mr.pickupDie() or nothing?
-        mr.searchForDie()
+        mm.doHoming(waitForHomingFinished=False)
+        dieRollResult, processedImages = mr.findDie()
+        mm.waitForMovementFinished()
+        mm.updateCurrentPosition()
+        if dieRollResult.found:
+            mr.pickupDieFromPosition(dieRollResult.position)
+        else:
+            mr.searchForDie()
         countSameResult = 0
 
     mm.moveToPos(cs.CENTER_TOP)
     mm.waitForMovementFinished()
 
 def doJobsDummy():
+    global exitTOR
     global nextJob
     done = False
     while not done:
         print(nextJob)
         time.sleep(3)
     print("finished")
+    exitTOR = True
 
 def doJobs():
+    global exitTOR
     global nextJob
     mm.doHoming()
     mm.moveToPos(cs.CENTER_TOP)
@@ -101,49 +92,24 @@ def doJobs():
     print("now in starting position.")
     time.sleep(0.5)
 
+    lm.setAllLeds()
+
     done = False
     while not done:
         print(nextJob)
         if "R" in nextJob:
-            for _ in range(int(nextJob["R"])):
-                run()
-        elif "C" in nextJob:
-            mm.moveToAllCorners()
+            run()
+        elif "H" in nextJob: # H...homing
+            mm.doHoming()
+            mm.moveToPos(cs.CENTER_TOP)
             mm.waitForMovementFinished()
-        elif "M" in nextJob: # M...move
-            if "P" in nextJob: # P...to position
-                pos = None
-                if nextJob["P"] == "BOTTOM_CENTER":
-                    pos = cs.CENTER_BOTTOM
-                elif nextJob["P"] == "CX":
-                    pos = [cs.CENTER_TOP, cs.CORNER_X, cs.CENTER_TOP]
-                elif nextJob["P"] == "CY":
-                    pos = [cs.CENTER_TOP, cs.CORNER_Y, cs.CENTER_TOP]
-                elif nextJob["P"] == "CZ":
-                    pos = [cs.CENTER_TOP, cs.CORNER_Z, cs.CENTER_TOP]
-                elif nextJob["P"] == "CE":
-                    pos = [cs.CENTER_TOP, cs.CORNER_E, cs.CENTER_TOP]
-                if pos is not None:
-                    mm.moveToPos(pos)
-                    mm.waitForMovementFinished()
-                    time.sleep(1)
-            elif "H" in nextJob: # H...homing
-                mm.doHoming()
-                mm.moveToPos(cs.CENTER_TOP)
-                mm.waitForMovementFinished()
         elif "W" in nextJob: # W...wait
-            if "T" in nextJob:
-                waitUntil = nextJob["T"]
-                while datetime.datetime.now() < waitUntil:
-                    time.sleep(1)
-            elif "S" in nextJob:
-                time.sleep(nextJob["S"])
-            else:
-                time.sleep(nextJob["W"])
+            time.sleep(nextJob["W"])
         elif "Q" in nextJob: # Q...quit
             done = True
     mm.moveToParkingPosition()
     print("finished")
+    exitTOR = True
 
 ####################
 ###    tests     ###
@@ -186,6 +152,7 @@ if cs.ON_RASPI:
 ### main program ###
 ####################
 
+exitTOR = False
 nextJob = ""
 
 jobScheduler = threading.Thread(target=keepAskingForNextJob)
@@ -202,3 +169,9 @@ else:
     worker = threading.Thread(target=doJobsDummy)
 worker.start()
 
+worker.join()
+exitTOR = True # worker quitted accidentally
+mm.moveToParkingPosition()
+jobScheduler.join()
+lm.clear()
+print("TORClient will now quit.")

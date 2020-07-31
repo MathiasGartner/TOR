@@ -4,6 +4,7 @@ import time
 import numpy as np
 import os
 
+from tor.base.DieRollResult import DieRollResult
 from tor.client import ClientSettings as cs
 from tor.client.MovementManager import MovementManager
 from tor.client.MovementRoutines import MovementRoutines
@@ -81,8 +82,8 @@ def start_script():
     mm.rollDie()
     if (args.find):
         time.sleep(2)
-        found, result, diePosition = mr.pickupDie()
-        return found, result
+        dieRollResult = mr.pickupDie()
+        return dieRollResult
 
 
 ###############
@@ -104,7 +105,7 @@ if args.start:
     if (args.infinity):
         i=0
         err=0
-        result=-1
+        dieRollResult = DieRollResult()
         while(True):
             i+=1
             if (err == 3):  # prevents bad runs
@@ -113,11 +114,11 @@ if args.start:
                 mm.doHoming()
                 mr.searchForDie()
 
-            result_old = result
-            found, result = start_script()
-            print(result)
+            result_old = dieRollResult.result
+            dieRollResult = start_script()
+            print(dieRollResult.result)
 
-            if ((not found) or (result_old == result)):
+            if ((not found) or (result_old == dieRollResult.result)):
                 err += 1
             else:
                 err = 0

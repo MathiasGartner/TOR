@@ -28,10 +28,12 @@ class ClientManager:
         answer = self.sendAndGetAnswer(msg);
         return answer
 
-    def sendDieRollResult(self, result):
+    def sendDieRollResult(self, dieRollResult):
         msg = {
             "C": self.clientId,
-            "D": result
+            "RESULT": dieRollResult.result,
+            "POSX": dieRollResult.position.x,
+            "POSY": dieRollResult.position.y
         }
         answer = self.sendAndGetAnswer(msg)
         if "STATUS" in answer:

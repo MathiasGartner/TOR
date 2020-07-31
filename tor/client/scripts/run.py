@@ -108,11 +108,11 @@ elif mode == 9: # take picture and search dice dots
     else:
         image = dr.readDummyImage()
     print("analyze picture...")
-    found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
+    dieRollResult, processedImages = dr.getDieRollResult(image, returnOriginalImg=True)
     print("write image...")
     dr.writeImage(processedImages[1])
-    print("result:", result)
-    #lm.showResult(result)
+    print("result:", dieRollResult.result)
+    #lm.showResult(dieRollResult.result)
 
 elif mode == 10: #leds
     lm = LedManager()
@@ -173,7 +173,7 @@ elif mode == 17: # take pictures forever
         print("take picture...")
         image = cam.takePicture()
         print("analyze picture...")
-        found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
+        dieRollResult, processedImages = dr.getDieRollResult(image, returnOriginalImg=True)
         if i == 10:
             i = 0
             dr.writeImage(processedImages[1])
@@ -192,11 +192,11 @@ elif mode == 18: # read and search dice dots #like mode 9 but read image and tes
     image = np.load(filename.format(".npy"))
     print("analyze picture...")
     t0 = time.time()
-    found, diePosition, result, processedImages = dr.getDiePosition(image, returnOriginalImg=True)
+    dieRollResult, processedImages = dr.getDieRollResult(image, returnOriginalImg=True)
     print('timing of image analysis:', time.time()-t0)
     print("write image...")
     dr.writeImage(processedImages[1], filename.format("_result.jpg"))
-    print("result:", result)
+    print("result:", dieRollResult.result)
     #lm.showResult(result)
 
 elif mode == 19: # move forever between two positions

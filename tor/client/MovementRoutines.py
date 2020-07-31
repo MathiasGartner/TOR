@@ -2,6 +2,7 @@ import numpy as np
 import time
 
 from tor.base.DieRecognizer import DieRecognizer
+from tor.base.DieRollResult import DieRollResult
 from tor.client import ClientSettings as cs
 from tor.client.Camera import Camera
 from tor.client.LedManager import LedManager
@@ -114,45 +115,77 @@ class MovementRoutines:
         self.mm.moveToPos(cs.AFTER_PICKUP_POSITION, True)
         self.mm.waitForMovementFinished()
 
-    def pickupDie(self):
-        found = False
-        result = -1
-        diePosition = None
-        if cs.USE_IMAGE_RECOGNITION:
-            cam = Camera()
-            self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
-            image = cam.takePicture()
-            self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
-            cam.close()
+    def pickupDieFromPosition(self, pos):
+        print("die position:", pos)
+        self.mm.setFeedratePercentage(cs.FR_DEFAULT)
+        self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
+        self.mm.waitForMovementFinished()
 
-            found, diePosition, result, processedImages = self.dr.getDiePosition(image, returnOriginalImg=True)
-            print("result:", result)
+        pickupPos = self.relativeBedCoordinatesToPosition(pos.x, pos.y)
+        print("pickupPos:", pickupPos)
+        self.mm.moveToPos(pickupPos, True)
+        self.mm.waitForMovementFinished()
+        time.sleep(cs.WAIT_ON_PICKUP_POS)
+        self.mm.moveToPos(cs.AFTER_PICKUP_POSITION, True)
+        self.mm.waitForMovementFinished()
+
+    def findDie(self):
+        cam = Camera()
+        self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
+        image = cam.takePicture()
+        self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
+        cam.close()
+        dieRollResult, processedImages = self.dr.getDieRollResult(image, returnOriginalImg=True)
+        return dieRollResult, processedImages
+
+    def pickupDie(self):
+        dieRollResult = DieRollResult()
+        if cs.USE_IMAGE_RECOGNITION:
+            dieRollResult, processedImages = self.findDie()
+            print("result:", dieRollResult.result)
             if cs.STORE_IMAGES:
-                directory = "found" if found else "fail"
+                directory = "found" if dieRollResult.found else "fail"
                 self.dr.writeImage(processedImages[0], directory=directory)
-                self.dr.writeImage(processedImages[0], directory=cs.WEB_DIRECTORY,fileName='current_view.jpg')
+                self.dr.writeImage(processedImages[0], directory=cs.WEB_DIRECTORY, fileName='current_view.jpg')
                 self.dr.writeRGBArray(processedImages[0], directory=directory)
 
-        if found:
+        if dieRollResult.found:
+            print("dieRollResult", dieRollResult)
             if cs.SHOW_DIE_RESULT_WITH_LEDS:
                 lm = LedManager()
-                lm.showResult(result)
-            print("die position:", diePosition)
-            self.mm.setFeedratePercentage(cs.FR_DEFAULT)
-            self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
-            self.mm.waitForMovementFinished()
-
-            pickupPos = self.relativeBedCoordinatesToPosition(diePosition.x,diePosition.y)
-            print("pickupPos:", pickupPos)
-            self.mm.moveToPos(pickupPos, True)
-            self.mm.waitForMovementFinished()
-            time.sleep(0.2)
-            self.mm.moveToPos(cs.AFTER_PICKUP_POSITION, True)
-            self.mm.waitForMovementFinished()
+                lm.showResult(dieRollResult.result)
+            #TODO: send dieRollResult here
+            self.pickupDieFromPosition(dieRollResult.position)
         else:
             print('Die not found, now searching...')
             self.searchForDie()
-        return found, result, diePosition
+        return dieRollResult
 
-    def run(self):
-        pass
+    def run(self, lastPickupX):
+        # move to dropoff position
+        dropoffPos = cs.MESH_MAGNET[1, :]
+        px = np.clip(1 - lastPickupX / cs.LX, 0.0, 1.0)
+        if px < 0.5:
+            dropoffPos = 2 * px * cs.MESH_MAGNET[1, :] + (1 - 2 * px) * cs.MESH_MAGNET[0, :]
+        else:
+            dropoffPos = 2 * (px - 0.5) * cs.MESH_MAGNET[3, :] + 2 * (1 - px) * cs.MESH_MAGNET[2, :]
+        self.mm.setFeedratePercentage(cs.FR_DEFAULT)
+        self.mm.moveToPos(Position(dropoffPos[0], dropoffPos[1] + 20, 30), True)
+        self.mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE)
+        self.mm.moveToPos(Position(dropoffPos[0], dropoffPos[1] + 10, dropoffPos[2] + 10), True)
+        self.mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE_SLOW)
+        self.mm.moveToPos(Position(dropoffPos[0], dropoffPos[1], dropoffPos[2]), True)
+        self.mm.waitForMovementFinished()
+
+        # roll die
+        time.sleep(cs.WAIT_BEFORE_ROLL_TIME)
+        self.mm.setFeedratePercentage(cs.FR_FAST_MOVES)
+        self.mm.rollDie()
+        time.sleep(cs.DIE_ROLL_TIME / 2.0)
+        self.mm.moveToPos(cs.CENTER_TOP)
+        time.sleep(cs.DIE_ROLL_TIME / 2.0)
+
+        # pickup die
+        dieRollResult = self.pickupDie()
+
+        return dieRollResult

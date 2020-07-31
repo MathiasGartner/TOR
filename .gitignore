@@ -1,4 +1,5 @@
 #custom
+/tor/TORSettingsLocal.py
 tor/TORSettingsPrivate.py
 /scratches/update_tor.cmd
 /venv_38/

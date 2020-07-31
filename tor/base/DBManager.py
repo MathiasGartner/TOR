@@ -24,9 +24,10 @@ def saveClientSettings(clientId, settings):
     data = [(clientId, s[0], str(s[1]) if type(s[1]) is list else s[1]) for s in settings]
     cursor.executemany(query, data)
 
-def writeResult(clientId, result):
-    query = "INSERT INTO diceresult (ClientId, Result) VALUES ({}, {})".format(clientId, result)
-    cursor.execute(query)
+def writeResult(clientId, result, x, y):
+    query = "INSERT INTO diceresult (ClientId, Result, X, Y) VALUES (%s, %s, %s, %s)"
+    data = (clientId, result, x, y)
+    cursor.execute(query, data)
     db.commit()
 
 def getClientIdentity(clientMAC):
@@ -38,12 +39,12 @@ def getClientIdentity(clientMAC):
     return data
 
 def getNextJobForClientId(clientId):
-    query = "SELECT j.Code, q.JobParameters FROM jobqueue q LEFT JOIN job j ON q.JobId = j.Id WHERE q.ClientId = %(clientId)s ORDER BY q.ExecuteAt, q.Id"
+    query = "SELECT ClientId, JobCode, JobParameters FROM jobqueue WHERE ClientId = %(clientId)s ORDER BY ExecuteAt, Id"
     cursor.execute(query, { "clientId" : clientId })
     data = cursor.fetchone()
     if data is None:
         data = Job()
-        data.Code = "W"
+        data.JobCode = "W"
         data.JobParameters = 5
     return data
 
