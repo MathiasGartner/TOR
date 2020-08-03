@@ -18,9 +18,10 @@ class MovementManager:
         self.com = Communicator()
         self.feedratePercentage = 0
         self.currentPosition = Position(-1, -1, -1)
-        if not self.isInitialized:
+        if not MovementManager.isInitialized:
+            self.hasCorrectVersion = self.checkTORMarlinVersion()
             self.__initBoard()
-            self.isInitialized = True
+            MovementManager.isInitialized = True
 
     def __initBoard(self):
         # Restore Settings
@@ -32,15 +33,15 @@ class MovementManager:
         self.updateCurrentPosition()
         self.waitForMovementFinished()
 
-    def setFeedratePercentage(self, fr):
-        self.sendGCode("M220 S{}".format(fr))
-        self.feedratePercentage = fr
-
     def sendGCode(self, cmd):
         log.info("SEND: {}".format(cmd))
         self.com.send(cmd)
         msgs = self.com.recvUntilOk()
         return msgs
+
+    def setFeedratePercentage(self, fr):
+        self.sendGCode("M220 S{}".format(fr))
+        self.feedratePercentage = fr
 
     def getCordLengthGCode(self, cords):
         cmd = ""
@@ -69,6 +70,25 @@ class MovementManager:
 
     def updateCurrentPosition(self):
         self.currentPosition = self.getCurrentPosition()
+
+    def checkTORMarlinVersion(self):
+        versionOkay = False
+        version = ""
+        msgs = self.sendGCode("M115")
+        if not cs.ON_RASPI:
+            msgs = ["FIRMWARE_NAME:Marlin 2.0.5.3 (GitHub) TOR_VERSION:1.1 SOURCE_CODE_URL:https://github.com/MarlinFirmware/Marlin PROTOCOL_VERSION:1.0 MACHINE_TYPE:The Transparency of Randomness EXTRUDER_COUNT:1 UUID:cede2a2f-41a2-4748-9b12-c55c62f367ff"]
+        pattern = ".*TOR_VERSION:(\d+\.\d+).*"
+        for msg in msgs:
+            match = re.match(pattern, msg)
+            if match:
+                version = str(match.group(1))
+        if version == cs.TOR_MARLIN_VERSION:
+            versionOkay = True
+            log.info("TOR-Marlin v{} installed.".format(version))
+        else:
+            versionOkay = False
+            log.error("TOR-Marlin v{} installed, but v{} required.".format(version, cs.TOR_MARLIN_VERSION))
+        return versionOkay
 
     def toggleLED(self, ledId, isOn, r=0, b=0, g=0, brightness=255):
         raise Exception("LEDs are not supported")

@@ -12,6 +12,11 @@ if sys.platform == "linux":
 else:
     ON_RASPI = False
 
+TOR_MARLIN_VERSION = "1.0"
+
+#logging
+LOG_LEVEL = logging.INFO
+
 L_X_RAW = 290
 L_Y_RAW = 290
 L_ANCHOR_Z_HOOK_X = 12
@@ -19,11 +24,11 @@ L_ANCHOR_Z_HOOK_Y = 15
 L_ANCHOR_E_HOOK_X = 12
 L_ANCHOR_E_HOOK_Y = 15
 
-MIN_Z = 20
+MIN_Z = 30
 
-LX = 242
-LY = 242
-LZ = 290 - 15 + 0 #height - hook + empiric value...
+LX = 247 #TOR_ANCHOR_X_E0 in tor-marlin
+LY = 247 #TOR_ANCHOR_X_Y in tor-marlin
+LZ = 290 - 15 + 0 #height - hook + empiric value..
 LMAX = math.sqrt(LX**2 + LY**2 + LZ**2)
 
 RAMP_FORBIDDEN_X_MIN = 50
@@ -48,6 +53,12 @@ WAIT_BEFORE_ROLL_TIME = 1
 DIE_ROLL_TIME = 1
 WAIT_ON_PICKUP_POS = 0.2
 STANDARD_CLIENT_SLEEP_TIME = 5
+
+#cord factors
+CORD_FACTOR_X = 1.0
+CORD_FACTOR_Y = 1.0
+CORD_FACTOR_Z = 1.0
+CORD_FACTOR_E = 1.0
 
 #special positions
 BOX_SIZE = Position(LX, LY, LZ)
@@ -155,7 +166,4 @@ WEB_DIRECTORY = "/home/pi/tor/client/html"
 #die paramters
 DIE_SIZE_X=120
 DIE_SIZE_Y=260
-
-#logging
-LOG_LEVEL = logging.INFO
 

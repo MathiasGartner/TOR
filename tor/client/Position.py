@@ -1,9 +1,5 @@
 import math
 
-import tor.client.ClientSettings as cs
-
-from tor.client.Cords import *
-
 class Position:
     def __init__(self, x, y, z):
         self.x = x
@@ -32,18 +28,19 @@ class Position:
         return math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
 
     def toCordLengths(self):
-        factor = 1.0
+        import tor.client.ClientSettings as cs
+        from tor.client.Cords import Cords
         diffs = cs.BOX_SIZE - self
-        c1 = math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2) * factor
-        c2 = math.sqrt(diffs.x ** 2 + self.y ** 2 + self.z ** 2) * factor
-        c3 = math.sqrt(diffs.x ** 2 + diffs.y ** 2 + self.z ** 2) * factor
-        c4 = math.sqrt(self.x ** 2 + diffs.y ** 2 + self.z ** 2) * factor
-        #return Cords([c1, c2, c3, c4])
-        return Cords([c3, c2, c1, c4])
+        c1 = math.sqrt(diffs.x ** 2 + diffs.y ** 2 + self.z ** 2) * cs.CORD_FACTOR_X
+        c2 = math.sqrt(diffs.x ** 2 + self.y ** 2 + self.z ** 2) * cs.CORD_FACTOR_Y
+        c3 = math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2) * cs.CORD_FACTOR_Z
+        c4 = math.sqrt(self.x ** 2 + diffs.y ** 2 + self.z ** 2) * cs.CORD_FACTOR_E
+        return Cords([c1, c2, c3, c4])
 
     def isValid(self):
+        import tor.client.ClientSettings as cs
         if self.x < 0 or self.y < 0 or self.z < 0:
             return False
-        if self.x>cs.LX or self.y>cs.LY or self.z>cs.LZ:
+        if self.x > cs.LX or self.y>cs.LY or self.z>cs.LZ:
             return False
         return True

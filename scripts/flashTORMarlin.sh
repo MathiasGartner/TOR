@@ -1,16 +1,18 @@
 #!/bin/bash
 
-printf "#### flash TOR-Marlin ####"
-printf "mount usb-STM_SD_Flash_Disk-0\:0-part1 ..."
+printf "#### flash TOR-Marlin ####\n"
+printf "mount usb-STM_SD_Flash_Disk-0\:0-part1 ...\n"
 sudo mount /dev/disk/by-id/usb-STM_SD_Flash_Disk-0\:0-part1 /mnt
-printf "copy firmware.bin ..."
-sudo cp /home/pi/firmware.bin /mnt/
-printf "files on SD card:"
+sudo rm -r /mnt/*
+printf "copy firmware.bin ...\n"
+sudo cp /home/pi/tormarlin/firmware.bin /mnt/
+printf "files on SD card:\n"
 ls /mnt
-printf "now flashing ..."
+sudo umount /mnt
+printf "now flashing ...\n"
 torenv/bin/python3 -m tor.client.scripts.serialCmd "M997"
-sleep 10
-printf "mount SD card again ..."
+sleep 20
+printf "mount SD card again ...\n"
 sudo mount /dev/disk/by-id/usb-STM_SD_Flash_Disk-0\:0-part1 /mnt
-printf "files on SD card (firmware.bin should be deleted):"
+printf "files on SD card (firmware.bin should be deleted):\n"
 ls /mnt

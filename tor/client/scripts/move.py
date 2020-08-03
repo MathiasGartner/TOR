@@ -1,5 +1,6 @@
 import argparse
 import cv2
+import logging
 import time
 import numpy as np
 import os
@@ -33,6 +34,8 @@ parser.add_argument("-infinity", dest='infinity', action="store_true")
 parser.add_argument("-cor", dest="cal_on_run", default=0, type=int)
 args = parser.parse_args()
 
+logging.basicConfig(format='%(levelname)s: %(message)s', level=cs.LOG_LEVEL)
+log = logging.getLogger(__name__)
 
 ###########################
 ### get client identity ###

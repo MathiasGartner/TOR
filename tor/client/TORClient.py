@@ -71,7 +71,7 @@ def run():
             mr.searchForDie()
         countSameResult = 0
 
-    mm.moveToPos(cs.CENTER_TOP)
+    mm.moveToPos(cs.CENTER_TOP, True)
     mm.waitForMovementFinished()
 
 def doJobsDummy():
@@ -88,7 +88,7 @@ def doJobs():
     global exitTOR
     global nextJob
     mm.doHoming()
-    mm.moveToPos(cs.CENTER_TOP)
+    mm.moveToPos(cs.CENTER_TOP, True)
     mm.waitForMovementFinished()
     log.info("now in starting position.")
     time.sleep(0.5)
@@ -102,7 +102,7 @@ def doJobs():
             run()
         elif "H" in nextJob: # H...homing
             mm.doHoming()
-            mm.moveToPos(cs.CENTER_TOP)
+            mm.moveToPos(cs.CENTER_TOP, True)
             mm.waitForMovementFinished()
         elif "W" in nextJob: # W...wait
             sleepTime = int(nextJob["W"] or cs.STANDARD_CLIENT_SLEEP_TIME)
@@ -111,7 +111,7 @@ def doJobs():
             time.sleep(sleepTime)
         elif "Q" in nextJob: # Q...quit
             done = True
-    mm.moveToParkingPosition()
+    mm.moveToParkingPosition(True)
     log.info("finished")
     exitTOR = True
 
@@ -164,6 +164,9 @@ log.setLevel(cs.LOG_LEVEL)
 
 dr = DieRecognizer()
 mm = MovementManager()
+if not mm.hasCorrectVersion:
+    log.warning("Incompatible version of TOR-Marlin installed. TORClient will now quit.")
+    exit(0)
 mr = MovementRoutines()
 
 if cs.ON_RASPI:
@@ -196,7 +199,7 @@ worker.start()
 
 worker.join()
 exitTOR = True # worker quitted accidentally
-mm.moveToParkingPosition()
+mm.moveToParkingPosition(True)
 jobScheduler.join()
 lm.clear()
 log.info("TORClient will now quit.")

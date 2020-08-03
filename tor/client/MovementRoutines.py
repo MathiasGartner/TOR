@@ -187,7 +187,7 @@ class MovementRoutines:
         self.mm.setFeedratePercentage(cs.FR_FAST_MOVES)
         self.mm.rollDie()
         time.sleep(cs.DIE_ROLL_TIME / 2.0)
-        self.mm.moveToPos(cs.CENTER_TOP)
+        self.mm.moveToPos(cs.CENTER_TOP, True)
         time.sleep(cs.DIE_ROLL_TIME / 2.0)
 
         # pickup die
