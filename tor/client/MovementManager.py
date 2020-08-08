@@ -117,11 +117,10 @@ class MovementManager:
         cmd = "M42 P40 S{} I".format(brightness)
         self.sendGCode(cmd)
 
-    def doHoming(self, waitForHomingFinished=True):
-        cmd = cs.G_HOMING
+    def doHoming(self, mode=0):
+        cmd = cs.G_HOMING.format(mode)
         self.sendGCode(cmd)
-        if waitForHomingFinished:
-            self.waitForMovementFinished()
+        self.waitForMovementFinished()
         self.updateCurrentPosition()
 
     def __moveToCords(self, cords, segmented=False):

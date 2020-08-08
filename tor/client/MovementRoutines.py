@@ -134,16 +134,29 @@ class MovementRoutines:
         self.mm.moveToPos(cs.AFTER_PICKUP_POSITION, True)
         self.mm.waitForMovementFinished()
 
-    def findDie(self):
+    def takePicture(self):
         cam = Camera()
         self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
         image = cam.takePicture()
         self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
         cam.close()
+        return image
+
+    '''take a picture and locate the die'''
+    def findDie(self):
+        image = self.takePicture()
         dieRollResult, processedImages = self.dr.getDieRollResult(image, returnOriginalImg=True)
         return dieRollResult, processedImages
 
-    def pickupDie(self):
+    '''take a picture and locate the die while homing is performed'''
+    def findDieWhileHoming(self):
+        self.mm.doHoming(mode=2)
+        image = self.takePicture()
+        self.mm.doHoming(mode=3)
+        dieRollResult, processedImages = self.dr.getDieRollResult(image, returnOriginalImg=True)
+        return dieRollResult, processedImages
+
+    def pickupDie(self, onSendResult=None):
         dieRollResult = DieRollResult()
         if cs.USE_IMAGE_RECOGNITION:
             dieRollResult, processedImages = self.findDie()
@@ -159,21 +172,15 @@ class MovementRoutines:
             if cs.SHOW_DIE_RESULT_WITH_LEDS:
                 lm = LedManager()
                 lm.showResult(dieRollResult.result)
-            #TODO: send dieRollResult here
+            if onSendResult is not None:
+                onSendResult(dieRollResult)
             self.pickupDieFromPosition(dieRollResult.position)
         else:
             log.info('Die not found, now searching...')
             self.searchForDie()
         return dieRollResult
 
-    def run(self, lastPickupX):
-        # move to dropoff position
-        dropoffPos = cs.MESH_MAGNET[1, :]
-        px = np.clip(1 - lastPickupX / cs.LX, 0.0, 1.0)
-        if px < 0.5:
-            dropoffPos = 2 * px * cs.MESH_MAGNET[1, :] + (1 - 2 * px) * cs.MESH_MAGNET[0, :]
-        else:
-            dropoffPos = 2 * (px - 0.5) * cs.MESH_MAGNET[3, :] + 2 * (1 - px) * cs.MESH_MAGNET[2, :]
+    def moveToDropoffPosition(self, dropoffPos):
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
         self.mm.moveToPos(Position(dropoffPos[0], dropoffPos[1] + 20, 30), True)
         self.mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE)
@@ -181,6 +188,16 @@ class MovementRoutines:
         self.mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE_SLOW)
         self.mm.moveToPos(Position(dropoffPos[0], dropoffPos[1], dropoffPos[2]), True)
         self.mm.waitForMovementFinished()
+
+    def run(self, lastPickupX, onSendResult=None):
+        # move to dropoff position
+        dropoffPos = cs.MESH_MAGNET[1, :]
+        px = np.clip(1 - lastPickupX / cs.LX, 0.0, 1.0)
+        if px < 0.5:
+            dropoffPos = 2 * px * cs.MESH_MAGNET[1, :] + (1 - 2 * px) * cs.MESH_MAGNET[0, :]
+        else:
+            dropoffPos = 2 * (px - 0.5) * cs.MESH_MAGNET[3, :] + 2 * (1 - px) * cs.MESH_MAGNET[2, :]
+        self.moveToDropoffPosition(dropoffPos)
 
         # roll die
         time.sleep(cs.WAIT_BEFORE_ROLL_TIME)
@@ -191,6 +208,6 @@ class MovementRoutines:
         time.sleep(cs.DIE_ROLL_TIME / 2.0)
 
         # pickup die
-        dieRollResult = self.pickupDie()
+        dieRollResult = self.pickupDie(onSendResult)
 
         return dieRollResult

@@ -34,10 +34,10 @@ def run():
     global countSameResult
     global lastResult
 
-    dieRollResult = mr.run(lastPickupX)
+    dieRollResult = mr.run(lastPickupX, cm.sendDieRollResult)
     if dieRollResult.found:
         lastPickupX = dieRollResult.position.x
-        cm.sendDieRollResult(dieRollResult)
+        #cm.sendDieRollResult(dieRollResult)
         if lastResult == dieRollResult.result:
             countSameResult += 1
         else:
@@ -87,7 +87,14 @@ def doJobsDummy():
 def doJobs():
     global exitTOR
     global nextJob
-    mm.doHoming()
+
+    dieRollResult, processedImages = mr.findDieWhileHoming()
+    mm.waitForMovementFinished()
+    mm.updateCurrentPosition()
+    mm.moveToPos(cs.CENTER_TOP, True)
+    if dieRollResult.found:
+        mr.pickupDieFromPosition(dieRollResult.position)
+
     mm.moveToPos(cs.CENTER_TOP, True)
     mm.waitForMovementFinished()
     log.info("now in starting position.")

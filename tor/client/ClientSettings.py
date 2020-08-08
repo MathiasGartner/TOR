@@ -127,7 +127,7 @@ BLOB_MIN_DIAMETER = 20 #18
 BLOB_MAX_DIAMETER = 31
 
 # movement configuration:
-G_HOMING = "G28 A0 S50 P130 F68 R8 D1.05 B1.15"
+G_HOMING = "G28 N{} A0 S50 P130 F68 R8 D1.05 B1.15"
 
 # LED strip configuration:
 LED_COUNT      = 81      # Number of LED pixels.

@@ -50,7 +50,7 @@ writeCustomFile(material, settings)
 #ips = range(101, 131) #[107]
 
 #ips = [107, 112]
-ips = [112, 107]
+ips = [107]
 path_key = tsl.PATH_TO_SSH_KEY
 
 #### TOR ####
@@ -61,6 +61,7 @@ cmd_delete_service = r'ssh -i {0} pi@192.168.0.{1} "sudo rm -r scripts"'
 cmd_copy_service = r"scp -i {0} -r " + tsl.PATH_TO_TOR_SCRIPTS + r"\TOR\scripts pi@192.168.0.{1}:/home/pi"
 cmd_copy_service_system = r'ssh -i {0} pi@192.168.0.{1} "sudo cp /home/pi/scripts/TORClient.service /etc/systemd/system/TORClient.service"'
 cmd_chmod_marlin = r'ssh -i {0} pi@192.168.0.{1} "sudo chmod +x /home/pi/scripts/flashTORMarlin.sh"'
+cmd_chmod_temp = r'ssh -i {0} pi@192.168.0.{1} "sudo chmod +x /home/pi/scripts/temperature.sh"'
 
 with open(filename, 'w') as f:
     for ip in ips:
@@ -76,6 +77,8 @@ with open(filename, 'w') as f:
         cmd = cmd_copy_service_system.format(path_key, full_ip)
         f.write(cmd + "\n")
         cmd = cmd_chmod_marlin.format(path_key, full_ip)
+        f.write(cmd + "\n")
+        cmd = cmd_chmod_temp.format(path_key, full_ip)
         f.write(cmd + "\n")
 
 #### TOR-Marlin ####
