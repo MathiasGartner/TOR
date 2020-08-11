@@ -58,11 +58,7 @@ def run():
         mr.searchForDie()
         countNotFound = 0
     elif countSameResult >= cs.HOME_AFTER_N_SAME_RESULTS:
-        #TODO: while homing, check if image recognition finds die
-        #      for this, add option "waitForHomingFinished" to mm.doHoming()
-        #      then eihter call mr.searchForDie() or mr.pickupDie() or nothing?
-        mm.doHoming(waitForHomingFinished=False)
-        dieRollResult, processedImages = mr.findDie()
+        dieRollResult, processedImages = mr.findDieWhileHoming()
         mm.waitForMovementFinished()
         mm.updateCurrentPosition()
         if dieRollResult.found:

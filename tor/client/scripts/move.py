@@ -32,6 +32,8 @@ parser.add_argument("-find", dest='find', action="store_true")
 parser.add_argument("-pickup", dest='pickup', action="store_true")
 parser.add_argument("-infinity", dest='infinity', action="store_true")
 parser.add_argument("-cor", dest="cal_on_run", default=0, type=int)
+parser.add_argument("-a", dest='a', action="store_true")
+parser.add_argument("-b", dest='b', action="store_true")
 args = parser.parse_args()
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=cs.LOG_LEVEL)
@@ -136,5 +138,5 @@ if args.start:
 
 pos = Position(args.position[0], args.position[1], args.position[2])
 if pos.isValid():
-    mm.moveToPos(pos, args.segmented)
+    mm.moveToPos(pos, args.segmented, useSlowDownStart=(not args.a), useSlowDownEnd=(not args.b))
 

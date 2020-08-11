@@ -47,7 +47,6 @@ class MovementRoutines:
         10 11 12
         M      M
         '''
-        oldFeedratePercentage = self.mm.feedratePercentage
         p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12 = self.loadPoints()
         n_rows = 4 # rows per area
         self.mm.moveToPos(Position(p1[0], p1[1], 100), True)
@@ -72,16 +71,16 @@ class MovementRoutines:
             if (i % 2 == 0):
                 self.mm.moveToPos(Position(x_mesh_l[i], y_mesh_l[i], z_mesh_l[i]), True)
                 #self.mm.waitForMovementFinished()
-                self.mm.moveToPos(Position(x_mesh_c[i], y_mesh_c[i], z_mesh_c[i]), True)
+                self.mm.moveToPos(Position(x_mesh_c[i], y_mesh_c[i], z_mesh_c[i]), True, useSlowDownEnd=False)
                 #self.mm.waitForMovementFinished()
-                self.mm.moveToPos(Position(x_mesh_r[i], y_mesh_r[i], z_mesh_r[i]), True)
+                self.mm.moveToPos(Position(x_mesh_r[i], y_mesh_r[i], z_mesh_r[i]), True, useSlowDownStart=False)
                 self.mm.waitForMovementFinished()
             else:
                 self.mm.moveToPos(Position(x_mesh_r[i], y_mesh_r[i], z_mesh_r[i]), True)
                 #self.mm.waitForMovementFinished()
-                self.mm.moveToPos(Position(x_mesh_c[i], y_mesh_c[i], z_mesh_c[i]), True)
+                self.mm.moveToPos(Position(x_mesh_c[i], y_mesh_c[i], z_mesh_c[i]), True, useSlowDownEnd=False)
                 #self.mm.waitForMovementFinished()
-                self.mm.moveToPos(Position(x_mesh_l[i], y_mesh_l[i], z_mesh_l[i]), True)
+                self.mm.moveToPos(Position(x_mesh_l[i], y_mesh_l[i], z_mesh_l[i]), True, useSlowDownStart=False)
                 self.mm.waitForMovementFinished()
 
         #### ramp ###
@@ -116,7 +115,7 @@ class MovementRoutines:
                     self.mm.moveToPos(Position(x_mesh_l[i], y_mesh_l[i], z_mesh_l[i]), True)
                     self.mm.waitForMovementFinished()
 
-        self.mm.setFeedratePercentage(oldFeedratePercentage)
+        self.mm.setFeedratePercentage(cs.FR_DEFAULT)
         self.mm.moveToPos(cs.AFTER_PICKUP_POSITION, True)
         self.mm.waitForMovementFinished()
 

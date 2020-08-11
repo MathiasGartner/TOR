@@ -12,7 +12,7 @@ if sys.platform == "linux":
 else:
     ON_RASPI = False
 
-TOR_MARLIN_VERSION = "1.0"
+TOR_MARLIN_VERSION = "1.1"
 
 #logging
 LOG_LEVEL = logging.INFO
