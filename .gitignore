@@ -145,3 +145,4 @@ dmypy.json
 
 # Generated files
 .idea/**/contentModel.xml
+/scratches/update_wifi.cmd

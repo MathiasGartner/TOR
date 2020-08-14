@@ -122,6 +122,11 @@ class MovementManager:
         self.sendGCode(cmd)
         self.waitForMovementFinished()
         self.updateCurrentPosition()
+        homePos = Position(cs.LX, cs.LY, 0)
+        homeCords = homePos.toCordLengths()
+        print(homeCords)
+        self.setCurrentPosition(homeCords)
+        self.currentPosition = homePos
 
     def __moveToCords(self, cords, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
         cmd = "G1 " + self.getCordLengthGCode(cords) + (" S" if segmented else "") + (" A" if not useSlowDownStart else "") + (" B" if not useSlowDownEnd else "")

@@ -6,6 +6,7 @@ import numpy as np
 import os
 
 from tor.base.DieRollResult import DieRollResult
+from tor.base.utils.Point2D import Point2D
 from tor.client import ClientSettings as cs
 from tor.client.MovementManager import MovementManager
 from tor.client.MovementRoutines import MovementRoutines
@@ -64,8 +65,9 @@ mm = MovementManager()
 mr = MovementRoutines()
 lm = LedManager()
 
-def start_script():
-    pos=mm.getCurrentPosition()
+def start_script(last_pos):
+    #pos=mm.getCurrentPosition()
+    pos=last_pos
     if(pos.y<cs.LY/2.):
         mm.moveToPos(cs.CENTER_TOP, True)
         mm.waitForMovementFinished()
@@ -111,6 +113,7 @@ if args.start:
         i=0
         err=0
         dieRollResult = DieRollResult()
+        dieRollResult.position=Point2D(0,0)
         while(True):
             i+=1
             if (err == 3):  # prevents bad runs
@@ -120,10 +123,10 @@ if args.start:
                 mr.searchForDie()
 
             result_old = dieRollResult.result
-            dieRollResult = start_script()
+            dieRollResult = start_script(dieRollResult.position)
             print(dieRollResult.result)
 
-            if ((not found) or (result_old == dieRollResult.result)):
+            if ((not dieRollResult.found) or (result_old == dieRollResult.result)):
                 err += 1
             else:
                 err = 0
