@@ -1,3 +1,6 @@
+import logging
+log = logging.getLogger(__name__)
+
 import math
 import numpy as np
 import re
@@ -15,9 +18,11 @@ class MovementManager:
         self.com = Communicator()
         self.feedratePercentage = 0
         self.currentPosition = Position(-1, -1, -1)
-        if not self.isInitialized:
+        if not MovementManager.isInitialized:
+            self.torMarlinVersion = "X"
+            self.hasCorrectVersion = self.checkTORMarlinVersion()
             self.__initBoard()
-            self.isInitialized = True
+            MovementManager.isInitialized = True
 
     def __initBoard(self):
         # Restore Settings
@@ -29,15 +34,15 @@ class MovementManager:
         self.updateCurrentPosition()
         self.waitForMovementFinished()
 
-    def setFeedratePercentage(self, fr):
-        self.sendGCode("M220 S{}".format(fr))
-        self.feedratePercentage = fr
-
     def sendGCode(self, cmd):
-        print("SEND: " + cmd)
+        log.info("SEND: {}".format(cmd))
         self.com.send(cmd)
         msgs = self.com.recvUntilOk()
         return msgs
+
+    def setFeedratePercentage(self, fr):
+        self.sendGCode("M220 S{}".format(fr))
+        self.feedratePercentage = fr
 
     def getCordLengthGCode(self, cords):
         cmd = ""
@@ -67,6 +72,24 @@ class MovementManager:
     def updateCurrentPosition(self):
         self.currentPosition = self.getCurrentPosition()
 
+    def checkTORMarlinVersion(self):
+        versionOkay = False
+        msgs = self.sendGCode("M115")
+        if not cs.ON_RASPI:
+            msgs = ["FIRMWARE_NAME:Marlin 2.0.5.3 (GitHub) TOR_VERSION:1.1 SOURCE_CODE_URL:https://github.com/MarlinFirmware/Marlin PROTOCOL_VERSION:1.0 MACHINE_TYPE:The Transparency of Randomness EXTRUDER_COUNT:1 UUID:cede2a2f-41a2-4748-9b12-c55c62f367ff"]
+        pattern = ".*TOR_VERSION:(\d+\.\d+).*"
+        for msg in msgs:
+            match = re.match(pattern, msg)
+            if match:
+                self.torMarlinVersion = str(match.group(1))
+        if self.torMarlinVersion == cs.TOR_MARLIN_VERSION:
+            versionOkay = True
+            log.info("TOR-Marlin v{} installed.".format(self.torMarlinVersion))
+        else:
+            versionOkay = False
+            log.error("TOR-Marlin v{} installed, but v{} required.".format(self.torMarlinVersion, cs.TOR_MARLIN_VERSION))
+        return versionOkay
+
     def toggleLED(self, ledId, isOn, r=0, b=0, g=0, brightness=255):
         raise Exception("LEDs are not supported")
         if not isOn:
@@ -94,68 +117,67 @@ class MovementManager:
         cmd = "M42 P40 S{} I".format(brightness)
         self.sendGCode(cmd)
 
-    def doHoming(self, waitForHomingFinished=True):
-        cmd = cs.G_HOMING
+    def doHoming(self, mode=0):
+        cmd = cs.G_HOMING.format(mode)
         self.sendGCode(cmd)
-        if waitForHomingFinished:
-            self.waitForMovementFinished()
+        self.waitForMovementFinished()
         self.updateCurrentPosition()
 
-    def __moveToCords(self, cords, segmented=False):
-        cmd = "G1 " + self.getCordLengthGCode(cords) + (" S" if segmented else "")
+    def __moveToCords(self, cords, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
+        cmd = "G1 " + self.getCordLengthGCode(cords) + (" S" if segmented else "") + (" A" if not useSlowDownStart else "") + (" B" if not useSlowDownEnd else "")
         self.sendGCode(cmd)
 
-    def moveToPos(self, pos, segmented=False):
+    def moveToPos(self, pos, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
         if not isinstance(pos, list):
             pos = [pos]
         for p in pos:
-            print("MOVE{}:".format(" SEG" if segmented else ""), p.x, p.y, p.z)
+            log.info("MOVE{}: {} {} {}".format(" SEG" if segmented else "", p.x, p.y, p.z))
             cords = p.toCordLengths()
-            self.__moveToCords(cords, segmented)
+            self.__moveToCords(cords, segmented, useSlowDownStart, useSlowDownEnd)
             self.currentPosition = p
 
-    def moveToXYZ(self, x, y, z, segmented=False):
+    def moveToXYZ(self, x, y, z, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
         pos = Position(x, y, z)
-        self.moveToPos(pos, segmented)
+        self.moveToPos(pos, segmented, useSlowDownStart, )
 
-    def moveToXYPosDie(self, x, y, segmented=False):
+    def moveToXYPosDie(self, x, y, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
         pos = Position(x, y, cs.PICKUP_Z)
-        self.moveToPos(pos, segmented)
+        self.moveToPos(pos, segmented, useSlowDownStart, )
 
-    def moveToXPosRamp(self, x, segmented=False):
+    def moveToXPosRamp(self, x, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
         x = min(max(x, cs.RAMP_FORBIDDEN_X_MIN), cs.RAMP_FORBIDDEN_X_MAX)
         pos = Position(x, cs.RAMP_DROPOFF_Y, cs.RAMP_DROPOFF_Z)
-        self.moveToPos(pos, segmented)
+        self.moveToPos(pos, segmented, useSlowDownStart, )
 
-    def moveToXYPosDieAndRamp(self, x, y, segmented=False):
-        self.moveToXYPosDie(x, y, segmented)
-        self.moveToXPosRamp(x, segmented)
+    def moveToXYPosDieAndRamp(self, x, y, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
+        self.moveToXYPosDie(x, y, segmented, useSlowDownStart, )
+        self.moveToXPosRamp(x, segmented, useSlowDownStart, )
 
-    def moveHome(self, segmented=False):
-        self.moveToPos(cs.HOME_POSITION, segmented)
+    def moveHome(self, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
+        self.moveToPos(cs.HOME_POSITION, segmented, useSlowDownStart, )
 
-    def moveToParkingPosition(self, segmented=False):
-        self.moveToPos(cs.PARKING_POSITION, segmented)
+    def moveToParkingPosition(self, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
+        self.moveToPos(cs.PARKING_POSITION, segmented, useSlowDownStart, )
 
-    def moveToAllCorners(self, segmented=False):
-        self.moveToPos(cs.CORNER_X, segmented)
+    def moveToAllCorners(self, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
+        self.moveToPos(cs.CORNER_X, segmented, useSlowDownStart, )
         time.sleep(0.5)
-        self.moveToPos(cs.CENTER_TOP, segmented)
-        self.moveToPos(cs.CORNER_Z, segmented)
+        self.moveToPos(cs.CENTER_TOP, segmented, useSlowDownStart, )
+        self.moveToPos(cs.CORNER_Z, segmented, useSlowDownStart, )
         time.sleep(0.5)
-        self.moveToPos(cs.CENTER_TOP, segmented)
-        self.moveToPos(cs.CORNER_E, segmented)
+        self.moveToPos(cs.CENTER_TOP, segmented, useSlowDownStart, )
+        self.moveToPos(cs.CORNER_E, segmented, useSlowDownStart, )
         time.sleep(0.5)
-        self.moveToPos(cs.CENTER_TOP, segmented)
-        self.moveToPos(cs.CORNER_Y, segmented)
+        self.moveToPos(cs.CENTER_TOP, segmented, useSlowDownStart, )
+        self.moveToPos(cs.CORNER_Y, segmented, useSlowDownStart, )
         time.sleep(0.5)
-        self.moveToPos(cs.CENTER_TOP, segmented)
-        self.moveToPos(cs.CORNER_X, segmented)
+        self.moveToPos(cs.CENTER_TOP, segmented, useSlowDownStart, )
+        self.moveToPos(cs.CORNER_X, segmented, useSlowDownStart, )
         time.sleep(0.5)
-        self.moveHome(segmented)
+        self.moveHome(segmented, useSlowDownStart, )
 
     def rollDie(self):
-        print("die is now rolled...")
+        log.info("die is now rolled...")
         self.pulseMagnet()
 
     def waitForMovementFinished(self, sleepTime=0):

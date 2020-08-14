@@ -1,13 +1,19 @@
+import logging
+log = logging.getLogger(__name__)
+
+from datetime import datetime
 import numpy as np
 import time
 
 from tor.base.DieRecognizer import DieRecognizer
 from tor.base.DieRollResult import DieRollResult
 from tor.client import ClientSettings as cs
-from tor.client.Camera import Camera
 from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
 from tor.client.Position import Position
+
+if cs.ON_RASPI:
+    from tor.client.Camera import Camera
 
 class MovementRoutines:
     def __init__(self):
@@ -20,7 +26,7 @@ class MovementRoutines:
     def relativeBedCoordinatesToPosition(self, px, py):
         p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12 = self.loadPoints()
         if (px < 0 or px > 1 or py < -0.1 or py > 1):
-            print("Out of range!:", px, py)
+            log.warning("Out of range in relativeBedCoordinatesToPosition: [x,y]=[{},{}]".format(px, py))
             return cs.BEFORE_PICKUP_POSITION
         if (px < 0.5):
             x = (1 - py) * (p4[0] + px * (p6[0] - p4[0])) + py * (p1[0] + px * (p3[0] - p1[0]))
@@ -42,7 +48,6 @@ class MovementRoutines:
         10 11 12
         M      M
         '''
-        oldFeedratePercentage = self.mm.feedratePercentage
         p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12 = self.loadPoints()
         n_rows = 4 # rows per area
         self.mm.moveToPos(Position(p1[0], p1[1], 100), True)
@@ -67,16 +72,16 @@ class MovementRoutines:
             if (i % 2 == 0):
                 self.mm.moveToPos(Position(x_mesh_l[i], y_mesh_l[i], z_mesh_l[i]), True)
                 #self.mm.waitForMovementFinished()
-                self.mm.moveToPos(Position(x_mesh_c[i], y_mesh_c[i], z_mesh_c[i]), True)
+                self.mm.moveToPos(Position(x_mesh_c[i], y_mesh_c[i], z_mesh_c[i]), True, useSlowDownEnd=False)
                 #self.mm.waitForMovementFinished()
-                self.mm.moveToPos(Position(x_mesh_r[i], y_mesh_r[i], z_mesh_r[i]), True)
+                self.mm.moveToPos(Position(x_mesh_r[i], y_mesh_r[i], z_mesh_r[i]), True, useSlowDownStart=False)
                 self.mm.waitForMovementFinished()
             else:
                 self.mm.moveToPos(Position(x_mesh_r[i], y_mesh_r[i], z_mesh_r[i]), True)
                 #self.mm.waitForMovementFinished()
-                self.mm.moveToPos(Position(x_mesh_c[i], y_mesh_c[i], z_mesh_c[i]), True)
+                self.mm.moveToPos(Position(x_mesh_c[i], y_mesh_c[i], z_mesh_c[i]), True, useSlowDownEnd=False)
                 #self.mm.waitForMovementFinished()
-                self.mm.moveToPos(Position(x_mesh_l[i], y_mesh_l[i], z_mesh_l[i]), True)
+                self.mm.moveToPos(Position(x_mesh_l[i], y_mesh_l[i], z_mesh_l[i]), True, useSlowDownStart=False)
                 self.mm.waitForMovementFinished()
 
         #### ramp ###
@@ -111,38 +116,51 @@ class MovementRoutines:
                     self.mm.moveToPos(Position(x_mesh_l[i], y_mesh_l[i], z_mesh_l[i]), True)
                     self.mm.waitForMovementFinished()
 
-        self.mm.setFeedratePercentage(oldFeedratePercentage)
+        self.mm.setFeedratePercentage(cs.FR_DEFAULT)
         self.mm.moveToPos(cs.AFTER_PICKUP_POSITION, True)
         self.mm.waitForMovementFinished()
 
     def pickupDieFromPosition(self, pos):
-        print("die position:", pos)
+        log.info("die position: {}".format(pos))
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
         self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
         self.mm.waitForMovementFinished()
 
         pickupPos = self.relativeBedCoordinatesToPosition(pos.x, pos.y)
-        print("pickupPos:", pickupPos)
+        log.info("pickupPos: {}".format(pickupPos))
         self.mm.moveToPos(pickupPos, True)
         self.mm.waitForMovementFinished()
         time.sleep(cs.WAIT_ON_PICKUP_POS)
         self.mm.moveToPos(cs.AFTER_PICKUP_POSITION, True)
         self.mm.waitForMovementFinished()
 
-    def findDie(self):
+    def takePicture(self):
         cam = Camera()
         self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
         image = cam.takePicture()
         self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
         cam.close()
+        return image
+
+    '''take a picture and locate the die'''
+    def findDie(self):
+        image = self.takePicture()
         dieRollResult, processedImages = self.dr.getDieRollResult(image, returnOriginalImg=True)
         return dieRollResult, processedImages
 
-    def pickupDie(self):
+    '''take a picture and locate the die while homing is performed'''
+    def findDieWhileHoming(self):
+        self.mm.doHoming(mode=2)
+        image = self.takePicture()
+        self.mm.doHoming(mode=3)
+        dieRollResult, processedImages = self.dr.getDieRollResult(image, returnOriginalImg=True)
+        return dieRollResult, processedImages
+
+    def pickupDie(self, onSendResult=None):
         dieRollResult = DieRollResult()
         if cs.USE_IMAGE_RECOGNITION:
             dieRollResult, processedImages = self.findDie()
-            print("result:", dieRollResult.result)
+            log.info("result: {}".format(dieRollResult.result))
             if cs.STORE_IMAGES:
                 directory = "found" if dieRollResult.found else "fail"
                 self.dr.writeImage(processedImages[0], directory=directory)
@@ -150,25 +168,19 @@ class MovementRoutines:
                 self.dr.writeRGBArray(processedImages[0], directory=directory)
 
         if dieRollResult.found:
-            print("dieRollResult", dieRollResult)
+            log.info("dieRollResult: {}".format(dieRollResult))
             if cs.SHOW_DIE_RESULT_WITH_LEDS:
                 lm = LedManager()
                 lm.showResult(dieRollResult.result)
-            #TODO: send dieRollResult here
+            if onSendResult is not None:
+                onSendResult(dieRollResult)
             self.pickupDieFromPosition(dieRollResult.position)
         else:
-            print('Die not found, now searching...')
+            log.info('Die not found, now searching...')
             self.searchForDie()
         return dieRollResult
 
-    def run(self, lastPickupX):
-        # move to dropoff position
-        dropoffPos = cs.MESH_MAGNET[1, :]
-        px = np.clip(1 - lastPickupX / cs.LX, 0.0, 1.0)
-        if px < 0.5:
-            dropoffPos = 2 * px * cs.MESH_MAGNET[1, :] + (1 - 2 * px) * cs.MESH_MAGNET[0, :]
-        else:
-            dropoffPos = 2 * (px - 0.5) * cs.MESH_MAGNET[3, :] + 2 * (1 - px) * cs.MESH_MAGNET[2, :]
+    def moveToDropoffPosition(self, dropoffPos):
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
         self.mm.moveToPos(Position(dropoffPos[0], dropoffPos[1] + 20, 30), True)
         self.mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE)
@@ -177,15 +189,66 @@ class MovementRoutines:
         self.mm.moveToPos(Position(dropoffPos[0], dropoffPos[1], dropoffPos[2]), True)
         self.mm.waitForMovementFinished()
 
+    def run(self, lastPickupX, onSendResult=None):
+        # move to dropoff position
+        dropoffPos = cs.MESH_MAGNET[1, :]
+        px = np.clip(1 - lastPickupX / cs.LX, 0.0, 1.0)
+        if px < 0.5:
+            dropoffPos = 2 * px * cs.MESH_MAGNET[1, :] + (1 - 2 * px) * cs.MESH_MAGNET[0, :]
+        else:
+            dropoffPos = 2 * (px - 0.5) * cs.MESH_MAGNET[3, :] + 2 * (1 - px) * cs.MESH_MAGNET[2, :]
+        self.moveToDropoffPosition(dropoffPos)
+
         # roll die
         time.sleep(cs.WAIT_BEFORE_ROLL_TIME)
         self.mm.setFeedratePercentage(cs.FR_FAST_MOVES)
         self.mm.rollDie()
         time.sleep(cs.DIE_ROLL_TIME / 2.0)
-        self.mm.moveToPos(cs.CENTER_TOP)
+        self.mm.moveToPos(cs.CENTER_TOP, True)
         time.sleep(cs.DIE_ROLL_TIME / 2.0)
 
         # pickup die
-        dieRollResult = self.pickupDie()
+        dieRollResult = self.pickupDie(onSendResult)
 
         return dieRollResult
+
+    def sleepUntilTimestamp(self, step, timestamps):
+        sleepFor = timestamps[step] - time.time()
+        print("sleep:", sleepFor)
+        if sleepFor > 0:
+            time.sleep(sleepFor)
+
+    def doTestPerformance(self, startTime):
+        log.info("start performance")
+        startTimestamp = datetime.timestamp(startTime)
+        timings = np.cumsum([0, 2, 6.5, 3, 20, 2])
+        timestamps = [t + startTimestamp for t in timings]
+        log.info(timestamps)
+        lm = LedManager()
+
+        step = 0
+        self.sleepUntilTimestamp(step, timestamps)
+        for i in range(15):
+            lm.setLeds(range(0, i * 5), 255, 255, 255)
+            time.sleep(0.05)
+            lm.clear()
+            time.sleep(0.05)
+
+        step += 1
+        self.sleepUntilTimestamp(step, timestamps)
+        for i in range(10):
+            lm.setLeds(range(0, i*5), i*10, i*3, i)
+            time.sleep(0.5)
+
+        step += 1
+        self.sleepUntilTimestamp(step, timestamps)
+        self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
+
+        step += 1
+        self.sleepUntilTimestamp(step, timestamps)
+        self.searchForDie()
+
+        step += 1
+        self.sleepUntilTimestamp(step, timestamps)
+        self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
+

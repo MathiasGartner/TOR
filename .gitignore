@@ -2,6 +2,7 @@
 /tor/TORSettingsLocal.py
 tor/TORSettingsPrivate.py
 /scratches/update_tor.cmd
+/scratches/update_tor_marlin.cmd
 /venv_38/
 /venv_conda/
 

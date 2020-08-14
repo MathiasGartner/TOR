@@ -1,4 +1,5 @@
 import datetime
+import logging
 import itertools
 import json
 import random
@@ -7,10 +8,6 @@ import socket
 from tor.base import DBManager
 from tor.base import NetworkUtils
 import tor.TORSettings as ts
-
-def log(*msg):
-    print('{0:%Y-%m-%d %H:%M:%S}: '.format(datetime.datetime.now()), end='')
-    print(msg)
 
 def getClientSettings(clientId):
     settings = DBManager.getClientSettings(clientId)
@@ -40,20 +37,23 @@ def handleRequest(conn):
             dieResult = request["RESULT"]
             x = request["POSX"]
             y = request["POSY"]
-            log("Client", clientId, "rolled", dieResult, "at", x, y)
+            log.info("Client {} rolled {} at [{}, {}]".format(clientId, dieResult, x, y))
             NetworkUtils.sendOK(conn)
             DBManager.writeResult(clientId, dieResult, x, y)
         elif "E" in request: #error on client
-            log("ERROR", request["E"], "@ client", clientId)
-            log(request["MESSAGE"])
+            log.warning("Error {} @ Client {}".format(request["E"], clientId))
+            log.warning(request["MESSAGE"])
             NetworkUtils.sendOK(conn)
         elif "J" in request: #client asks for job
             #jobIds = [1, 1, 1, 1, 1, 1, 3, 4, 5, 6, 7, 8]
             #jobIds = [1]
             #job = random.choice(jobIds)
             job = DBManager.getNextJobForClientId(clientId)
-            log("client", clientId, "asks for job, send", job)
-            NetworkUtils.sendData(conn, {job.JobCode: job.JobParameters})
+            log.info("client {} asks for job, send {}".format(clientId, job))
+            NetworkUtils.sendData(conn, {
+                job.JobCode: job.JobParameters,
+                "T": job.ExecuteAt.__str__()
+            })
             # if job == 1:
             #     NetworkUtils.sendData(conn, {"R" : 1})
             # elif job == 2:
@@ -92,13 +92,17 @@ def handleRequest(conn):
                                      "Position": cId.Position
                                      })
     else:
-        log("could not identify client.")
+        log.warning("could not identify client.")
+
+
+logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=ts.SERVER_LOG_LEVEL)
+log = logging.getLogger(__name__)
 
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serverSocket.bind((ts.SERVER_IP, ts.SERVER_PORT))
 serverSocket.listen(5)
 
-log("start server")
+log.info("start server")
 while True:
     (clientSocket, address) = serverSocket.accept()
     handleRequest(clientSocket)

@@ -1,3 +1,6 @@
+import logging
+log = logging.getLogger(__name__)
+
 import mysql.connector as mysql
 
 import tor.TORSettings as ts
@@ -39,13 +42,14 @@ def getClientIdentity(clientMAC):
     return data
 
 def getNextJobForClientId(clientId):
-    query = "SELECT ClientId, JobCode, JobParameters FROM jobqueue WHERE ClientId = %(clientId)s ORDER BY ExecuteAt, Id"
+    query = "SELECT ClientId, JobCode, JobParameters, ExecuteAt FROM jobqueue WHERE ClientId = %(clientId)s ORDER BY ExecuteAt, Id"
     cursor.execute(query, { "clientId" : clientId })
     data = cursor.fetchone()
     if data is None:
         data = Job()
         data.JobCode = "W"
         data.JobParameters = 5
+        data.ExecuteAt = None
     return data
 
 def getMeshpoints(clientId):

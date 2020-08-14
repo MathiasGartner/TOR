@@ -1,3 +1,6 @@
+import logging
+log = logging.getLogger(__name__)
+
 import math
 import numpy as np
 import sys
@@ -9,6 +12,11 @@ if sys.platform == "linux":
 else:
     ON_RASPI = False
 
+TOR_MARLIN_VERSION = "1.1"
+
+#logging
+LOG_LEVEL = logging.INFO
+
 L_X_RAW = 290
 L_Y_RAW = 290
 L_ANCHOR_Z_HOOK_X = 12
@@ -16,11 +24,11 @@ L_ANCHOR_Z_HOOK_Y = 15
 L_ANCHOR_E_HOOK_X = 12
 L_ANCHOR_E_HOOK_Y = 15
 
-MIN_Z = 20
+MIN_Z = 30
 
-LX = 245
-LY = 247
-LZ = 290 - 15 + 0 #height - hook + empiric value...
+LX = 247 #TOR_ANCHOR_X_E0 in tor-marlin
+LY = 247 #TOR_ANCHOR_X_Y in tor-marlin
+LZ = 290 - 15 + 0 #height - hook + empiric value..
 LMAX = math.sqrt(LX**2 + LY**2 + LZ**2)
 
 RAMP_FORBIDDEN_X_MIN = 50
@@ -44,6 +52,13 @@ PULSE_MAGNET_TIME_MS = 100
 WAIT_BEFORE_ROLL_TIME = 1
 DIE_ROLL_TIME = 1
 WAIT_ON_PICKUP_POS = 0.2
+STANDARD_CLIENT_SLEEP_TIME = 5
+
+#cord factors
+CORD_FACTOR_X = 1.0
+CORD_FACTOR_Y = 1.0
+CORD_FACTOR_Z = 1.0
+CORD_FACTOR_E = 1.0
 
 #special positions
 BOX_SIZE = Position(LX, LY, LZ)
@@ -112,7 +127,7 @@ BLOB_MIN_DIAMETER = 20 #18
 BLOB_MAX_DIAMETER = 31
 
 # movement configuration:
-G_HOMING = "G28 A0 S50 P130 F68 R8 D1.05 B1.15"
+G_HOMING = "G28 N{} A0 S50 P130 F68 R8 D1.05 B1.15"
 
 # LED strip configuration:
 LED_COUNT      = 81      # Number of LED pixels.

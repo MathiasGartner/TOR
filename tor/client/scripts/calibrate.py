@@ -20,6 +20,7 @@ from tor.client.LedManager import LedManager
 parser = argparse.ArgumentParser()
 parser.add_argument("-l", dest="led", action="store_true")
 parser.add_argument("-p", dest="take_picture", action="store_true")
+parser.add_argument("-home", dest='doHoming', action="store_true")
 parser.add_argument("-bed", dest='bed', action="store_true")
 parser.add_argument("-ramp", dest='ramp', action="store_true")
 parser.add_argument("-magnet", dest='magnet',action='store_true')
@@ -109,14 +110,14 @@ def calibrateMeshpoints(type, p):
                 answ = input() or 'y'
                 if (answ == 'y'):
                     finish = True
+                    cm.saveMeshpoints("M", p)
                     mm.setFeedratePercentage(200)
                     mm.moveToPos(Position(p[i, 0], p[i, 1] + 30, p[i, 2] + 20), True)
                     mm.waitForMovementFinished()
                     mr.pickupDie()
                     mm.waitForMovementFinished()
                 elif (answ == 'n'):
-                    print('Current position')
-                    print(mm.getCurrentPosition())
+                    print('Current position:', mm.currentPosition)
                     mm.moveToPos(Position(p[i, 0], p[i, 1] + 20, p[i, 2] + 20), True)
                     mm.waitForMovementFinished()
                     print('New position')
@@ -141,6 +142,15 @@ def calibrateMeshpoints(type, p):
 ###############
 ### Program ###
 ###############
+
+if args.doHoming:
+    homingOkay = False
+    while not homingOkay:
+        mm.doHoming()
+        print('Homing OK? (y/n)')
+        answ = input() or 'y'
+        if answ == 'y':
+            homingOkay = True
 
 if args.bed or args.ramp:
     cm.loadMeshpoints()
