@@ -1,10 +1,12 @@
 import logging
 log = logging.getLogger(__name__)
 
-from rpi_ws281x import Adafruit_NeoPixel, Color
 import time
 
 import tor.client.ClientSettings as cs
+
+if cs.ON_RASPI:
+    from rpi_ws281x import Adafruit_NeoPixel, Color
 
 class LedManager:
     def __init__(self, brightness=None):

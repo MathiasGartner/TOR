@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import logging
 import numpy as np
 import time
@@ -14,7 +14,6 @@ if cs.ON_RASPI:
     from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
 from tor.client.MovementRoutines import MovementRoutines
-from tor.client.Position import Position
 
 def keepAskingForNextJob(askEveryNthSecond = 10):
     global exitTOR
@@ -76,6 +75,9 @@ def doJobsDummy():
     done = False
     while not done:
         log.info("nextJob: {}".format(nextJob))
+        if "T" in nextJob:
+            test = datetime.strptime(nextJob["T"], '%Y-%m-%d %H:%M:%S')
+            print(test)
         time.sleep(3)
     log.info("finished")
     exitTOR = True
@@ -84,19 +86,19 @@ def doJobs():
     global exitTOR
     global nextJob
 
-    dieRollResult, processedImages = mr.findDieWhileHoming()
-    mm.waitForMovementFinished()
-    mm.updateCurrentPosition()
-    mm.moveToPos(cs.CENTER_TOP, True)
-    if dieRollResult.found:
-        mr.pickupDieFromPosition(dieRollResult.position)
+    #dieRollResult, processedImages = mr.findDieWhileHoming()
+    #mm.waitForMovementFinished()
+    #mm.updateCurrentPosition()
+    #mm.moveToPos(cs.CENTER_TOP, True)
+    #if dieRollResult.found:
+    #    mr.pickupDieFromPosition(dieRollResult.position)
 
     mm.moveToPos(cs.CENTER_TOP, True)
     mm.waitForMovementFinished()
     log.info("now in starting position.")
     time.sleep(0.5)
 
-    lm.setAllLeds()
+    #lm.setAllLeds()
 
     done = False
     while not done:
@@ -107,6 +109,12 @@ def doJobs():
             mm.doHoming()
             mm.moveToPos(cs.CENTER_TOP, True)
             mm.waitForMovementFinished()
+        elif "P" in nextJob: # P...Performance
+            if "T" in nextJob:
+                startTime = datetime.strptime(nextJob["T"], '%Y-%m-%d %H:%M:%S')
+            else:
+                startTime = datetime.now()
+            mr.doTestPerformance(startTime)
         elif "W" in nextJob: # W...wait
             sleepTime = int(nextJob["W"] or cs.STANDARD_CLIENT_SLEEP_TIME)
             if sleepTime <= 0:

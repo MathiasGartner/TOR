@@ -50,7 +50,10 @@ def handleRequest(conn):
             #job = random.choice(jobIds)
             job = DBManager.getNextJobForClientId(clientId)
             log.info("client {} asks for job, send {}".format(clientId, job))
-            NetworkUtils.sendData(conn, {job.JobCode: job.JobParameters})
+            NetworkUtils.sendData(conn, {
+                job.JobCode: job.JobParameters,
+                "T": job.ExecuteAt.__str__()
+            })
             # if job == 1:
             #     NetworkUtils.sendData(conn, {"R" : 1})
             # elif job == 2:

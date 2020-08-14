@@ -1,6 +1,7 @@
 import logging
 log = logging.getLogger(__name__)
 
+from datetime import datetime
 import numpy as np
 import time
 
@@ -210,3 +211,44 @@ class MovementRoutines:
         dieRollResult = self.pickupDie(onSendResult)
 
         return dieRollResult
+
+    def sleepUntilTimestamp(self, step, timestamps):
+        sleepFor = timestamps[step] - time.time()
+        print("sleep:", sleepFor)
+        if sleepFor > 0:
+            time.sleep(sleepFor)
+
+    def doTestPerformance(self, startTime):
+        log.info("start performance")
+        startTimestamp = datetime.timestamp(startTime)
+        timings = np.cumsum([0, 2, 6.5, 3, 20, 2])
+        timestamps = [t + startTimestamp for t in timings]
+        log.info(timestamps)
+        lm = LedManager()
+
+        step = 0
+        self.sleepUntilTimestamp(step, timestamps)
+        for i in range(15):
+            lm.setLeds(range(0, i * 5), 255, 255, 255)
+            time.sleep(0.05)
+            lm.clear()
+            time.sleep(0.05)
+
+        step += 1
+        self.sleepUntilTimestamp(step, timestamps)
+        for i in range(10):
+            lm.setLeds(range(0, i*5), i*10, i*3, i)
+            time.sleep(0.5)
+
+        step += 1
+        self.sleepUntilTimestamp(step, timestamps)
+        self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
+
+        step += 1
+        self.sleepUntilTimestamp(step, timestamps)
+        self.searchForDie()
+
+        step += 1
+        self.sleepUntilTimestamp(step, timestamps)
+        self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
+
