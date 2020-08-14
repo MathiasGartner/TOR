@@ -78,6 +78,9 @@ def calibrateMeshpoints(type, p):
             finish = False
             while not finish:
                 pos = Position(p[i, 0], p[i, 1], p[i, 2])
+                if type == 'B' and i > 2:
+                    mm.moveToPos(cs.BEFORE_PICKUP_POSITION,True)
+                    mm.waitForMovementFinished()
                 mm.moveToPos(pos, True)
                 mm.waitForMovementFinished()
                 if ((type == "B") and args.take_picture):

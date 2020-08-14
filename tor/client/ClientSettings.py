@@ -26,8 +26,8 @@ L_ANCHOR_E_HOOK_Y = 15
 
 MIN_Z = 30
 
-LX = 247 #TOR_ANCHOR_X_E0 in tor-marlin
-LY = 247 #TOR_ANCHOR_X_Y in tor-marlin
+LX = 240#247 #TOR_ANCHOR_X_E0 in tor-marlin
+LY = 240#247 #TOR_ANCHOR_X_Y in tor-marlin
 LZ = 290 - 15 + 0 #height - hook + empiric value..
 LMAX = math.sqrt(LX**2 + LY**2 + LZ**2)
 
@@ -55,10 +55,10 @@ WAIT_ON_PICKUP_POS = 0.2
 STANDARD_CLIENT_SLEEP_TIME = 5
 
 #cord factors
-CORD_FACTOR_X = 1.0
-CORD_FACTOR_Y = 1.0
-CORD_FACTOR_Z = 1.0
-CORD_FACTOR_E = 1.0
+CORD_FACTOR_X = 1.016
+CORD_FACTOR_Y = 1.016
+CORD_FACTOR_Z = 1.016
+CORD_FACTOR_E = 1.016
 
 #special positions
 BOX_SIZE = Position(LX, LY, LZ)
@@ -85,26 +85,26 @@ FR_SEARCH_RAMP = 200
 
 #Calibration meshpoints for bed, ramp and magnet
 MESH_BED_TYPE = "B"
-MESH_BED_DEFAULT = [(0, 242, 198),
+MESH_BED_DEFAULT = np.array([(0, 242, 198),
                     (121, 242, 200),
                     (242, 242, 203),
                     (0, 150, 201),
                     (121, 150.5, 204),
-                    (242, 150, 203)]
+                    (242, 150, 203)])
 MESH_BED = np.array(MESH_BED_DEFAULT)
 MESH_RAMP_TYPE = "R"
-MESH_RAMP_DEFAULT = [(0, 130, 140),
+MESH_RAMP_DEFAULT = np.array([(0, 130, 140),
                      (121, 130, 140),
                      (242, 130, 140),
                      (0, 40, 65),
                      (121, 40, 65),
-                     (242, 40, 65)]
+                     (242, 40, 65)])
 MESH_RAMP = np.array(MESH_RAMP_DEFAULT)
 MESH_MAGNET_TYPE = "M"
-MESH_MAGNET_DEFAULT = [(60, 20, 25),
+MESH_MAGNET_DEFAULT = np.array([(60, 20, 25),
                        (110, 20, 25),
                        (160, 20, 25),
-                       (220, 20, 25)]
+                       (220, 20, 25)])
 MESH_MAGNET = np.array(MESH_MAGNET_DEFAULT)
 
 #camera settings
