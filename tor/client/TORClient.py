@@ -1,3 +1,4 @@
+import argparse
 from datetime import datetime
 import logging
 import numpy as np
@@ -14,6 +15,14 @@ if cs.ON_RASPI:
     from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
 from tor.client.MovementRoutines import MovementRoutines
+
+#################
+### arguments ###
+#################
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-nohome", dest='doHomingOnStartup', action="store_false")
+args = parser.parse_args()
 
 def keepAskingForNextJob(askEveryNthSecond = 10):
     global exitTOR
@@ -86,19 +95,20 @@ def doJobs():
     global exitTOR
     global nextJob
 
-    #dieRollResult, processedImages = mr.findDieWhileHoming()
-    #mm.waitForMovementFinished()
-    #mm.updateCurrentPosition()
-    #mm.moveToPos(cs.CENTER_TOP, True)
-    #if dieRollResult.found:
-    #    mr.pickupDieFromPosition(dieRollResult.position)
+    if args.doHomingOnStartup:
+        dieRollResult, processedImages = mr.findDieWhileHoming()
+        mm.waitForMovementFinished()
+        mm.updateCurrentPosition()
+        mm.moveToPos(cs.CENTER_TOP, True)
+        if dieRollResult.found:
+            mr.pickupDieFromPosition(dieRollResult.position)
 
     mm.moveToPos(cs.CENTER_TOP, True)
     mm.waitForMovementFinished()
     log.info("now in starting position.")
     time.sleep(0.5)
 
-    #lm.setAllLeds()
+    lm.setAllLeds()
 
     done = False
     while not done:
