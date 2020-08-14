@@ -16,7 +16,7 @@ args = parser.parse_args()
 def move(direction):
     mm.sendGCode("M17")
     zeroPos = Cords([0, 0, 0, 0])
-    mm.setCurrentPosition(zeroPos)
+    mm.__setCurrentPosition(zeroPos)
 
     dest = 200 * direction
     pos = Cords([0, 0, dest, dest])

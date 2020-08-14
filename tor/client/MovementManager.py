@@ -35,7 +35,7 @@ class MovementManager:
         self.waitForMovementFinished()
 
     def sendGCode(self, cmd):
-        log.info("SEND: {}".format(cmd))
+        log.debug("SEND: {}".format(cmd))
         self.com.send(cmd)
         msgs = self.com.recvUntilOk()
         return msgs
@@ -52,7 +52,7 @@ class MovementManager:
             raise Exception("Cords are outside boundaries: ", cords.lengths)
         return cmd
 
-    def setCurrentPosition(self, cords):
+    def __setCurrentPosition(self, cords):
         cmd = "G92 " + self.getCordLengthGCode(cords)
         self.sendGCode(cmd)
 
@@ -122,11 +122,8 @@ class MovementManager:
         self.sendGCode(cmd)
         self.waitForMovementFinished()
         self.updateCurrentPosition()
-        homePos = Position(cs.LX, cs.LY, 0)
-        homeCords = homePos.toCordLengths()
-        print(homeCords)
-        self.setCurrentPosition(homeCords)
-        self.currentPosition = homePos
+        self.__setCurrentPosition(cs.HOME_CORDS)
+        self.currentPosition = cs.HOME_POSITION
 
     def __moveToCords(self, cords, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
         cmd = "G1 " + self.getCordLengthGCode(cords) + (" S" if segmented else "") + (" A" if not useSlowDownStart else "") + (" B" if not useSlowDownEnd else "")
@@ -136,7 +133,7 @@ class MovementManager:
         if not isinstance(pos, list):
             pos = [pos]
         for p in pos:
-            log.info("MOVE{}: {} {} {}".format(" SEG" if segmented else "", p.x, p.y, p.z))
+            log.debug("MOVE{}: {} {} {}".format(" SEG" if segmented else "", p.x, p.y, p.z))
             cords = p.toCordLengths()
             self.__moveToCords(cords, segmented, useSlowDownStart, useSlowDownEnd)
             self.currentPosition = p
