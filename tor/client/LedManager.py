@@ -101,7 +101,14 @@ class LedManager:
             self.strip.setPixelColor(i, Color(r, g, b))
         self.strip.show()
 
-    def setAllLeds(self):
+    def setAllLeds(self, color=None):
+        if color is None:
+            color = self.DEFAULT_COLOR
         for i in range(self.strip.numPixels()):
-            self.strip.setPixelColor(i, self.DEFAULT_COLOR)
+            self.strip.setPixelColor(i, color)
         self.strip.show()
+
+    def blink(self, blinkTime=0.01):
+        self.setAllLeds(self.W)
+        time.sleep(blinkTime)
+        self.clear()

@@ -43,7 +43,7 @@ def getClientIdentity(clientMAC):
     return data
 
 def getNextJobForClientId(clientId):
-    query = "SELECT ClientId, JobCode, JobParameters, ExecuteAt FROM jobqueue WHERE ClientId = %(clientId)s ORDER BY ExecuteAt, Id LIMIT 1"
+    query = "SELECT ClientId, JobCode, JobParameters, ExecuteAt FROM jobqueue WHERE ClientId = %(clientId)s ORDER BY Id DESC LIMIT 1"
     cursor.execute(query, { "clientId" : clientId })
     data = cursor.fetchone()
     if data is None:

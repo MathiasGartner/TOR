@@ -31,7 +31,7 @@ class MovementManager:
         self.setFeedratePercentage(cs.FR_DEFAULT)
         # enable all steppers
         self.sendGCode("M17")
-        self.updateCurrentPosition()
+        self.__updateCurrentPosition()
         self.waitForMovementFinished()
 
     def sendGCode(self, cmd):
@@ -52,11 +52,11 @@ class MovementManager:
             raise Exception("Cords are outside boundaries: ", cords.lengths)
         return cmd
 
-    def __setCurrentPosition(self, cords):
+    def setCurrentPositionGCode(self, cords):
         cmd = "G92 " + self.getCordLengthGCode(cords)
         self.sendGCode(cmd)
 
-    def getCurrentPosition(self):
+    def __getCurrentPosition(self):
         pos = cs.HOME_POSITION
         cmd = "M114"
         msgs = self.sendGCode(cmd)
@@ -69,8 +69,8 @@ class MovementManager:
                 pos = Cords([float(match.group(i)) for i in range(1, 5)]).toPosition()
         return pos
 
-    def updateCurrentPosition(self):
-        self.currentPosition = self.getCurrentPosition()
+    def __updateCurrentPosition(self):
+        self.currentPosition = self.__getCurrentPosition()
 
     def checkTORMarlinVersion(self):
         versionOkay = False
@@ -121,8 +121,7 @@ class MovementManager:
         cmd = cs.G_HOMING.format(mode)
         self.sendGCode(cmd)
         self.waitForMovementFinished()
-        self.updateCurrentPosition()
-        self.__setCurrentPosition(cs.HOME_CORDS)
+        self.setCurrentPositionGCode(cs.HOME_CORDS)
         self.currentPosition = cs.HOME_POSITION
 
     def __moveToCords(self, cords, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):

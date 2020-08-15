@@ -138,7 +138,7 @@ class DieRecognizer:
         return im_color
 
 
-    def getDieRollResult(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False, alreadyGray=False, threshold = 110):
+    def getDieRollResult(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False, alreadyGray=False, threshold=110, markDie=False):
         if not alreadyCropped:
             im = self.transformImage(im)
         im_original = im
@@ -156,7 +156,6 @@ class DieRecognizer:
         retVal, im = cv2.threshold(im, threshold, 255, cv2.THRESH_BINARY)  #45
         # im = cv2.adaptiveThreshold(im, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 51, 40)
         #second to last number is size of neighbourhood, threshhold is last number below mean over neighbourhood
-
 
         blobs = self.blobDetector.detect(im)
 
@@ -207,10 +206,13 @@ class DieRecognizer:
             result = 0
 
         #im_with_blobs = cv2.drawKeypoints(im, blobs, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-        if returnOriginalImg:
-            im_with_blobs = self.markDieOnImage(im_original, blobs)
+        if markDie:
+            if returnOriginalImg:
+                im_with_blobs = self.markDieOnImage(im_original, blobs)
+            else:
+                im_with_blobs = self.markDieOnImage(im, blobs)
         else:
-            im_with_blobs = self.markDieOnImage(im, blobs)
+            im_with_blobs = None
 
         if withUI:
             windowX = int(im.shape[1]/3)

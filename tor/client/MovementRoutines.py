@@ -180,14 +180,16 @@ class MovementRoutines:
             self.searchForDie()
         return dieRollResult
 
-    def moveToDropoffPosition(self, dropoffPos):
+    def moveToDropoffPosition(self, dropoffPos, speedupFactor1=1, speedupFactor2=1):
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
-        self.mm.moveToPos(Position(dropoffPos[0], dropoffPos[1] + 20, 30), True)
-        self.mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE)
+        dropoffAdvancePos = Position(dropoffPos[0], dropoffPos[1] + 20, 30)
+        self.mm.moveToPos(dropoffAdvancePos, True)
+        self.mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE * speedupFactor1)
         self.mm.moveToPos(Position(dropoffPos[0], dropoffPos[1] + 10, dropoffPos[2] + 10), True)
-        self.mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE_SLOW)
+        self.mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE_SLOW * speedupFactor2)
         self.mm.moveToPos(Position(dropoffPos[0], dropoffPos[1], dropoffPos[2]), True)
         self.mm.waitForMovementFinished()
+        self.mm.setFeedratePercentage(cs.FR_DEFAULT)
 
     def run(self, lastPickupX, onSendResult=None):
         # move to dropoff position
@@ -251,4 +253,72 @@ class MovementRoutines:
         step += 1
         self.sleepUntilTimestamp(step, timestamps)
         self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
+
+    def doDieRollAndPickupPerformance(self, startTime):
+        log.info("preparing for performance...")
+        self.pickupDie()
+        lm = LedManager()
+        lm.clear()
+        self.mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
+        dropoffPos = cs.MESH_MAGNET[1]
+        dropoffAdvancePos = Position(dropoffPos[0], dropoffPos[1] + cs.DROPOFF_ADVANCE_OFFSET_Y, cs.DROPOFF_ADVANCE_Z)
+        self.mm.moveToPos(dropoffAdvancePos, True)
+        fr_factor = 2
+        fr_default_old = cs.FR_DEFAULT
+        cs.FR_DEFAULT = cs.FR_DEFAULT * fr_factor
+        log.info("in starting position...")
+        log.info("waiting for performance to start...")
+        startTimestamp = datetime.timestamp(startTime)
+        timings = np.cumsum([0,
+                             0.1, # turn on leds
+                             1.4, # move to dropoff position
+                             2,   # roll die and mvoe to cs.CENTER_TOP
+                             3.1, # take picture
+                             0.3, # move to cs.BEFORE_PICKUP_POSITION
+                             5.1, # find die on image
+                             4.9  # pickup die
+                            ])    # move to starting position (dropoff advance position)
+        timestamps = [t + startTimestamp for t in timings]
+        log.info(timestamps)
+
+        step = 0
+        self.sleepUntilTimestamp(step, timestamps)
+        lm.setAllLeds()
+
+        step += 1
+        self.sleepUntilTimestamp(step, timestamps)
+        self.moveToDropoffPosition(cs.MESH_MAGNET[1], speedupFactor1=3, speedupFactor2=3)
+
+        step += 1
+        self.sleepUntilTimestamp(step, timestamps)
+        self.mm.setFeedratePercentage(cs.FR_DEFAULT)
+        self.mm.rollDie()
+        time.sleep(0.4)
+        self.mm.moveToPos(cs.CENTER_TOP, True)
+
+        step += 1
+        self.sleepUntilTimestamp(step, timestamps)
+        image = self.takePicture()
+
+        step += 1
+        self.sleepUntilTimestamp(step, timestamps)
+        self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
+
+        step += 1
+        self.sleepUntilTimestamp(step, timestamps)
+        dieRollResult, _ = self.dr.getDieRollResult(image, returnOriginalImg=True)
+
+        step += 1
+        self.sleepUntilTimestamp(step, timestamps)
+        if dieRollResult.found:
+            self.pickupDieFromPosition(dieRollResult.position)
+        else:
+            self.searchForDie()
+
+        step += 1
+        self.sleepUntilTimestamp(step, timestamps)
+        self.mm.moveToPos(dropoffAdvancePos, True)
+        lm.clear()
+
+        cs.FR_DEFAULT = fr_default_old
 
