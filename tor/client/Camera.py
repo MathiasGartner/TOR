@@ -8,20 +8,24 @@ import time
 import tor.client.ClientSettings as cs
 
 class Camera:
-    def __init__(self):
+    def __init__(self, doWarmup=True):
         self.cam = PiCamera(resolution=(2592, 1944))
+        self.creationTime = time.time()
         #self.cam.led = False
         self.cam.iso = cs.CAM_ISO
-        time.sleep(2)
+        if doWarmup:
+            log.warning("warmup camera for 2 seconds...")
+            time.sleep(2)
         self.cam.shutter_speed = cs.CAM_SHUTTER_SPEED
         self.cam.exposure_mode = 'off'
         self.cam.contrast = cs.CAM_CONTRAST
         self.cam.awb_mode = 'off'
         awbr = cs.CAM_AWBR
         awbb = cs.CAM_AWBB
-        self.awb_gains = (awbr, awbb)
+        self.cam.awb_gains = (awbr, awbb)
 
     def takePicture(self):
+        log.warning("camera is {} s old.".format(time.time() - self.creationTime))
         rawCapture = PiRGBArray(self.cam)
         self.cam.capture(rawCapture, format="bgr")
         image = rawCapture.array

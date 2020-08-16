@@ -134,8 +134,9 @@ class MovementRoutines:
         self.mm.moveToPos(cs.AFTER_PICKUP_POSITION, True)
         self.mm.waitForMovementFinished()
 
-    def takePicture(self):
-        cam = Camera()
+    def takePicture(self, cam=None):
+        if cam is None:
+            cam = Camera()
         self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
         image = cam.takePicture()
         self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
@@ -143,23 +144,24 @@ class MovementRoutines:
         return image
 
     '''take a picture and locate the die'''
-    def findDie(self):
-        image = self.takePicture()
+    def findDie(self, cam=None):
+        image = self.takePicture(cam)
         dieRollResult, processedImages = self.dr.getDieRollResult(image, returnOriginalImg=True)
         return dieRollResult, processedImages
 
     '''take a picture and locate the die while homing is performed'''
     def findDieWhileHoming(self):
+        cam = Camera(doWarmup=False)
         self.mm.doHoming(mode=2)
-        image = self.takePicture()
+        image = self.takePicture(cam)
         self.mm.doHoming(mode=3)
         dieRollResult, processedImages = self.dr.getDieRollResult(image, returnOriginalImg=True)
         return dieRollResult, processedImages
 
-    def pickupDie(self, onSendResult=None):
+    def pickupDie(self, onSendResult=None, cam=None):
         dieRollResult = DieRollResult()
         if cs.USE_IMAGE_RECOGNITION:
-            dieRollResult, processedImages = self.findDie()
+            dieRollResult, processedImages = self.findDie(cam)
             log.info("result: {}".format(dieRollResult.result))
             if cs.STORE_IMAGES:
                 directory = "found" if dieRollResult.found else "fail"
@@ -201,16 +203,18 @@ class MovementRoutines:
             dropoffPos = 2 * (px - 0.5) * cs.MESH_MAGNET[3, :] + 2 * (1 - px) * cs.MESH_MAGNET[2, :]
         self.moveToDropoffPosition(dropoffPos)
 
+        cam = Camera(doWarmup=False)
+
         # roll die
         time.sleep(cs.WAIT_BEFORE_ROLL_TIME)
-        self.mm.setFeedratePercentage(cs.FR_FAST_MOVES)
         self.mm.rollDie()
         time.sleep(cs.DIE_ROLL_TIME / 2.0)
+        self.mm.setFeedratePercentage(cs.FR_DEFAULT)
         self.mm.moveToPos(cs.CENTER_TOP, True)
         time.sleep(cs.DIE_ROLL_TIME / 2.0)
 
         # pickup die
-        dieRollResult = self.pickupDie(onSendResult)
+        dieRollResult = self.pickupDie(onSendResult, cam)
 
         return dieRollResult
 
@@ -270,10 +274,10 @@ class MovementRoutines:
         log.info("waiting for performance to start...")
         startTimestamp = datetime.timestamp(startTime)
         timings = np.cumsum([0,
-                             0.1, # turn on leds
-                             1.4, # move to dropoff position
+                             0.25, # turn on leds
+                             1.45, # move to dropoff position
                              2,   # roll die and mvoe to cs.CENTER_TOP
-                             3.1, # take picture
+                             0.9, # take picture
                              0.3, # move to cs.BEFORE_PICKUP_POSITION
                              5.1, # find die on image
                              4.9  # pickup die
@@ -283,6 +287,7 @@ class MovementRoutines:
 
         step = 0
         self.sleepUntilTimestamp(step, timestamps)
+        cam = Camera(doWarmup=False)
         lm.setAllLeds()
 
         step += 1
@@ -298,7 +303,7 @@ class MovementRoutines:
 
         step += 1
         self.sleepUntilTimestamp(step, timestamps)
-        image = self.takePicture()
+        image = self.takePicture(cam)
 
         step += 1
         self.sleepUntilTimestamp(step, timestamps)

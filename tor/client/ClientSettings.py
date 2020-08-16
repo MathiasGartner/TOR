@@ -15,7 +15,7 @@ else:
 TOR_MARLIN_VERSION = "1.1"
 
 #logging
-LOG_LEVEL = logging.INFO
+LOG_LEVEL = logging.WARNING
 
 L_X_RAW = 290
 L_Y_RAW = 290
