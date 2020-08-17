@@ -27,8 +27,8 @@ parser.add_argument("-f", dest="feedratePercentage", default=cs.FR_DEFAULT, type
 parser.add_argument("-c", dest="doHoming", action="store_true")
 parser.add_argument("-l", dest="led", action="store_true")
 parser.add_argument("-p", dest="take_picture", action="store_true")
-parser.add_argument("-s", dest="segmented", action="store_true")
 parser.add_argument("-start", dest='start', action="store_true")
+parser.add_argument("-s", dest="segmented", action="store_true")
 parser.add_argument("-find", dest='find', action="store_true")
 parser.add_argument("-pickup", dest='pickup', action="store_true")
 parser.add_argument("-infinity", dest='infinity', action="store_true")
@@ -136,7 +136,7 @@ if args.start:
                     mm.doHoming()
                     mm.waitForMovementFinished()
     else:
-        start_script()
+        start_script(Position(100,100,100))
     exit(0)
 
 pos = Position(args.position[0], args.position[1], args.position[2])
