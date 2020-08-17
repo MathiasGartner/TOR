@@ -184,8 +184,8 @@ class MovementRoutines:
 
     def moveToDropoffPosition(self, dropoffPos, speedupFactor1=1, speedupFactor2=1):
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
-        dropoffAdvancePos = Position(dropoffPos[0], dropoffPos[1] + 20, 30)
-        self.mm.moveToPos(dropoffAdvancePos, True)
+        dropoffAdvancePos = Position(dropoffPos[0], dropoffPos[1] + cs.DROPOFF_ADVANCE_OFFSET_Y, cs.DROPOFF_ADVANCE_Z)
+        self.mm.moveToPos(dropoffAdvancePos)
         self.mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE * speedupFactor1)
         self.mm.moveToPos(Position(dropoffPos[0], dropoffPos[1] + 10, dropoffPos[2] + 10), True)
         self.mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE_SLOW * speedupFactor2)
@@ -266,7 +266,7 @@ class MovementRoutines:
         self.mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
         dropoffPos = cs.MESH_MAGNET[1]
         dropoffAdvancePos = Position(dropoffPos[0], dropoffPos[1] + cs.DROPOFF_ADVANCE_OFFSET_Y, cs.DROPOFF_ADVANCE_Z)
-        self.mm.moveToPos(dropoffAdvancePos, True)
+        self.mm.moveToPos(dropoffAdvancePos)
         fr_factor = 2
         fr_default_old = cs.FR_DEFAULT
         cs.FR_DEFAULT = cs.FR_DEFAULT * fr_factor
