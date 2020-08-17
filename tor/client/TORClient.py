@@ -1,3 +1,4 @@
+import argparse
 from datetime import datetime
 import logging
 import numpy as np
@@ -14,6 +15,14 @@ if cs.ON_RASPI:
     from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
 from tor.client.MovementRoutines import MovementRoutines
+
+#################
+### arguments ###
+#################
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-nohome", dest='doHomingOnStartup', action="store_false")
+args = parser.parse_args()
 
 def keepAskingForNextJob(askEveryNthSecond = 10):
     global exitTOR
@@ -51,22 +60,27 @@ def run():
     runsSinceLastHoming += 1
     if runsSinceLastHoming >= cs.HOME_EVERY_N_RUNS:
         mm.doHoming()
+        mm.moveToPos(cs.CENTER_TOP)
         runsSinceLastHoming = 0
     elif countNotFound >= cs.HOME_AFTER_N_FAILS:
         mm.doHoming()
+        mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
         mr.searchForDie()
+        mm.moveToPos(cs.CENTER_TOP, True)
         countNotFound = 0
+        runsSinceLastHoming = 0
     elif countSameResult >= cs.HOME_AFTER_N_SAME_RESULTS:
         dieRollResult, processedImages = mr.findDieWhileHoming()
         mm.waitForMovementFinished()
-        mm.updateCurrentPosition()
+        mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
         if dieRollResult.found:
             mr.pickupDieFromPosition(dieRollResult.position)
         else:
             mr.searchForDie()
+        mm.moveToPos(cs.CENTER_TOP, True)
         countSameResult = 0
+        runsSinceLastHoming = 0
 
-    mm.moveToPos(cs.CENTER_TOP, True)
     mm.waitForMovementFinished()
 
 def doJobsDummy():
@@ -86,19 +100,28 @@ def doJobs():
     global exitTOR
     global nextJob
 
-    #dieRollResult, processedImages = mr.findDieWhileHoming()
-    #mm.waitForMovementFinished()
-    #mm.updateCurrentPosition()
-    #mm.moveToPos(cs.CENTER_TOP, True)
-    #if dieRollResult.found:
-    #    mr.pickupDieFromPosition(dieRollResult.position)
+    log.warning("current position: {}".format(mm.currentPosition))
 
+    if args.doHomingOnStartup:
+        dieRollResult, processedImages = mr.findDieWhileHoming()
+        mm.waitForMovementFinished()
+
+        mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
+        mm.moveToPos(cs.CENTER_TOP)
+        if dieRollResult.found:
+            mr.pickupDieFromPosition(dieRollResult.position)
+    else:
+        #TODO: get current position from BTT SKR Board
+        mm.setCurrentPositionGCode(cs.HOME_CORDS)
+        mm.currentPosition = cs.HOME_POSITION
+
+    mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
     mm.moveToPos(cs.CENTER_TOP, True)
     mm.waitForMovementFinished()
     log.info("now in starting position.")
     time.sleep(0.5)
 
-    #lm.setAllLeds()
+    lm.setAllLeds()
 
     done = False
     while not done:
@@ -107,14 +130,18 @@ def doJobs():
             run()
         elif "H" in nextJob: # H...homing
             mm.doHoming()
-            mm.moveToPos(cs.CENTER_TOP, True)
+            mm.moveToPos(cs.CENTER_TOP)
             mm.waitForMovementFinished()
         elif "P" in nextJob: # P...Performance
             if "T" in nextJob:
                 startTime = datetime.strptime(nextJob["T"], '%Y-%m-%d %H:%M:%S')
             else:
                 startTime = datetime.now()
-            mr.doTestPerformance(startTime)
+            performanceNo = int(nextJob["P"]) or 1
+            if performanceNo == 1:
+                mr.doTestPerformance(startTime)
+            elif performanceNo == 2:
+                mr.doDieRollAndPickupPerformance(startTime)
         elif "W" in nextJob: # W...wait
             sleepTime = int(nextJob["W"] or cs.STANDARD_CLIENT_SLEEP_TIME)
             if sleepTime <= 0:
@@ -185,7 +212,6 @@ if cs.ON_RASPI:
         lm = LedManager()
     except:
         raise Exception("Could not create LedManager.")
-
 
 ####################
 ### main program ###

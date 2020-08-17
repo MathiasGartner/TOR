@@ -38,15 +38,17 @@ def getClientIdentity(clientMAC):
     cursor.execute(query, { "clientMAC" : clientMAC })
     data = cursor.fetchone()
     if data is None:
-        raise Exception("Could not read client identity for: ", clientMAC)
+        #raise Exception("Could not read client identity for: ", clientMAC)
+        log.warning("Could not read client identity for: {}".format(clientMAC))
     return data
 
 def getNextJobForClientId(clientId):
-    query = "SELECT ClientId, JobCode, JobParameters, ExecuteAt FROM jobqueue WHERE ClientId = %(clientId)s ORDER BY ExecuteAt, Id"
+    query = "SELECT ClientId, JobCode, JobParameters, ExecuteAt FROM jobqueue WHERE ClientId = %(clientId)s ORDER BY Id DESC LIMIT 1"
     cursor.execute(query, { "clientId" : clientId })
     data = cursor.fetchone()
     if data is None:
         data = Job()
+        data.ClientId = clientId
         data.JobCode = "W"
         data.JobParameters = 5
         data.ExecuteAt = None
@@ -61,4 +63,11 @@ def getMeshpoints(clientId):
 def saveMeshpoints(clientId, type, points):
     query = "INSERT INTO meshpoints (ClientId, Type, No, X, Y, Z) VALUES (%s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE X = VALUES(X), Y = VALUES(Y), Z = VALUES(Z)"
     data = [(clientId, type, i, p[0], p[1], p[2]) for (i, p) in enumerate(points)]
+    cursor.executemany(query, data)
+
+def saveJobs(jobs):
+    if not isinstance(jobs, list):
+        jobs = [jobs]
+    query = "INSERT INTO jobqueue (ClientId, JobCode, JobParameters, ExecuteAt) VALUES (%s, %s, %s, %s)"
+    data = [(j.ClientId, j.JobCode, j.JobParameters, j.ExecuteAt) for j in jobs]
     cursor.executemany(query, data)

@@ -105,6 +105,7 @@ elif mode == 9: # take picture and search dice dots
     if cs.ON_RASPI:
         cam = Camera()
         image = cam.takePicture()
+        cam.close()
     else:
         image = dr.readDummyImage()
     print("analyze picture...")
@@ -172,6 +173,7 @@ elif mode == 17: # take pictures forever
     while True:
         print("take picture...")
         image = cam.takePicture()
+        cam.close()
         print("analyze picture...")
         dieRollResult, processedImages = dr.getDieRollResult(image, returnOriginalImg=True)
         if i == 10:

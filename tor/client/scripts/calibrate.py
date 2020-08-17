@@ -19,13 +19,14 @@ from tor.client.LedManager import LedManager
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-l", dest="led", action="store_true")
-parser.add_argument("-p", dest="take_picture", action="store_true")
+parser.add_argument("-pic", dest="take_picture", action="store_true")
 parser.add_argument("-home", dest='doHoming', action="store_true")
 parser.add_argument("-bed", dest='bed', action="store_true")
 parser.add_argument("-ramp", dest='ramp', action="store_true")
 parser.add_argument("-magnet", dest='magnet',action='store_true')
 parser.add_argument("-camera", dest='camera', action="store_true")
 parser.add_argument("-image", dest='image', action="store_true")
+parser.add_argument("-p", dest="points", default=None, type=int)
 args = parser.parse_args()
 
 ###########################
@@ -72,9 +73,13 @@ def saveCurrentView(path):
     image = dr.transformImage(image)
     dr.writeImage(image,"current_view.jpg", directory=path)
 
-def calibrateMeshpoints(type, p):
+def calibrateMeshpoints(type, p, pointsToCalibrate=None):
+    if pointsToCalibrate is None:
+        pointsToCalibrate = range(len(p))
+    elif not isinstance(pointsToCalibrate, list):
+        pointsToCalibrate = [pointsToCalibrate]
     if type == "B" or type == "R":
-        for i in range(len(p)):
+        for i in pointsToCalibrate:
             finish = False
             while not finish:
                 pos = Position(p[i, 0], p[i, 1], p[i, 2])
@@ -97,7 +102,7 @@ def calibrateMeshpoints(type, p):
                     p[i, 1] = input('y:') or p[i, 1]
                     p[i, 2] = input('z:') or p[i, 2]
     elif type == "M":
-        for i in range(len(p)):
+        for i in pointsToCalibrate:
             print('Searching point', i + 1)
             finish = False
             while not finish:
@@ -155,17 +160,21 @@ if args.doHoming:
         if answ == 'y':
             homingOkay = True
 
-if args.bed or args.ramp:
+if args.bed:
     cm.loadMeshpoints()
 
-    calibrateMeshpoints("B", cs.MESH_BED)
+    calibrateMeshpoints("B", cs.MESH_BED, args.points)
     cm.saveMeshpoints("B", cs.MESH_BED)
 
+    if not args.ramp:
+        mm.moveToPos(cs.PARKING_POSITION, True)
+        exit(0)
+
+if args.ramp:
     # overcome ramp
-    mm.moveToPos(Position(cs.MESH_BED[-1, 0], cs.MESH_BED[-1, 1]+30, 180), True)
-    mm.moveToPos(Position(cs.MESH_BED[-1, 0], cs.MESH_BED[-1, 1], 60), True)
+    mm.moveToPos(cs.AFTER_PICKUP_POSITION, True)
     mm.waitForMovementFinished()
-    calibrateMeshpoints("R", cs.MESH_RAMP)
+    calibrateMeshpoints("R", cs.MESH_RAMP, args.points)
     cm.saveMeshpoints("R", cs.MESH_RAMP)
 
     mm.moveToPos(cs.PARKING_POSITION, True)
@@ -178,7 +187,7 @@ if args.magnet:
 
     cm.loadMeshpoints()
 
-    calibrateMeshpoints("M", cs.MESH_MAGNET)
+    calibrateMeshpoints("M", cs.MESH_MAGNET, args.points)
     cm.saveMeshpoints("M", cs.MESH_MAGNET)
 
     exit(0)
@@ -256,7 +265,7 @@ if args.image:
             print("currently warping, use this only if really needed (processing time of ~1 second)")
         else:
             print("currently cropping, switch to warping only if really needed (processing time of ~1 second)")
-        print('Image OK? (y/c/w) [yes/crop/warp]')
+        print('Image OK? (y/c/w/r) [yes/crop/warp/refresh]')
         answ = input() or 'y'
         if answ == "y":
             finish = True
@@ -291,4 +300,6 @@ if args.image:
             print('Current bottom right:', br)
             br[0] = int(input("x:") or br[0])
             br[1] = int(input("y:") or br[1])
+        elif answ == "r":
+            pass
     exit(0)

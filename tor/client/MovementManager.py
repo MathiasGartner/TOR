@@ -31,11 +31,11 @@ class MovementManager:
         self.setFeedratePercentage(cs.FR_DEFAULT)
         # enable all steppers
         self.sendGCode("M17")
-        self.updateCurrentPosition()
+        self.__updateCurrentPosition()
         self.waitForMovementFinished()
 
     def sendGCode(self, cmd):
-        log.info("SEND: {}".format(cmd))
+        log.debug("SEND: {}".format(cmd))
         self.com.send(cmd)
         msgs = self.com.recvUntilOk()
         return msgs
@@ -52,11 +52,11 @@ class MovementManager:
             raise Exception("Cords are outside boundaries: ", cords.lengths)
         return cmd
 
-    def setCurrentPosition(self, cords):
+    def setCurrentPositionGCode(self, cords):
         cmd = "G92 " + self.getCordLengthGCode(cords)
         self.sendGCode(cmd)
 
-    def getCurrentPosition(self):
+    def __getCurrentPosition(self):
         pos = cs.HOME_POSITION
         cmd = "M114"
         msgs = self.sendGCode(cmd)
@@ -69,8 +69,8 @@ class MovementManager:
                 pos = Cords([float(match.group(i)) for i in range(1, 5)]).toPosition()
         return pos
 
-    def updateCurrentPosition(self):
-        self.currentPosition = self.getCurrentPosition()
+    def __updateCurrentPosition(self):
+        self.currentPosition = self.__getCurrentPosition()
 
     def checkTORMarlinVersion(self):
         versionOkay = False
@@ -121,12 +121,8 @@ class MovementManager:
         cmd = cs.G_HOMING.format(mode)
         self.sendGCode(cmd)
         self.waitForMovementFinished()
-        self.updateCurrentPosition()
-        homePos = Position(cs.LX, cs.LY, 0)
-        homeCords = homePos.toCordLengths()
-        print(homeCords)
-        self.setCurrentPosition(homeCords)
-        self.currentPosition = homePos
+        self.setCurrentPositionGCode(cs.HOME_CORDS)
+        self.currentPosition = cs.HOME_POSITION
 
     def __moveToCords(self, cords, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
         cmd = "G1 " + self.getCordLengthGCode(cords) + (" S" if segmented else "") + (" A" if not useSlowDownStart else "") + (" B" if not useSlowDownEnd else "")
@@ -136,7 +132,7 @@ class MovementManager:
         if not isinstance(pos, list):
             pos = [pos]
         for p in pos:
-            log.info("MOVE{}: {} {} {}".format(" SEG" if segmented else "", p.x, p.y, p.z))
+            log.debug("MOVE{}: {} {} {}".format(" SEG" if segmented else "", p.x, p.y, p.z))
             cords = p.toCordLengths()
             self.__moveToCords(cords, segmented, useSlowDownStart, useSlowDownEnd)
             self.currentPosition = p

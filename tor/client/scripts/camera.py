@@ -17,6 +17,7 @@ time.sleep(2)
 dr = DieRecognizer()
 
 image = cam.takePicture()
+cam.close()
 
 print("picture taken")
 
