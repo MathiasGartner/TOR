@@ -128,10 +128,18 @@ class MovementRoutines:
 
         pickupPos = self.relativeBedCoordinatesToPosition(pos.x, pos.y)
         log.info("pickupPos: {}".format(pickupPos))
-        self.mm.moveToPos(pickupPos, True)
+        #move to pick-up position
+        if pickupPos.y < cs.RAMP_CRITICAL_Y:
+            self.mm.moveCloseToRamp(pickupPos,segmented=True)
+        else:
+            self.mm.moveToPos(pickupPos, True)
         self.mm.waitForMovementFinished()
         time.sleep(cs.WAIT_ON_PICKUP_POS)
-        self.mm.moveToPos(cs.AFTER_PICKUP_POSITION, True)
+        #move away from pick-up position
+        if pickupPos.y < cs.RAMP_CRITICAL_Y:
+            self.mm.moveCloseToRamp(cs.AFTER_PICKUP_POSITION,segmented=True,moveto=False)
+        else:
+            self.mm.moveToPos(cs.AFTER_PICKUP_POSITION, True)
         self.mm.waitForMovementFinished()
 
     def takePicture(self, cam=None):

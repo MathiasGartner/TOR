@@ -86,8 +86,11 @@ def calibrateMeshpoints(type, p, pointsToCalibrate=None):
                 if type == 'B' and i > 2:
                     mm.moveToPos(cs.BEFORE_PICKUP_POSITION,True)
                     mm.waitForMovementFinished()
-                mm.moveToPos(pos, True)
-                mm.waitForMovementFinished()
+                    mm.moveCloseToRamp(pos,True)
+                    mm.waitForMovementFinished()
+                else:
+                    mm.moveToPos(pos, True)
+                    mm.waitForMovementFinished()
                 if ((type == "B") and args.take_picture):
                     saveCurrentView(cs.WEB_DIRECTORY)
                     print("http://" + cm.clientIdentity["IP"])
@@ -101,6 +104,9 @@ def calibrateMeshpoints(type, p, pointsToCalibrate=None):
                     p[i, 0] = input('x:') or p[i, 0]
                     p[i, 1] = input('y:') or p[i, 1]
                     p[i, 2] = input('z:') or p[i, 2]
+                if type=='B' and i > 2:
+                    mm.moveCloseToRamp(cs.BEFORE_PICKUP_POSITION,segmented=True,moveto=False)
+                    mm.waitForMovementFinished()
     elif type == "M":
         for i in pointsToCalibrate:
             print('Searching point', i + 1)

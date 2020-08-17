@@ -141,6 +141,15 @@ class MovementManager:
         pos = Position(x, y, z)
         self.moveToPos(pos, segmented, useSlowDownStart, )
 
+    def moveCloseToRamp(self,pos,segmented=False,moveto=True):
+        if moveto:
+            self.moveToPos(Position(pos.x,pos.y+cs.CRITICAL_AREA_APPROACH_Y,pos.z-cs.CRITICAL_AREA_APPROACH_Z),useSlowDownEnd=False,segmented=segmented)
+            self.moveToPos(pos,useSlowDownStart=False,segmented=segmented)
+        else:
+            p0=self.currentPosition
+            self.moveToPos(Position(p0.x, p0.y + cs.CRITICAL_AREA_APPROACH_Y, p0.z - cs.CRITICAL_AREA_APPROACH_Z), useSlowDownEnd=False, segmented=segmented)
+            self.moveToPos(pos,useSlowDownStart=False,segmented=segmented)
+
     def moveToXYPosDie(self, x, y, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
         pos = Position(x, y, cs.PICKUP_Z)
         self.moveToPos(pos, segmented, useSlowDownStart, )
