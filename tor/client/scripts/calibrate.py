@@ -134,8 +134,8 @@ def calibrateMeshpoints(type, p, pointsToCalibrate=None):
                     p[i, 2] = input('z:') or p[i, 2]
                 else:
                     mm.doHoming()
-                    mm.setFeedratePercentage(400)
-                    mm.moveToPos(Position(120, 100, 50), True)
+                    mm.setFeedratePercentage(200)
+                    mm.moveToPos(Position(120, 100, 50))
                     mm.waitForMovementFinished()
                     print(p[i, 0], p[i, 1], p[i, 2])
                     mm.setFeedratePercentage(50)
