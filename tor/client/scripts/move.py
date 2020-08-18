@@ -68,15 +68,16 @@ lm = LedManager()
 def start_script(last_pos):
     #pos=mm.getCurrentPosition()
     pos=last_pos
-    if(pos.y<cs.LY/2.):
-        mm.moveToPos(cs.CENTER_TOP, True)
-        mm.waitForMovementFinished()
+    #if(pos.y<cs.LY/2.):
+    mm.moveToPos(cs.CENTER_TOP)
+    mm.waitForMovementFinished()
+
     px = 1-pos.x / cs.LX
     if(px<0.5): spos=2*px*cs.MESH_MAGNET[1,:]+(1-2*px)*cs.MESH_MAGNET[0,:]
     if(px>=0.5): spos= 2*(px-0.5)*cs.MESH_MAGNET[3,:]+2*(1-px)*cs.MESH_MAGNET[2,:]
     #spos = cs.MESH_MAGNET[np.random.randint(0, 4), :]
     #mm.waitForMovementFinished()
-    mm.moveToPos(Position(spos[0], spos[1]+20, 50), True)
+    mm.moveToPos(Position(spos[0], spos[1]+cs.DROPOFF_ADVANCE_OFFSET_Y, cs.DROPOFF_ADVANCE_Z), True)
     mm.waitForMovementFinished()
     mm.setFeedratePercentage(50)
     mm.moveToPos(Position(spos[0], spos[1]+10, spos[2]+10), True)

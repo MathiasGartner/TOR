@@ -50,7 +50,7 @@ writeCustomFile(material, settings)
 #ips = range(101, 131) #[107]
 
 #ips = [107, 112]
-ips = [114]
+ips = [129,110]
 path_key = tsl.PATH_TO_SSH_KEY
 
 #### TOR ####
