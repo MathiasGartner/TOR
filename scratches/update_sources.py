@@ -1,48 +1,6 @@
 
 import tor.TORSettingsLocal as tsl
 
-#######################################
-### generate custom client settings ###
-#######################################
-writeCustomFiles = False
-
-def writeCustomFile(material, settings):
-	if writeCustomFiles:
-		filename = "../tor/client/CustomClientSettings/{}.py".format(material)
-		with open(filename, 'w') as f:
-			f.write("import tor.client.ClientSettings as cs" + "\n")
-			for s in settings:
-				f.write(s + "\n")
-
-material = "orange"
-settings = [
-    "cs.RAMP_MATERIAL = \"" + material + "\"",
-    "cs.RAMP_MATERIAL_HEIGHT = 20",
-]
-writeCustomFile(material, settings)
-
-material = "moss"
-settings = [
-    "cs.RAMP_MATERIAL = \"" + material + "\"",
-    "cs.RAMP_MATERIAL_HEIGHT = 30",
-]
-writeCustomFile(material, settings)
-
-material = "coffee"
-settings = [
-    "cs.RAMP_MATERIAL = \"" + material + "\"",
-    "cs.RAMP_MATERIAL_HEIGHT = 30",
-]
-writeCustomFile(material, settings)
-
-material = "empty"
-settings = [
-    "cs.RAMP_MATERIAL = \"" + material + "\"",
-    "cs.RAMP_MATERIAL_HEIGHT = 0",
-]
-writeCustomFile(material, settings)
-
-
 ################################
 ### update source on clients ###
 ################################
@@ -50,7 +8,7 @@ writeCustomFile(material, settings)
 #ips = range(101, 131) #[107]
 
 #ips = [107, 112]
-ips = [129,110]
+ips = [103, 117]
 path_key = tsl.PATH_TO_SSH_KEY
 
 #### TOR ####
@@ -116,3 +74,26 @@ with open(filename, 'w') as f:
         f.write(cmd + "\n")
         cmd = cmd_reboot.format(path_key, full_ip)
         f.write(cmd + "\n")
+
+
+
+#######################################
+### generate custom client settings ###
+#######################################
+writeCustomFiles = True
+
+materials = ["Acacia Bohnen","Linsen","Kirschkerne","Eucalyptus","Zimtstangen","Gerstenähren","Kaffeebohnen","Wachtelbohne","Japanischer Schlitzahorn","Strandflieder","Pfeffer","Baumschwamm","Luffa","Platanen","Orangenscheiben","Sternanis","Traubenkerne","Limettenscheiben","Pampasgras","Kork","Palmringe","Lavendel","Apfelscheiben","Air-Fern","Essigbaum","Baumwolle","Palmenblatt","Samtgras","Chilis","Yoga"]
+
+def writeCustomFile(material, settings):
+    if writeCustomFiles:
+        filename = "../tor/client/CustomClientSettings/{}.py".format(material)
+        with open(filename, 'w') as f:
+            f.write("import tor.client.ClientSettings as cs" + "\n")
+            for s in settings:
+                f.write(s + "\n")
+
+for m in materials:
+    settings = [
+        "cs.RAMP_MATERIAL = \"" + m + "\"",
+    ]
+    writeCustomFile(m, settings)

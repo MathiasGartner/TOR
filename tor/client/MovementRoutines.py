@@ -284,7 +284,7 @@ class MovementRoutines:
         timings = np.cumsum([0,
                              0.25, # turn on leds
                              1.45, # move to dropoff position
-                             2,   # roll die and mvoe to cs.CENTER_TOP
+                             2,   # roll die and mvoe to cs.CENTERc_TOP
                              0.9, # take picture
                              0.3, # move to cs.BEFORE_PICKUP_POSITION
                              5.1, # find die on image

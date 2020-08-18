@@ -23,7 +23,7 @@ jR.JobCode = "R"
 j1 = Job()
 j1.JobCode = "P"
 j1.JobParameters = 1
-j1.ExecuteAt = datetime.now() + timedelta(hours=-1) + timedelta(minutes=2)
+j1.ExecuteAt = datetime.now() + timedelta(hours=-1) + timedelta(seconds=10)
 
 j2 = Job()
 j2.JobCode = "P"
