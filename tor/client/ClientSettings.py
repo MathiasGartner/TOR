@@ -92,7 +92,7 @@ FR_SEARCH_RAMP = 200
 
 #Calibration meshpoints for bed, ramp and magnet
 MESH_BED_TYPE = "B"
-MESH_BED_DEFAULT = np.array([(0, LY, 205),
+MESH_BED_DEFAULT = np.array([(0.0, LY, 205),
                              (LX/2, LY, 205),
                              (LX, LY, 205),
                              (0, 160, 205),
@@ -100,7 +100,7 @@ MESH_BED_DEFAULT = np.array([(0, LY, 205),
                              (LX, 160, 205)])
 MESH_BED = np.array(MESH_BED_DEFAULT)
 MESH_RAMP_TYPE = "R"
-MESH_RAMP_DEFAULT = np.array([(0, 130, 120),
+MESH_RAMP_DEFAULT = np.array([(0.0, 130, 120),
                               (LX/2, 130, 120),
                               (LX, 130, 120),
                               (0, 40, 60),
@@ -108,10 +108,10 @@ MESH_RAMP_DEFAULT = np.array([(0, 130, 120),
                               (LX, 40, 60)])
 MESH_RAMP = np.array(MESH_RAMP_DEFAULT)
 MESH_MAGNET_TYPE = "M"
-MESH_MAGNET_DEFAULT = np.array([(60, 5, 20),
-                                (105, 5, 15),
-                                (LX-105, 5, 15),
-                               (LX-60, 5, 20)])
+MESH_MAGNET_DEFAULT = np.array([(60.0, 5, 30),
+                                (105, 5, 30),
+                                (LX-105, 5, 30),
+                               (LX-60, 5, 30)])
 MESH_MAGNET = np.array(MESH_MAGNET_DEFAULT)
 
 #camera settings
@@ -177,5 +177,9 @@ DIE_SIZE_Y=260
 #CRITICAL AREA APPROACH
 CRITICAL_AREA_APPROACH_Y=15
 CRITICAL_AREA_APPROACH_Z=10
+
+#APPROACH MAGNET
+USE_MAGNET_BETWEEN_P0P1=True
+USE_MAGNET_BETWEEN_P2P3=True
 
 

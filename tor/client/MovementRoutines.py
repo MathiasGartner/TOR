@@ -83,6 +83,7 @@ class MovementRoutines:
                 #self.mm.waitForMovementFinished()
                 self.mm.moveToPos(Position(x_mesh_l[i], y_mesh_l[i], z_mesh_l[i]), True, useSlowDownStart=False)
                 self.mm.waitForMovementFinished()
+        self.mm.moveToPos(Position(self.mm.currentPosition.x,self.mm.currentPosition.y+cs.CRITICAL_AREA_APPROACH_Y,self.mm.currentPosition.z-cs.CRITICAL_AREA_APPROACH_Z))
 
         #### ramp ###
         if(cs.SEARCH_RAMP):
@@ -205,10 +206,16 @@ class MovementRoutines:
         # move to dropoff position
         dropoffPos = cs.MESH_MAGNET[1, :]
         px = np.clip(1 - lastPickupX / cs.LX, 0.0, 1.0)
-        if px < 0.5:
+        if (px < 0.5 and cs.USE_MAGNET_BETWEEN_P0P1):
             dropoffPos = 2 * px * cs.MESH_MAGNET[1, :] + (1 - 2 * px) * cs.MESH_MAGNET[0, :]
-        else:
+        if (px < 0.5 and (not cs.USE_MAGNET_BETWEEN_P0P1)):
+            px=1-px
+        if (px >= 0.5 and cs.USE_MAGNET_BETWEEN_P2P3):
             dropoffPos = 2 * (px - 0.5) * cs.MESH_MAGNET[3, :] + 2 * (1 - px) * cs.MESH_MAGNET[2, :]
+        if (px>=0.5 and (not cs.USE_MAGNET_BETWEEN_P2P3)):
+            px=1-px
+            dropoffPos = 2 * px * cs.MESH_MAGNET[1, :] + (1 - 2 * px) * cs.MESH_MAGNET[0, :]
+
         self.moveToDropoffPosition(dropoffPos)
 
         cam = Camera(doWarmup=False)
@@ -283,8 +290,8 @@ class MovementRoutines:
         startTimestamp = datetime.timestamp(startTime)
         timings = np.cumsum([0,
                              0.25, # turn on leds
-                             1.45, # move to dropoff position
-                             2,   # roll die and mvoe to cs.CENTERc_TOP
+                             3.0, # move to dropoff position
+                             2,   # roll die and mvoe to cs.CENTER_TOP
                              0.9, # take picture
                              0.3, # move to cs.BEFORE_PICKUP_POSITION
                              5.1, # find die on image
@@ -300,7 +307,8 @@ class MovementRoutines:
 
         step += 1
         self.sleepUntilTimestamp(step, timestamps)
-        self.moveToDropoffPosition(cs.MESH_MAGNET[1], speedupFactor1=3, speedupFactor2=3)
+        self.moveToDropoffPosition(cs.MESH_MAGNET[1], speedupFactor1=3, speedupFactor2=1)
+        #self.moveToDropoffPosition(cs.MESH_MAGNET[1], speedupFactor1=3, speedupFactor2=3)
 
         step += 1
         self.sleepUntilTimestamp(step, timestamps)
