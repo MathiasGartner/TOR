@@ -8,7 +8,7 @@ import tor.TORSettingsLocal as tsl
 #ips = range(101, 131) #[107]
 
 #ips = [107, 112]
-ips = [103, 117]
+ips = [113]
 path_key = tsl.PATH_TO_SSH_KEY
 
 #### TOR ####
@@ -80,7 +80,7 @@ with open(filename, 'w') as f:
 #######################################
 ### generate custom client settings ###
 #######################################
-writeCustomFiles = True
+writeCustomFiles = False
 
 materials = ["Acacia Bohnen","Linsen","Kirschkerne","Eucalyptus","Zimtstangen","Gerstenähren","Kaffeebohnen","Wachtelbohne","Japanischer Schlitzahorn","Strandflieder","Pfeffer","Baumschwamm","Luffa","Platanen","Orangenscheiben","Sternanis","Traubenkerne","Limettenscheiben","Pampasgras","Kork","Palmringe","Lavendel","Apfelscheiben","Air-Fern","Essigbaum","Baumwolle","Palmenblatt","Samtgras","Chilis","Yoga"]
 
