@@ -146,3 +146,4 @@ dmypy.json
 # Generated files
 .idea/**/contentModel.xml
 /scratches/update_wifi.cmd
+/scratches/update_tor_marlin_window.cmd
