@@ -42,7 +42,12 @@ class NumpyEncoder(json.JSONEncoder):
 def recvData(conn):
     msgReceived = conn.recv(4096)
     msg = msgReceived.decode()
-    msgData = json.loads(msg)
+    msgData = None
+    try:
+        msgData = json.loads(msg)
+    except Exception as e:
+        log.error("Error parsing JSON message:")
+        print(repr(e))
     return msgData
 
 def sendData(conn, data):

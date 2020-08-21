@@ -1,5 +1,6 @@
 import argparse
 import cv2
+import logging
 import time
 import numpy as np
 import os
@@ -29,6 +30,9 @@ parser.add_argument("-image", dest='image', action="store_true")
 parser.add_argument("-p", dest="points", default=None, type=int)
 args = parser.parse_args()
 
+logging.basicConfig(format='%(levelname)s: %(message)s', level=cs.LOG_LEVEL)
+log = logging.getLogger(__name__)
+
 ###########################
 ### get client identity ###
 ###########################
@@ -44,6 +48,7 @@ ccsModuleName = "tor.client.CustomClientSettings." + cm.clientIdentity["Material
 try:
     import importlib
     customClientSettings = importlib.import_module(ccsModuleName)
+    print("Custom config file loaded.")
 except:
     print("No CustomClientSettings found.")
 
@@ -112,12 +117,15 @@ def calibrateMeshpoints(type, p, pointsToCalibrate=None):
             print('Searching point', i + 1)
             finish = False
             while not finish:
-                mm.moveToPos(Position(p[i, 0], p[i, 1] + 20, p[i, 2] + 20), True)
-                mm.waitForMovementFinished()
-                mm.setFeedratePercentage(30)
-                mm.moveToPos(Position(p[i, 0], p[i, 1], p[i, 2]), True)
-                mm.waitForMovementFinished()
+                #mm.setFeedratePercentage(50)
+                #mm.moveToPos(Position(p[i, 0], p[i, 1] + cs.DROPOFF_ADVANCE_OFFSET_Y, p[i, 2] + cs.DROPOFF_ADVANCE_OFFSET_Z))
+                #mm.waitForMovementFinished()
+                #mm.setFeedratePercentage(30)
+                #mm.moveToPos(Position(p[i, 0], p[i, 1], p[i, 2]))
+                #mm.waitForMovementFinished()
                 # mm.setFeedratePercentage(30)
+                mr.moveToDropoffPosition(Position(p[i, 0], p[i, 1], p[i, 2]))
+                mm.waitForMovementFinished()
                 time.sleep(2)
                 mm.rollDie()
                 print('Position OK? (y/n/c)')
@@ -126,13 +134,13 @@ def calibrateMeshpoints(type, p, pointsToCalibrate=None):
                     finish = True
                     cm.saveMeshpoints("M", p)
                     mm.setFeedratePercentage(200)
-                    mm.moveToPos(Position(p[i, 0], p[i, 1] + 30, p[i, 2] + 20), True)
+                    mm.moveToPos(Position(p[i, 0], p[i, 1] + cs.DROPOFF_ADVANCE_OFFSET_Y, p[i, 2] + cs.DROPOFF_ADVANCE_OFFSET_Z), True)
                     mm.waitForMovementFinished()
                     mr.pickupDie()
                     mm.waitForMovementFinished()
                 elif (answ == 'n'):
-                    print('Current position:', mm.currentPosition)
-                    mm.moveToPos(Position(p[i, 0], p[i, 1] + 20, p[i, 2] + 20), True)
+                    print('Current position:', MovementManager.currentPosition)
+                    mm.moveToPos(Position(p[i, 0], p[i, 1] + cs.DROPOFF_ADVANCE_OFFSET_Y, p[i, 2] + cs.DROPOFF_ADVANCE_OFFSET_Z), True)
                     mm.waitForMovementFinished()
                     print('New position')
                     p[i, 0] = input('x:') or p[i, 0]
@@ -140,7 +148,7 @@ def calibrateMeshpoints(type, p, pointsToCalibrate=None):
                     p[i, 2] = input('z:') or p[i, 2]
                 else:
                     mm.doHoming()
-                    mm.setFeedratePercentage(200)
+                    mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
                     mm.moveToPos(Position(120, 100, 50))
                     mm.waitForMovementFinished()
                     print(p[i, 0], p[i, 1], p[i, 2])

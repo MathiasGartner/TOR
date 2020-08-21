@@ -13,11 +13,12 @@ from tor.client.Position import Position
 
 class MovementManager:
     isInitialized = False
+    currentPosition = Position(-1, -1, -1)
 
     def __init__(self):
         self.com = Communicator()
         self.feedratePercentage = 0
-        self.currentPosition = Position(-1, -1, -1)
+        MovementManager.currentPosition = Position(-1, -1, -1)
         if not MovementManager.isInitialized:
             self.torMarlinVersion = "X"
             self.hasCorrectVersion = self.checkTORMarlinVersion()
@@ -70,7 +71,7 @@ class MovementManager:
         return pos
 
     def __updateCurrentPosition(self):
-        self.currentPosition = self.__getCurrentPosition()
+        MovementManager.currentPosition = self.__getCurrentPosition()
 
     def checkTORMarlinVersion(self):
         versionOkay = False
@@ -121,8 +122,8 @@ class MovementManager:
         cmd = cs.G_HOMING.format(mode)
         self.sendGCode(cmd)
         self.waitForMovementFinished()
-        self.setCurrentPositionGCode(cs.HOME_CORDS)
-        self.currentPosition = cs.HOME_POSITION
+        self.setCurrentPositionGCode(cs.HOME_POSITION.toCordLengths())
+        MovementManager.currentPosition = cs.HOME_POSITION
 
     def __moveToCords(self, cords, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
         cmd = "G1 " + self.getCordLengthGCode(cords) + (" S" if segmented else "") + (" A" if not useSlowDownStart else "") + (" B" if not useSlowDownEnd else "")
@@ -135,20 +136,20 @@ class MovementManager:
             log.debug("MOVE{}: {} {} {}".format(" SEG" if segmented else "", p.x, p.y, p.z))
             cords = p.toCordLengths()
             self.__moveToCords(cords, segmented, useSlowDownStart, useSlowDownEnd)
-            self.currentPosition = p
+            MovementManager.currentPosition = p
 
     def moveToXYZ(self, x, y, z, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
         pos = Position(x, y, z)
         self.moveToPos(pos, segmented, useSlowDownStart, )
 
-    def moveCloseToRamp(self,pos,segmented=False,moveto=True):
+    def moveCloseToRamp(self, pos, segmented=False, moveto=True):
         if moveto:
-            self.moveToPos(Position(pos.x,pos.y+cs.CRITICAL_AREA_APPROACH_Y,pos.z-cs.CRITICAL_AREA_APPROACH_Z),useSlowDownEnd=False,segmented=segmented)
-            self.moveToPos(pos,useSlowDownStart=False,segmented=segmented)
+            self.moveToPos(Position(pos.x,pos.y+cs.CRITICAL_AREA_APPROACH_Y,pos.z-cs.CRITICAL_AREA_APPROACH_Z), useSlowDownEnd=False, segmented=segmented)
+            self.moveToPos(pos,useSlowDownStart=False, segmented=segmented)
         else:
-            p0=self.currentPosition
+            p0 = MovementManager.currentPosition
             self.moveToPos(Position(p0.x, p0.y + cs.CRITICAL_AREA_APPROACH_Y, p0.z - cs.CRITICAL_AREA_APPROACH_Z), useSlowDownEnd=False, segmented=segmented)
-            self.moveToPos(pos,useSlowDownStart=False,segmented=segmented)
+            self.moveToPos(pos,useSlowDownStart=False, segmented=segmented)
 
     def moveToXYPosDie(self, x, y, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
         pos = Position(x, y, cs.PICKUP_Z)

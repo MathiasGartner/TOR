@@ -24,6 +24,26 @@ class Position:
     def __repr__(self):
         return self.__str__()
 
+    def __setitem__(self, coordinate, data):
+        if coordinate == 0:
+            self.x = data
+        elif coordinate == 1:
+            self.y = data
+        elif coordinate == 2:
+            self.z = data
+        else:
+            raise Exception("only x, y an z (0, 1, 2) are available.")
+
+    def __getitem__(self, coordinate):
+        if coordinate == 0:
+            return self.x
+        elif coordinate == 1:
+            return self.y
+        elif coordinate == 2:
+            return self.z
+        else:
+            raise Exception("only x, y an z (0, 1, 2) are available.")
+
     def norm(self):
         return math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
 

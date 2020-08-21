@@ -100,7 +100,7 @@ def doJobs():
     global exitTOR
     global nextJob
 
-    log.warning("current position: {}".format(mm.currentPosition))
+    log.warning("current position: {}".format(MovementManager.currentPosition))
 
     if args.doHomingOnStartup:
         dieRollResult, processedImages = mr.findDieWhileHoming()
@@ -112,8 +112,8 @@ def doJobs():
             mr.pickupDieFromPosition(dieRollResult.position)
     else:
         #TODO: get current position from BTT SKR Board
-        mm.setCurrentPositionGCode(cs.HOME_CORDS)
-        mm.currentPosition = cs.HOME_POSITION
+        mm.setCurrentPositionGCode(cs.HOME_POSITION.toCordLengths())
+        MovementManager.currentPosition = cs.HOME_POSITION
 
     mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
     mm.moveToPos(cs.CENTER_TOP, True)
@@ -142,6 +142,8 @@ def doJobs():
                 mr.doTestPerformance(startTime)
             elif performanceNo == 2:
                 mr.doDieRollAndPickupPerformance(startTime)
+            elif performanceNo == 3:
+                mr.doPositionTestWithTiming(startTime, cm.clientIdentity)
         elif "W" in nextJob: # W...wait
             sleepTime = int(nextJob["W"] or cs.STANDARD_CLIENT_SLEEP_TIME)
             if sleepTime <= 0:
@@ -192,6 +194,7 @@ ccsModuleName = "tor.client.CustomClientSettings." + cm.clientIdentity["Material
 try:
     import importlib
     customClientSettings = importlib.import_module(ccsModuleName)
+    print("Custom config file loaded.")
 except:
     log.warning("No CustomClientSettings found.")
 

@@ -25,6 +25,7 @@ class MovementRoutines:
 
     def relativeBedCoordinatesToPosition(self, px, py):
         p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12 = self.loadPoints()
+        #TODO: check the out of range logic. die was found correctly at y=1.002
         if (px < 0 or px > 1 or py < -0.1 or py > 1):
             log.warning("Out of range in relativeBedCoordinatesToPosition: [x,y]=[{},{}]".format(px, py))
             return cs.BEFORE_PICKUP_POSITION
@@ -83,12 +84,12 @@ class MovementRoutines:
                 #self.mm.waitForMovementFinished()
                 self.mm.moveToPos(Position(x_mesh_l[i], y_mesh_l[i], z_mesh_l[i]), True, useSlowDownStart=False)
                 self.mm.waitForMovementFinished()
-        self.mm.moveToPos(Position(self.mm.currentPosition.x,self.mm.currentPosition.y+cs.CRITICAL_AREA_APPROACH_Y,self.mm.currentPosition.z-cs.CRITICAL_AREA_APPROACH_Z))
+        self.mm.moveToPos(Position(MovementManager.currentPosition.x, MovementManager.currentPosition.y+cs.CRITICAL_AREA_APPROACH_Y, MovementManager.currentPosition.z-cs.CRITICAL_AREA_APPROACH_Z), True)
 
         #### ramp ###
         if(cs.SEARCH_RAMP):
             #safely move away from ramp
-            self.mm.moveToPos(Position(self.mm.currentPosition.x, self.mm.currentPosition.y + 20, 100), True)
+            self.mm.moveToPos(Position(MovementManager.currentPosition.x, MovementManager.currentPosition.y + 20, 100), True)
             self.mm.waitForMovementFinished()
 
             # mesh left side
@@ -148,6 +149,7 @@ class MovementRoutines:
             cam = Camera()
         self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
         image = cam.takePicture()
+        self.dr.writeImage(image, "test.jpg", directory=cs.WEB_DIRECTORY)
         self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
         cam.close()
         return image
@@ -191,14 +193,22 @@ class MovementRoutines:
             self.searchForDie()
         return dieRollResult
 
+    def getDropoffPosition(self, pos, stage=1):
+        if stage == 1:
+            p = Position(pos[0], pos[1] + cs.DROPOFF_ADVANCE_OFFSET_Y, pos[2] + cs.DROPOFF_ADVANCE_OFFSET_Z)
+        elif stage == 2:
+            p = Position(pos[0], pos[1] + cs.DROPOFF_ADVANCE_OFFSET_Y2, pos[2] + cs.DROPOFF_ADVANCE_OFFSET_Z2)
+        return p
+
     def moveToDropoffPosition(self, dropoffPos, speedupFactor1=1, speedupFactor2=1):
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
-        dropoffAdvancePos = Position(dropoffPos[0], dropoffPos[1] + cs.DROPOFF_ADVANCE_OFFSET_Y, cs.DROPOFF_ADVANCE_Z)
-        self.mm.moveToPos(dropoffAdvancePos)
+        dropoffAdvancePos = self.getDropoffPosition(dropoffPos, stage=1)
+        dropoffAdvancePos2 = self.getDropoffPosition(dropoffPos, stage=2)
+        self.mm.moveToPos(dropoffAdvancePos, True)
         self.mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE * speedupFactor1)
-        self.mm.moveToPos(Position(dropoffPos[0], dropoffPos[1] + 10, dropoffPos[2] + 10), True)
+        self.mm.moveToPos(dropoffAdvancePos2, True)
         self.mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE_SLOW * speedupFactor2)
-        self.mm.moveToPos(Position(dropoffPos[0], dropoffPos[1], dropoffPos[2]), True)
+        self.mm.moveToPos(dropoffPos, True)
         self.mm.waitForMovementFinished()
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
 
@@ -218,7 +228,8 @@ class MovementRoutines:
 
         self.moveToDropoffPosition(dropoffPos)
 
-        cam = Camera(doWarmup=False)
+        #TODO: why is this not working?
+        #cam = Camera(doWarmup=False)
 
         # roll die
         time.sleep(cs.WAIT_BEFORE_ROLL_TIME)
@@ -229,7 +240,8 @@ class MovementRoutines:
         time.sleep(cs.DIE_ROLL_TIME / 2.0)
 
         # pickup die
-        dieRollResult = self.pickupDie(onSendResult, cam)
+        dieRollResult = self.pickupDie(onSendResult)
+        #cam.close()
 
         return dieRollResult
 
@@ -279,8 +291,9 @@ class MovementRoutines:
         lm = LedManager()
         lm.clear()
         self.mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
+        #TODO: check if USE_MAGNET_BETWEEN_P0P1=True, otherwise use left side
         dropoffPos = cs.MESH_MAGNET[1]
-        dropoffAdvancePos = Position(dropoffPos[0], dropoffPos[1] + cs.DROPOFF_ADVANCE_OFFSET_Y, cs.DROPOFF_ADVANCE_Z)
+        dropoffAdvancePos = Position(dropoffPos[0], dropoffPos[1] + cs.DROPOFF_ADVANCE_OFFSET_Y, dropoffPos[2] + cs.DROPOFF_ADVANCE_OFFSET_Z)
         self.mm.moveToPos(dropoffAdvancePos)
         fr_factor = 2
         fr_default_old = cs.FR_DEFAULT
@@ -290,9 +303,9 @@ class MovementRoutines:
         startTimestamp = datetime.timestamp(startTime)
         timings = np.cumsum([0,
                              0.25, # turn on leds
-                             3.0, # move to dropoff position
+                             5.0, # move to dropoff position
                              2,   # roll die and mvoe to cs.CENTER_TOP
-                             0.9, # take picture
+                             0.9+4.2, # take picture
                              0.3, # move to cs.BEFORE_PICKUP_POSITION
                              5.1, # find die on image
                              4.9  # pickup die
@@ -302,12 +315,12 @@ class MovementRoutines:
 
         step = 0
         self.sleepUntilTimestamp(step, timestamps)
-        cam = Camera(doWarmup=False)
+        #cam = Camera(doWarmup=False)
         lm.setAllLeds()
 
         step += 1
         self.sleepUntilTimestamp(step, timestamps)
-        self.moveToDropoffPosition(cs.MESH_MAGNET[1], speedupFactor1=3, speedupFactor2=1)
+        self.moveToDropoffPosition(cs.MESH_MAGNET[1], speedupFactor1=2, speedupFactor2=1)
         #self.moveToDropoffPosition(cs.MESH_MAGNET[1], speedupFactor1=3, speedupFactor2=3)
 
         step += 1
@@ -319,7 +332,8 @@ class MovementRoutines:
 
         step += 1
         self.sleepUntilTimestamp(step, timestamps)
-        image = self.takePicture(cam)
+        #image = self.takePicture(cam)
+        image = self.takePicture()
 
         step += 1
         self.sleepUntilTimestamp(step, timestamps)
@@ -343,3 +357,22 @@ class MovementRoutines:
 
         cs.FR_DEFAULT = fr_default_old
 
+    def doPositionTestWithTiming(self, startTime, clientIdentity):
+        log.info("preparing for performance...")
+        lm = LedManager()
+        lm.clear()
+        self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
+        log.info("waiting for performance to start...")
+        startTimestamp = datetime.timestamp(startTime)
+        timings = np.cumsum([clientIdentity["Position"], # wait for position to be next
+                             27])  # light up
+        timestamps = [t + startTimestamp for t in timings]
+        log.info(timestamps)
+
+        step = 0
+        self.sleepUntilTimestamp(step, timestamps)
+        lm.setAllLeds()
+
+        step += 1
+        self.sleepUntilTimestamp(step, timestamps)
+        lm.clear()

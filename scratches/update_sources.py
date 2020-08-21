@@ -1,6 +1,8 @@
 
 import tor.TORSettingsLocal as tsl
 
+from tor.base import DBManager
+
 ################################
 ### update source on clients ###
 ################################
@@ -8,8 +10,22 @@ import tor.TORSettingsLocal as tsl
 #ips = range(101, 131) #[107]
 
 #ips = [107, 112]
-ips = [113]
+ips = []
+#positions = [1, 2, 3, 4,5, 6, 7, 8, 9]
+#positions = range(1, 28)
+#positions = [10, 11, 12, 13, 14, 15]
+positions = [20]
+
+for p in positions:
+    ips.append(DBManager.getIPByPosition(p))
+
+if len(positions) == 0:
+    ips = [115]
+
+
 path_key = tsl.PATH_TO_SSH_KEY
+
+cmd_new_shell = "invoke-expression 'cmd /c start powershell -Command {{ {0} }}'"
 
 #### TOR ####
 filename = "update_tor.cmd"
@@ -23,7 +39,8 @@ cmd_chmod_temp = r'ssh -i {0} pi@{1} "sudo chmod +x /home/pi/scripts/temperature
 
 with open(filename, 'w') as f:
     for ip in ips:
-        full_ip = tsl.CLIENT_IP_NETWORK + "." + str(ip)
+        #full_ip = tsl.CLIENT_IP_NETWORK + "." + str(ip)
+        full_ip = ip
         cmd = cmd_delete.format(path_key, full_ip)
         f.write(cmd + "\n")
         cmd = cmd_copy.format(path_key, full_ip)
@@ -48,7 +65,8 @@ cmd_flash = r'ssh -i {0} pi@{1} "sudo ./scripts/flashTORMarlin.sh"'
 
 with open(filename, 'w') as f:
     for ip in ips:
-        full_ip = tsl.CLIENT_IP_NETWORK + "." + str(ip)
+        #full_ip = tsl.CLIENT_IP_NETWORK + "." + str(ip)
+        full_ip = ip
         cmd = cmd_delete.format(path_key, full_ip)
         f.write(cmd + "\n")
         cmd = cmd_mkdir.format(path_key, full_ip)
@@ -56,6 +74,29 @@ with open(filename, 'w') as f:
         cmd = cmd_copy.format(path_key, full_ip)
         f.write(cmd + "\n")
         cmd = cmd_flash.format(path_key, full_ip)
+        f.write(cmd + "\n")
+
+#### TOR-Marlin ####
+
+filename = "update_tor_marlin_window.ps1"
+with open(filename, 'w') as f:
+    for ip in ips:
+        cmds = ""
+        #full_ip = tsl.CLIENT_IP_NETWORK + "." + str(ip)
+        full_ip = ip
+        cmd = "echo " + full_ip
+        cmds = cmds + cmd + "; "
+        cmd = cmd_delete.format(path_key, full_ip)
+        cmds = cmds + cmd + "; "
+        cmd = cmd_mkdir.format(path_key, full_ip)
+        cmds = cmds + cmd + "; "
+        cmd = cmd_copy.format(path_key, full_ip)
+        cmds = cmds + cmd + "; "
+        cmd = cmd_flash.format(path_key, full_ip)
+        cmds = cmds + cmd + "; "
+        cmd = "sleep 5"
+        cmds = cmds + cmd + "; "
+        cmd = cmd_new_shell.format(cmds)
         f.write(cmd + "\n")
 
 #### wifi ####

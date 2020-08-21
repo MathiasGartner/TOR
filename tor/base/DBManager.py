@@ -71,3 +71,15 @@ def saveJobs(jobs):
     query = "INSERT INTO jobqueue (ClientId, JobCode, JobParameters, ExecuteAt) VALUES (%s, %s, %s, %s)"
     data = [(j.ClientId, j.JobCode, j.JobParameters, j.ExecuteAt) for j in jobs]
     cursor.executemany(query, data)
+
+def getIdByPosition(position):
+    query = "SELECT Id FROM client WHERE Position = %(pos)s"
+    cursor.execute(query, { "pos" : position })
+    data = cursor.fetchone()
+    return data[0]
+
+def getIPByPosition(position):
+    query = "SELECT IP FROM client WHERE Position = %(pos)s"
+    cursor.execute(query, { "pos" : position })
+    data = cursor.fetchone()
+    return data[0]

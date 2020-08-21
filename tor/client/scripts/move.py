@@ -55,6 +55,7 @@ ccsModuleName = "tor.client.CustomClientSettings." + cm.clientIdentity["Material
 try:
     import importlib
     customClientSettings = importlib.import_module(ccsModuleName)
+    print("Custom config file loaded.")
 except:
     print("No CustomClientSettings found.")
 
