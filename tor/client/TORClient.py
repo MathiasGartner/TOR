@@ -42,6 +42,8 @@ def run():
     global countSameResult
     global lastResult
 
+    lm.setAllLeds()
+
     dieRollResult = mr.run(lastPickupX, cm.sendDieRollResult)
     if dieRollResult.found:
         lastPickupX = dieRollResult.position.x
@@ -132,6 +134,11 @@ def doJobs():
             mm.doHoming()
             mm.moveToPos(cs.CENTER_TOP)
             mm.waitForMovementFinished()
+        elif "HH" in nextJob:  # H...homing
+            mr.findDieWhileHoming()
+            mm.waitForMovementFinished()
+            mm.moveToPos(cs.CENTER_TOP)
+            mm.waitForMovementFinished()
         elif "P" in nextJob: # P...Performance
             if "T" in nextJob:
                 startTime = datetime.strptime(nextJob["T"], '%Y-%m-%d %H:%M:%S')
@@ -151,6 +158,8 @@ def doJobs():
             time.sleep(sleepTime)
         elif "Q" in nextJob: # Q...quit
             done = True
+        elif "S" in nextJob: # S...load settings
+            cm.loadSettings()
     mm.moveToParkingPosition(True)
     log.info("finished")
     exitTOR = True

@@ -24,8 +24,14 @@ jR.JobCode = "R"
 jQ = Job()
 jQ.JobCode = "Q"
 
+jS = Job()
+jS.JobCode = "S"
+
 jH = Job()
 jH.JobCode = "H"
+
+jHH = Job()
+jHH.JobCode = "HH"
 
 j1 = Job()
 j1.JobCode = "P"
@@ -57,14 +63,16 @@ if args.thenwait:
 if args.id is not None:
     ids = int(args.id)
 
-jobsToCreate = [j2, jW]
+jobsToCreate = [jR, jW]
 #jobsToCreate = [jH, jW]
 #ids = [15]
 
 ids = []
 #positions = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 positions = range(1, 28)
-#positions = [7]
+#positions = [1, 2, 3]
+positions = [3]
+#positions = [15, 17]
 
 for p in positions:
     ids.append(DBManager.getIdByPosition(p))

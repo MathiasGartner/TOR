@@ -8,6 +8,12 @@ import tor.client.ClientSettings as cs
 if cs.ON_RASPI:
     from rpi_ws281x import Adafruit_NeoPixel, Color
 
+def clamp(n, smallest, largest):
+    return max(smallest, min(n, largest))
+
+def clamp255(n):
+    return clamp(n, 0, 255)
+
 class LedManager:
     def __init__(self, brightness=None):
         if brightness == None:
@@ -101,9 +107,11 @@ class LedManager:
             self.strip.setPixelColor(i, Color(r, g, b))
         self.strip.show()
 
-    def setAllLeds(self, color=None):
+    def setAllLeds(self, color=None, r=None, g=None, b=None):
         if color is None:
             color = self.DEFAULT_COLOR
+        if r is not None and g is not None and b is not None:
+            color = Color(clamp255(r), clamp255(g), clamp255(b))
         for i in range(self.strip.numPixels()):
             self.strip.setPixelColor(i, color)
         self.strip.show()

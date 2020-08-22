@@ -202,6 +202,8 @@ class MovementRoutines:
 
     def moveToDropoffPosition(self, dropoffPos, speedupFactor1=1, speedupFactor2=1):
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
+        if not isinstance(dropoffPos, Position):
+            dropoffPos = Position(dropoffPos[0], dropoffPos[1], dropoffPos[2])
         dropoffAdvancePos = self.getDropoffPosition(dropoffPos, stage=1)
         dropoffAdvancePos2 = self.getDropoffPosition(dropoffPos, stage=2)
         self.mm.moveToPos(dropoffAdvancePos, True)
@@ -303,7 +305,7 @@ class MovementRoutines:
         startTimestamp = datetime.timestamp(startTime)
         timings = np.cumsum([0,
                              0.25, # turn on leds
-                             5.0, # move to dropoff position
+                             6.0, # move to dropoff position
                              2,   # roll die and mvoe to cs.CENTER_TOP
                              0.9+4.2, # take picture
                              0.3, # move to cs.BEFORE_PICKUP_POSITION
@@ -320,7 +322,7 @@ class MovementRoutines:
 
         step += 1
         self.sleepUntilTimestamp(step, timestamps)
-        self.moveToDropoffPosition(cs.MESH_MAGNET[1], speedupFactor1=2, speedupFactor2=1)
+        self.moveToDropoffPosition(cs.MESH_MAGNET[1], speedupFactor1=1.5, speedupFactor2=1)
         #self.moveToDropoffPosition(cs.MESH_MAGNET[1], speedupFactor1=3, speedupFactor2=3)
 
         step += 1
@@ -365,13 +367,17 @@ class MovementRoutines:
         log.info("waiting for performance to start...")
         startTimestamp = datetime.timestamp(startTime)
         timings = np.cumsum([clientIdentity["Position"], # wait for position to be next
-                             27])  # light up
+                             30])  # light up
         timestamps = [t + startTimestamp for t in timings]
         log.info(timestamps)
 
         step = 0
         self.sleepUntilTimestamp(step, timestamps)
-        lm.setAllLeds()
+        p = int(clientIdentity["Position"])
+        r = cs.LED_STRIP_DEFAULT_COLOR[0] + 30 * ((p % 3) - 1) + p
+        g = cs.LED_STRIP_DEFAULT_COLOR[1] + 30 * ((p % 3) - 1) + p
+        b = cs.LED_STRIP_DEFAULT_COLOR[2] + 30 * ((p % 3) - 1) + p
+        lm.setAllLeds(r=r, g=g, b=b)
 
         step += 1
         self.sleepUntilTimestamp(step, timestamps)
