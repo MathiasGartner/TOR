@@ -63,16 +63,16 @@ if args.thenwait:
 if args.id is not None:
     ids = int(args.id)
 
-jobsToCreate = [jR, jW]
-#jobsToCreate = [jH, jW]
-#ids = [15]
+#jobsToCreate = [jR]
+jobsToCreate = [jH, jW]
+#ids = [15]4
 
 ids = []
 #positions = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 positions = range(1, 28)
 #positions = [1, 2, 3]
-positions = [3]
-#positions = [15, 17]
+#positions = [9]
+#positions = [4, 5, 6]
 
 for p in positions:
     ids.append(DBManager.getIdByPosition(p))

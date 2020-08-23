@@ -216,8 +216,10 @@ if args.camera:
         cam = Camera()
         image = cam.takePicture()
         cam.close()
+        dieRollResult, processedImages = dr.getDieRollResult(image, returnOriginalImg=True, markDie=True)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         dr.writeImage(image, "camera.jpg", directory=cs.WEB_DIRECTORY)
+        dr.writeImage(processedImages[1], "recognized.jpg", directory=cs.WEB_DIRECTORY)
         print("http://" + cm.clientIdentity["IP"] + "/camera.html")
         print('Camera settings OK? (y/n)')
         answ = input() or 'y'

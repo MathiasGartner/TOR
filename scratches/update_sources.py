@@ -15,13 +15,16 @@ ips = []
 positions = range(1, 28)
 #positions = [10, 11, 12, 13, 14, 15]
 #positions = [1, 2, 3]
-positions = [5]
+#positions = [18]
+
+#from itertools import chain
+#positions = chain(range(1, 18), range(19, 28))
 
 for p in positions:
     ips.append(DBManager.getIPByPosition(p))
 
-if len(positions) == 0:
-    ips = [115]
+#if len(positions) == 0:
+#    ips = [115]
 
 
 path_key = tsl.PATH_TO_SSH_KEY

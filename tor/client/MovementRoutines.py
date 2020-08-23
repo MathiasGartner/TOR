@@ -228,6 +228,19 @@ class MovementRoutines:
             px=1-px
             dropoffPos = 2 * px * cs.MESH_MAGNET[1, :] + (1 - 2 * px) * cs.MESH_MAGNET[0, :]
 
+        #dropoffPos = cs.MESH_MAGNET[2, :]
+
+        #dropoffPos = (cs.MESH_MAGNET[3, :] +  cs.MESH_MAGNET[2, :]) / 2.0
+
+        #dropoffPos = cs.MESH_MAGNET[1, :]
+
+        #dropoffPos = (cs.MESH_MAGNET[1, :] + cs.MESH_MAGNET[0, :]) / 2.0
+
+        import random
+        random.seed(time.time())
+        index = random.randint(0, 3)
+        dropoffPos = cs.MESH_MAGNET[index, :]
+
         self.moveToDropoffPosition(dropoffPos)
 
         #TODO: why is this not working?
@@ -294,7 +307,7 @@ class MovementRoutines:
         lm.clear()
         self.mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
         #TODO: check if USE_MAGNET_BETWEEN_P0P1=True, otherwise use left side
-        dropoffPos = cs.MESH_MAGNET[1]
+        dropoffPos = cs.MESH_MAGNET[2]
         dropoffAdvancePos = Position(dropoffPos[0], dropoffPos[1] + cs.DROPOFF_ADVANCE_OFFSET_Y, dropoffPos[2] + cs.DROPOFF_ADVANCE_OFFSET_Z)
         self.mm.moveToPos(dropoffAdvancePos)
         fr_factor = 2
@@ -322,8 +335,8 @@ class MovementRoutines:
 
         step += 1
         self.sleepUntilTimestamp(step, timestamps)
-        self.moveToDropoffPosition(cs.MESH_MAGNET[1], speedupFactor1=1.5, speedupFactor2=1)
-        #self.moveToDropoffPosition(cs.MESH_MAGNET[1], speedupFactor1=3, speedupFactor2=3)
+        self.moveToDropoffPosition(cs.MESH_MAGNET[2], speedupFactor1=1.5, speedupFactor2=1)
+        #self.moveToDropoffPosition(cs.MESH_MAGNET[2], speedupFactor1=3, speedupFactor2=3)
 
         step += 1
         self.sleepUntilTimestamp(step, timestamps)
@@ -359,24 +372,25 @@ class MovementRoutines:
 
         cs.FR_DEFAULT = fr_default_old
 
-    def doPositionTestWithTiming(self, startTime, clientIdentity):
+    def doPositionTestWithTiming(self, startTime, clientIdentity, x, y ,z):
         log.info("preparing for performance...")
         lm = LedManager()
         lm.clear()
         self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
         log.info("waiting for performance to start...")
         startTimestamp = datetime.timestamp(startTime)
-        timings = np.cumsum([clientIdentity["Position"], # wait for position to be next
-                             30])  # light up
+        timings = np.cumsum([clientIdentity["Position"]*0.2, # wait for position to be next
+                             27 * 0.2 + 1])  # light up
         timestamps = [t + startTimestamp for t in timings]
         log.info(timestamps)
 
         step = 0
         self.sleepUntilTimestamp(step, timestamps)
         p = int(clientIdentity["Position"])
-        r = cs.LED_STRIP_DEFAULT_COLOR[0] + 30 * ((p % 3) - 1) + p
-        g = cs.LED_STRIP_DEFAULT_COLOR[1] + 30 * ((p % 3) - 1) + p
-        b = cs.LED_STRIP_DEFAULT_COLOR[2] + 30 * ((p % 3) - 1) + p
+        f = x + y + z
+        r = cs.LED_STRIP_DEFAULT_COLOR[0] + 10 * f
+        g = cs.LED_STRIP_DEFAULT_COLOR[1] - 8 * f
+        b = cs.LED_STRIP_DEFAULT_COLOR[2]
         lm.setAllLeds(r=r, g=g, b=b)
 
         step += 1

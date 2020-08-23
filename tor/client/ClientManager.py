@@ -13,6 +13,20 @@ class ClientManager:
         self.clientMacAddress = NetworkUtils.getMAC()
         self.clientIdentity = self.askForClientIdentity(self.clientMacAddress)
         self.clientId = self.clientIdentity["Id"]
+        p = int(self.clientIdentity["Position"])
+        if (p - 1) % 9 < 3:
+            self.x = 0
+        elif (p - 1) % 9 < 6:
+            self.x = 1
+        else:
+            self.x = 2
+        if p < 10:
+            self.y = 0
+        elif p < 19:
+            self.y = 1
+        else:
+            self.y = 2
+        self.z = (p - 1) % 3
 
     def createConnection(self):
         conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

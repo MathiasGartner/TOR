@@ -53,6 +53,7 @@ def run():
         else:
             countSameResult = 0
         lastResult = dieRollResult.result
+        countNotFound = 0
     else:
         lastPickupX = cs.LX / 2.0
         cm.sendDieResultNotRecognized()
@@ -65,6 +66,7 @@ def run():
         mm.moveToPos(cs.CENTER_TOP)
         runsSinceLastHoming = 0
     elif countNotFound >= cs.HOME_AFTER_N_FAILS:
+        log.info("count not found: {} -> do homing...".format(countNotFound))
         mm.doHoming()
         mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
         mr.searchForDie()
@@ -72,6 +74,7 @@ def run():
         countNotFound = 0
         runsSinceLastHoming = 0
     elif countSameResult >= cs.HOME_AFTER_N_SAME_RESULTS:
+        log.info("count same result: {} -> do homing...".format(countSameResult))
         dieRollResult, processedImages = mr.findDieWhileHoming()
         mm.waitForMovementFinished()
         mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
@@ -150,7 +153,7 @@ def doJobs():
             elif performanceNo == 2:
                 mr.doDieRollAndPickupPerformance(startTime)
             elif performanceNo == 3:
-                mr.doPositionTestWithTiming(startTime, cm.clientIdentity)
+                mr.doPositionTestWithTiming(startTime, cm.clientIdentity, cm.x, cm.y, cm.z)
         elif "W" in nextJob: # W...wait
             sleepTime = int(nextJob["W"] or cs.STANDARD_CLIENT_SLEEP_TIME)
             if sleepTime <= 0:

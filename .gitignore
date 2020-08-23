@@ -148,3 +148,4 @@ dmypy.json
 /scratches/update_wifi.cmd
 /scratches/update_tor_marlin_window.cmd
 /scratches/update_tor_marlin_window.ps1
+/scratches/executeOnClient.cmd
