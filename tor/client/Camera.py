@@ -14,7 +14,7 @@ class Camera:
         #self.cam.led = False
         self.cam.iso = cs.CAM_ISO
         if doWarmup:
-            log.warning("warmup camera for 2 seconds...")
+            log.debug("warmup camera for 2 seconds...")
             time.sleep(2)
         self.cam.shutter_speed = cs.CAM_SHUTTER_SPEED
         self.cam.exposure_mode = 'off'
@@ -25,7 +25,7 @@ class Camera:
         self.cam.awb_gains = (awbr, awbb)
 
     def takePicture(self):
-        log.warning("camera is {} s old.".format(time.time() - self.creationTime))
+        log.debug("camera is {} s old.".format(time.time() - self.creationTime))
         rawCapture = PiRGBArray(self.cam)
         self.cam.capture(rawCapture, format="bgr")
         image = rawCapture.array

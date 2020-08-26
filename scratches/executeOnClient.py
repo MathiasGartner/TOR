@@ -15,6 +15,8 @@ ips = []
 positions = range(1, 28)
 #positions = [1, 2, 3]
 #positions = [18]
+#positions = [3, 6, 17, 22, 27]
+#positions = [3]
 
 #from itertools import chain
 #positions = chain(range(1, 18), range(19, 28))
@@ -42,6 +44,6 @@ with open(filename, 'w') as f:
         #full_ip = tsl.CLIENT_IP_NETWORK + "." + str(ip)
         full_ip = ip
         #
-        cmd = cmd_ssh.format(path_key, full_ip, cmd_startService)
-        #cmd = cmd_ssh.format(path_key, full_ip, cmd_stopService)
+        #cmd = cmd_ssh.format(path_key, full_ip, cmd_startService)
+        cmd = cmd_ssh.format(path_key, full_ip, cmd_stopService)
         f.write(cmd + "\n")

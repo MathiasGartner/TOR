@@ -72,8 +72,11 @@ class ClientManager:
         }
         answer = self.sendAndGetAnswer(msg)
 
-    def askForJob(self):
-        msg = {"C": self.clientId, "J": "waiting"}
+    def askForJob(self, inUserMode=False):
+        if inUserMode:
+            msg = {"C": self.clientId, "A": ""}
+        else:
+            msg = {"C": self.clientId, "J": ""}
         answer = self.sendAndGetAnswer(msg)
         return answer
 

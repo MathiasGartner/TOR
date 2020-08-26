@@ -27,9 +27,18 @@ args = parser.parse_args()
 def keepAskingForNextJob(askEveryNthSecond = 10):
     global exitTOR
     global nextJob
+    global inUserMode
+
+    standardWaitTime = askEveryNthSecond
+    userModeWaitTime = cs.USER_ACTION_WAIT_TIME
+
     while not exitTOR:
+        if inUserMode:
+            askEveryNthSecond = userModeWaitTime
+        else:
+            askEveryNthSecond = standardWaitTime
         nextTime = time.time() + askEveryNthSecond
-        nextJob = cm.askForJob()
+        nextJob = cm.askForJob(inUserMode)
         log.info("nextJob: {}".format(nextJob))
         sleepFor = nextTime - time.time()
         if sleepFor > 0:
@@ -91,6 +100,8 @@ def run():
 def doJobsDummy():
     global exitTOR
     global nextJob
+    global inUserMode
+
     done = False
     while not done:
         log.info("nextJob: {}".format(nextJob))
@@ -104,6 +115,7 @@ def doJobsDummy():
 def doJobs():
     global exitTOR
     global nextJob
+    global inUserMode
 
     log.warning("current position: {}".format(MovementManager.currentPosition))
 
@@ -117,8 +129,10 @@ def doJobs():
             mr.pickupDieFromPosition(dieRollResult.position)
     else:
         #TODO: get current position from BTT SKR Board
-        mm.setCurrentPositionGCode(cs.HOME_POSITION.toCordLengths())
-        MovementManager.currentPosition = cs.HOME_POSITION
+        #mm.refreshCurrentPositionFromBoard()
+        #mm.setCurrentPositionGCode(cs.HOME_POSITION.toCordLengths())
+        #MovementManager.currentPosition = cs.HOME_POSITION
+        pass
 
     mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
     mm.moveToPos(cs.CENTER_TOP, True)
@@ -130,7 +144,7 @@ def doJobs():
 
     done = False
     while not done:
-        log.info("nextJob: {}".format(nextJob))
+        #log.info("nextJob: {}".format(nextJob))
         if "R" in nextJob:
             run()
         elif "H" in nextJob: # H...homing
@@ -154,6 +168,10 @@ def doJobs():
                 mr.doDieRollAndPickupPerformance(startTime)
             elif performanceNo == 3:
                 mr.doPositionTestWithTiming(startTime, cm.clientIdentity, cm.x, cm.y, cm.z)
+            elif performanceNo == 4:
+                mr.doLightTest(startTime)
+            elif performanceNo == 5:
+                mr.doRollDie(startTime)
         elif "W" in nextJob: # W...wait
             sleepTime = int(nextJob["W"] or cs.STANDARD_CLIENT_SLEEP_TIME)
             if sleepTime <= 0:
@@ -163,6 +181,16 @@ def doJobs():
             done = True
         elif "S" in nextJob: # S...load settings
             cm.loadSettings()
+        elif "U" in nextJob: # U...user mode
+            if not inUserMode:
+                lm.clear()
+                lm.loadUserMode()
+                inUserMode = True
+            mm.setFeedratePercentage(cs.FR_DEFAULT)
+        elif "A" in nextJob: # A...action from user
+            action = nextJob["A"]
+            param = nextJob["PARAM"]
+            mr.performUserAction(action, param)
     mm.moveToParkingPosition(True)
     log.info("finished")
     exitTOR = True
@@ -234,6 +262,7 @@ if cs.ON_RASPI:
 
 exitTOR = False
 nextJob = ""
+inUserMode = False
 
 jobScheduler = threading.Thread(target=keepAskingForNextJob)
 jobScheduler.start()

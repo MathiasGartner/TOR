@@ -48,6 +48,16 @@ j3.JobCode = "P"
 j3.JobParameters = 3
 j3.ExecuteAt = datetime.now() + timedelta(hours=-1) + timedelta(seconds=20)
 
+j4 = Job()
+j4.JobCode = "P"
+j4.JobParameters = 4
+j4.ExecuteAt = datetime.now() + timedelta(hours=-1) + timedelta(seconds=20)
+
+j5 = Job()
+j5.JobCode = "P"
+j5.JobParameters = 5
+j5.ExecuteAt = datetime.now() + timedelta(hours=-1) + timedelta(seconds=20)
+
 jobsToCreate = []
 
 if args.run:
@@ -63,16 +73,17 @@ if args.thenwait:
 if args.id is not None:
     ids = int(args.id)
 
-#jobsToCreate = [jR]
-jobsToCreate = [jH, jW]
+jobsToCreate = [j5, jW]
+#jobsToCreate = [jH, jW]
 #ids = [15]4
 
 ids = []
 #positions = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 positions = range(1, 28)
 #positions = [1, 2, 3]
-#positions = [9]
+#positions = [16]
 #positions = [4, 5, 6]
+positions = [17]
 
 for p in positions:
     ids.append(DBManager.getIdByPosition(p))

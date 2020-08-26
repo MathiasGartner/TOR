@@ -4,15 +4,10 @@ log = logging.getLogger(__name__)
 import time
 
 import tor.client.ClientSettings as cs
+from tor.base.utils.Utils import *
 
 if cs.ON_RASPI:
     from rpi_ws281x import Adafruit_NeoPixel, Color
-
-def clamp(n, smallest, largest):
-    return max(smallest, min(n, largest))
-
-def clamp255(n):
-    return clamp(n, 0, 255)
 
 class LedManager:
     def __init__(self, brightness=None):
@@ -30,6 +25,9 @@ class LedManager:
         self.B = Color(0, 0, 255)
         self.W = Color(255, 255, 255)
         self.DEFAULT_COLOR = Color(cs.LED_STRIP_DEFAULT_COLOR[0], cs.LED_STRIP_DEFAULT_COLOR[1], cs.LED_STRIP_DEFAULT_COLOR[2])
+
+    def getColorFromTuple(self, rgb):
+        return Color(rgb[0], rgb[1], rgb[2])
 
     def test(self):
         for i in range(self.strip.numPixels()):
@@ -97,6 +95,16 @@ class LedManager:
             self.strip.setPixelColor(i, self.OFF_COLOR)
         self.strip.show()
 
+    def loadUserMode(self):
+        col = self.getColorFromTuple(cs.USER_LOAD_COLOR)
+        self.clear()
+        time.sleep(0.3)
+        for i in range(self.strip.numPixels(), 0, -1):
+            self.strip.setPixelColor(i, col)
+            time.sleep(0.1)
+            self.strip.show()
+        self.blink(blinkTime=0.6, col=col)
+
     def showResult(self, result):
         for i in range(self.strip.numPixels()):
             self.strip.setPixelColor(i, self.R if (i < result*self.strip.numPixels()/6.) else self.OFF_COLOR)
@@ -116,7 +124,14 @@ class LedManager:
             self.strip.setPixelColor(i, color)
         self.strip.show()
 
-    def blink(self, blinkTime=0.01):
-        self.setAllLeds(self.W)
-        time.sleep(blinkTime)
-        self.clear()
+    def blink(self, blinkTime=0.01, col=None, repeat=3, keepLight=True):
+        if col is None:
+            col = self.W
+        for i in range(repeat):
+            self.setAllLeds(col)
+            time.sleep(blinkTime)
+            self.clear()
+            time.sleep(blinkTime)
+        if keepLight:
+            self.setAllLeds(col)
+

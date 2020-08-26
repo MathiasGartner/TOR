@@ -7,6 +7,7 @@ import time
 
 from tor.base.DieRecognizer import DieRecognizer
 from tor.base.DieRollResult import DieRollResult
+from tor.base.utils.Utils import *
 from tor.client import ClientSettings as cs
 from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
@@ -260,6 +261,53 @@ class MovementRoutines:
 
         return dieRollResult
 
+    def rollDie(self, dropoffPos):
+        self.moveToDropoffPosition(dropoffPos)
+
+        time.sleep(cs.WAIT_BEFORE_ROLL_TIME)
+        self.mm.rollDie()
+        time.sleep(cs.DIE_ROLL_TIME / 2.0)
+        self.mm.setFeedratePercentage(cs.FR_DEFAULT)
+        self.mm.moveToPos(cs.CENTER_TOP, True)
+        self.mm.waitForMovementFinished()
+
+    def getValidUserPosition(self, pos):
+        validPos = Position(clamp(pos.x, 0, cs.LX), clamp(pos.y, 160, cs.LY), clamp(pos.z, 50, 220))
+        return validPos
+
+    def performUserAction(self, action, steps):
+        posFrom = self.mm.currentPosition
+        posTo = None
+        if action == "DOWN":
+            log.info("move down")
+            posTo = posFrom + Position(0, 0, int(steps))
+        elif action == "UP":
+            log.info("move up")
+            posTo = posFrom + Position(0, 0, -int(steps))
+        elif action == "LEFT":
+            log.info("move left")
+            posTo = posFrom + Position(int(steps), 0, 0)
+        elif action == "RIGHT":
+            log.info("move right")
+            posTo = posFrom + Position(-int(steps), 0, 0)
+        elif action == "FRONT":
+            log.info("move front")
+            posTo = posFrom + Position(0, int(steps), 0)
+        elif action == "BACK":
+            log.info("move back")
+            posTo = posFrom + Position(0, -int(steps), 0)
+        elif action == "ROLL":
+            log.info("roll die")
+            dropoffPos = cs.MESH_MAGNET[2]
+            self.rollDie(dropoffPos)
+        else:
+            log.warning("Action {} not known.".format(action))
+            time.sleep(cs.USER_ACTION_WAIT_TIME)
+        if posTo is not None:
+            validPos = self.getValidUserPosition(posTo)
+            self.mm.moveToPos(validPos, True)
+            self.mm.waitForMovementFinished()
+
     def sleepUntilTimestamp(self, step, timestamps):
         sleepFor = timestamps[step] - time.time()
         print("sleep:", sleepFor)
@@ -396,3 +444,44 @@ class MovementRoutines:
         step += 1
         self.sleepUntilTimestamp(step, timestamps)
         lm.clear()
+
+    def doLightTest(self, startTime):
+        log.info("preparing for performance...")
+        lm = LedManager()
+        lm.clear()
+        self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
+        log.info("waiting for performance to start...")
+        startTimestamp = datetime.timestamp(startTime)
+        timings = np.cumsum([0])
+        timestamps = [t + startTimestamp for t in timings]
+        log.info(timestamps)
+
+        step = 0
+        self.sleepUntilTimestamp(step, timestamps)
+        for r in range(0, 150, 10):
+            for g in range(0, 150, 10):
+                for b in range(0, 150, 10):
+                    lm.setAllLeds(r=r, g=g, b=b)
+                    log.info("r={}, g={}, b={}".format(r, g, b))
+                    time.sleep(1)
+
+    def doRollDie(self, startTime):
+        log.info("preparing for performance...")
+        log.info("waiting for performance to start...")
+        startTimestamp = datetime.timestamp(startTime)
+        timings = np.cumsum([0])
+        timestamps = [t + startTimestamp for t in timings]
+        log.info(timestamps)
+
+        step = 0
+        self.sleepUntilTimestamp(step, timestamps)
+        dropoffPos = cs.MESH_MAGNET[2, :]
+        self.moveToDropoffPosition(dropoffPos)
+
+        # roll die
+        time.sleep(cs.WAIT_BEFORE_ROLL_TIME)
+        self.mm.rollDie()
+        time.sleep(cs.DIE_ROLL_TIME / 2.0)
+        self.mm.setFeedratePercentage(cs.FR_DEFAULT)
+        self.mm.moveToPos(cs.CENTER_TOP, True)
+        time.sleep(cs.DIE_ROLL_TIME / 2.0)

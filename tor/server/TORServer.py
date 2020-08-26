@@ -70,6 +70,14 @@ def handleRequest(conn):
             #     NetworkUtils.sendData(conn, {"M": 1, "P" : "CE"})
             # elif job == 8: #do homing
             #     NetworkUtils.sendData(conn, {"H": 1})
+        elif "A" in request:
+            log.info("send next user action")
+            action = DBManager.getUserAction(clientId)
+            log.info("action: {}".format(action))
+            NetworkUtils.sendData(conn, {
+                "A": action["Action"],
+                "PARAM": action["Parameters"]
+            })
         elif "GET" in request:
             if request["GET"] == "MESH":
                 meshpoints = getMeshpoints(clientId)

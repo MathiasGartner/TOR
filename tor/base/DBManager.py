@@ -83,3 +83,16 @@ def getIPByPosition(position):
     cursor.execute(query, { "pos" : position })
     data = cursor.fetchone()
     return data[0]
+
+def getUserAction(clientId, deleteAction=True):
+    query = "SELECT Id, Action, Parameters FROM useraction WHERE ClientId = %(clientId)s ORDER BY Id DESC LIMIT 1"
+    cursor.execute(query, { "clientId" : clientId })
+    data = cursor.fetchone()
+    if data is not None:
+        if deleteAction:
+            query = "DELETE FROM useraction WHERE ClientId = %(clientId)s and Id <= %(id)s"
+            cursor.execute(query, {"clientId": clientId, "id": data[0]})
+        data = {"Action": data[1], "Parameters": data[2]}
+    else:
+        data = {"Action": "NONE", "Parameters": ""}
+    return data
