@@ -9,6 +9,7 @@ from tor.base.DieRecognizer import DieRecognizer
 from tor.base.DieRollResult import DieRollResult
 from tor.base.utils.Utils import *
 from tor.client import ClientSettings as cs
+from tor.client.ClientManager import ClientManager
 from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
 from tor.client.Position import Position
@@ -17,7 +18,8 @@ if cs.ON_RASPI:
     from tor.client.Camera import Camera
 
 class MovementRoutines:
-    def __init__(self):
+    def __init__(self, cm):
+        self.cm = cm
         self.mm = MovementManager()
         self.dr = DieRecognizer()
 
@@ -26,7 +28,7 @@ class MovementRoutines:
 
     def relativeBedCoordinatesToPosition(self, px, py):
         p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12 = self.loadPoints()
-        #TODO: check the out of range logic. die was found correctly at y=1.002
+        #TODO: @David check the out of range logic. die was found correctly at y=1.002
         if (px < 0 or px > 1 or py < -0.1 or py > 1):
             log.warning("Out of range in relativeBedCoordinatesToPosition: [x,y]=[{},{}]".format(px, py))
             return cs.BEFORE_PICKUP_POSITION
@@ -170,7 +172,7 @@ class MovementRoutines:
         dieRollResult, processedImages = self.dr.getDieRollResult(image, returnOriginalImg=True)
         return dieRollResult, processedImages
 
-    def pickupDie(self, onSendResult=None, cam=None):
+    def pickupDie_takeImage(self, cam=None):
         dieRollResult = DieRollResult()
         if cs.USE_IMAGE_RECOGNITION:
             dieRollResult, processedImages = self.findDie(cam)
@@ -180,7 +182,9 @@ class MovementRoutines:
                 self.dr.writeImage(processedImages[0], directory=directory)
                 self.dr.writeImage(processedImages[0], directory=cs.WEB_DIRECTORY, fileName='current_view.jpg')
                 self.dr.writeRGBArray(processedImages[0], directory=directory)
+        return dieRollResult
 
+    def pickupDie_pickup(self, dieRollResult, onSendResult=None):
         if dieRollResult.found:
             log.info("dieRollResult: {}".format(dieRollResult))
             if cs.SHOW_DIE_RESULT_WITH_LEDS:
@@ -192,6 +196,10 @@ class MovementRoutines:
         else:
             log.info('Die not found, now searching...')
             self.searchForDie()
+
+    def pickupDie(self, onSendResult=None, cam=None):
+        dieRollResult = self.pickupDie_takeImage(cam)
+        self.pickupDie_pickup(dieRollResult, onSendResult)
         return dieRollResult
 
     def getDropoffPosition(self, pos, stage=1):
@@ -255,12 +263,6 @@ class MovementRoutines:
         self.mm.moveToPos(cs.CENTER_TOP, True)
         time.sleep(cs.DIE_ROLL_TIME / 2.0)
 
-        # pickup die
-        dieRollResult = self.pickupDie(onSendResult)
-        #cam.close()
-
-        return dieRollResult
-
     def rollDie(self, dropoffPos):
         self.moveToDropoffPosition(dropoffPos)
 
@@ -300,9 +302,14 @@ class MovementRoutines:
             log.info("roll die")
             dropoffPos = cs.MESH_MAGNET[2]
             self.rollDie(dropoffPos)
+            dieRollResult, processedImages = self.findDie()
+            if dieRollResult.found:
+                log.info("dieRollResult: {}".format(dieRollResult))
+                self.cm.sendDieRollResult(dieRollResult)
+            self.cm.exitUserMode()
         else:
             log.warning("Action {} not known.".format(action))
-            time.sleep(cs.USER_ACTION_WAIT_TIME)
+            time.sleep(2 * cs.ASK_EVERY_NTH_SECOND_FOR_JOB_USERMODE)
         if posTo is not None:
             validPos = self.getValidUserPosition(posTo)
             self.mm.moveToPos(validPos, True)

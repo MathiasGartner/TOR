@@ -1,5 +1,5 @@
 import argparse
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import numpy as np
 import time
@@ -24,21 +24,34 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-nohome", dest='doHomingOnStartup', action="store_false")
 args = parser.parse_args()
 
-def keepAskingForNextJob(askEveryNthSecond = 10):
+def keepAskingForNextJob(askEveryNthSecond = None):
+    global lock
     global exitTOR
     global nextJob
+    global userModeRequested
     global inUserMode
+    global exitUserModeAtTime
+
+    if askEveryNthSecond is None:
+        askEveryNthSecond = cs.ASK_EVERY_NTH_SECOND_FOR_JOB
 
     standardWaitTime = askEveryNthSecond
-    userModeWaitTime = cs.USER_ACTION_WAIT_TIME
+    userModeWaitTime = cs.ASK_EVERY_NTH_SECOND_FOR_JOB_USERMODE
 
     while not exitTOR:
         if inUserMode:
             askEveryNthSecond = userModeWaitTime
+            if exitUserModeAtTime is not None and datetime.now() > exitUserModeAtTime:
+                exitUserMode()
         else:
             askEveryNthSecond = standardWaitTime
         nextTime = time.time() + askEveryNthSecond
-        nextJob = cm.askForJob(inUserMode)
+        nextJob_ = cm.askForJob(inUserMode)
+        lock.acquire()
+        nextJob = nextJob_
+        if "U" in nextJob:
+            userModeRequested = True
+        lock.release()
         log.info("nextJob: {}".format(nextJob))
         sleepFor = nextTime - time.time()
         if sleepFor > 0:
@@ -50,52 +63,83 @@ def run():
     global countNotFound
     global countSameResult
     global lastResult
+    global userModeRequested
+    global currentState
 
     lm.setAllLeds()
 
-    dieRollResult = mr.run(lastPickupX, cm.sendDieRollResult)
-    if dieRollResult.found:
-        lastPickupX = dieRollResult.position.x
-        #cm.sendDieRollResult(dieRollResult)
-        if lastResult == dieRollResult.result:
-            countSameResult += 1
-        else:
-            countSameResult = 0
-        lastResult = dieRollResult.result
-        countNotFound = 0
-    else:
-        lastPickupX = cs.LX / 2.0
-        cm.sendDieResultNotRecognized()
-        countNotFound += 1
+    if not userModeRequested:
+        # roll
+        currentState = "ROLL"
+        mr.run(lastPickupX)
+    if not userModeRequested:
+        # pickup die - take image
+        currentState = "PICKUP_TAKEIMAGE"
+        dieRollResult = mr.pickupDie_takeImage()
+    if not userModeRequested:
+        # pickup die - pickup
+        currentState = "PICKUP_PICKUP"
+        mr.pickupDie_pickup(dieRollResult, cm.sendDieRollResult)
 
-    #check if homing is needed
-    runsSinceLastHoming += 1
-    if runsSinceLastHoming >= cs.HOME_EVERY_N_RUNS:
-        mm.doHoming()
-        mm.moveToPos(cs.CENTER_TOP)
-        runsSinceLastHoming = 0
-    elif countNotFound >= cs.HOME_AFTER_N_FAILS:
-        log.info("count not found: {} -> do homing...".format(countNotFound))
-        mm.doHoming()
-        mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
-        mr.searchForDie()
-        mm.moveToPos(cs.CENTER_TOP, True)
-        countNotFound = 0
-        runsSinceLastHoming = 0
-    elif countSameResult >= cs.HOME_AFTER_N_SAME_RESULTS:
-        log.info("count same result: {} -> do homing...".format(countSameResult))
-        dieRollResult, processedImages = mr.findDieWhileHoming()
-        mm.waitForMovementFinished()
-        mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
         if dieRollResult.found:
-            mr.pickupDieFromPosition(dieRollResult.position)
+            lastPickupX = dieRollResult.position.x
+            #cm.sendDieRollResult(dieRollResult)
+            if lastResult == dieRollResult.result:
+                countSameResult += 1
+            else:
+                countSameResult = 0
+            lastResult = dieRollResult.result
+            countNotFound = 0
         else:
+            lastPickupX = cs.LX / 2.0
+            cm.sendDieResultNotRecognized()
+            countNotFound += 1
+
+    if not userModeRequested:
+        #check if homing is needed
+        runsSinceLastHoming += 1
+        if runsSinceLastHoming >= cs.HOME_EVERY_N_RUNS:
+            mm.doHoming()
+            mm.moveToPos(cs.CENTER_TOP)
+            runsSinceLastHoming = 0
+        elif countNotFound >= cs.HOME_AFTER_N_FAILS:
+            log.info("count not found: {} -> do homing...".format(countNotFound))
+            mm.doHoming()
+            mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
             mr.searchForDie()
-        mm.moveToPos(cs.CENTER_TOP, True)
-        countSameResult = 0
-        runsSinceLastHoming = 0
+            mm.moveToPos(cs.CENTER_TOP, True)
+            countNotFound = 0
+            runsSinceLastHoming = 0
+        elif countSameResult >= cs.HOME_AFTER_N_SAME_RESULTS:
+            log.info("count same result: {} -> do homing...".format(countSameResult))
+            dieRollResult, processedImages = mr.findDieWhileHoming()
+            mm.waitForMovementFinished()
+            mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
+            if dieRollResult.found:
+                mr.pickupDieFromPosition(dieRollResult.position)
+            else:
+                mr.searchForDie()
+            mm.moveToPos(cs.CENTER_TOP, True)
+            countSameResult = 0
+            runsSinceLastHoming = 0
 
     mm.waitForMovementFinished()
+
+def exitUserMode():
+    global userModeRequested
+    global inUserMode
+    global currentState
+
+    userModeRequested = False
+    inUserMode = False
+    currentState = ""
+
+    lm.clear()
+    mm.setFeedratePercentage(cs.FR_DEFAULT)
+    mm.moveToPos(cs.CENTER_TOP)
+    mm.waitForMovementFinished()
+    cm.exitUserMode()
+    time.sleep(cs.STANDARD_CLIENT_SLEEP_TIME)
 
 def doJobsDummy():
     global exitTOR
@@ -116,6 +160,9 @@ def doJobs():
     global exitTOR
     global nextJob
     global inUserMode
+    global userModeRequested
+    global currentState
+    global exitUserModeAtTime
 
     log.warning("current position: {}".format(MovementManager.currentPosition))
 
@@ -151,7 +198,7 @@ def doJobs():
             mm.doHoming()
             mm.moveToPos(cs.CENTER_TOP)
             mm.waitForMovementFinished()
-        elif "HH" in nextJob:  # H...homing
+        elif "HH" in nextJob:  # H...homing with die pickup
             mr.findDieWhileHoming()
             mm.waitForMovementFinished()
             mm.moveToPos(cs.CENTER_TOP)
@@ -182,22 +229,21 @@ def doJobs():
         elif "S" in nextJob: # S...load settings
             cm.loadSettings()
         elif "U" in nextJob: # U...user mode
+            userModeRequested = False
             if not inUserMode:
                 lm.clear()
                 lm.loadUserMode()
                 inUserMode = True
+                cm.setUserModeReady(currentState)
             mm.setFeedratePercentage(cs.FR_DEFAULT)
-        elif "UU" in nextJob: # UU... end user mode
-            mm.setFeedratePercentage(cs.FR_DEFAULT)
-            mm.moveToPos(cs.CENTER_TOP)
-            mm.waitForMovementFinished()
-            lm.setAllLeds()
-            inUserMode = False
-            time.sleep(cs.STANDARD_CLIENT_SLEEP_TIME)
         elif "A" in nextJob: # A...action from user
             action = nextJob["A"]
-            param = nextJob["PARAM"]
-            mr.performUserAction(action, param)
+            if action == "EXIT":
+                exitUserMode()
+            else:
+                param = nextJob["PARAM"]
+                mr.performUserAction(action, param)
+                exitUserModeAtTime = datetime.now() + timedelta(seconds=cs.EXIT_USER_MODE_AFTER_N_SECONDS)
     mm.moveToParkingPosition(True)
     log.info("finished")
     exitTOR = True
@@ -255,7 +301,7 @@ mm = MovementManager()
 if not mm.hasCorrectVersion:
     log.warning("Incompatible version of TOR-Marlin installed. TORClient will now quit.")
     exit(0)
-mr = MovementRoutines()
+mr = MovementRoutines(cm)
 
 if cs.ON_RASPI:
     try:
@@ -267,9 +313,13 @@ if cs.ON_RASPI:
 ### main program ###
 ####################
 
+lock = threading.Lock()
 exitTOR = False
 nextJob = ""
+userModeRequested = False
+currentState = ""
 inUserMode = False
+exitUserModeAtTime = None
 
 jobScheduler = threading.Thread(target=keepAskingForNextJob)
 jobScheduler.start()

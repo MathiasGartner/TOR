@@ -50,10 +50,10 @@ with open(filename, 'w') as f:
         #full_ip = tsl.CLIENT_IP_NETWORK + "." + str(ip)
         full_ip = ip
         #cmd = cmd_ssh.format(path_key, full_ip, cmd_startService)
-        #cmd = cmd_ssh.format(path_key, full_ip, cmd_stopService)
+        cmd = cmd_ssh.format(path_key, full_ip, cmd_stopService)
         #cmd = cmd_ssh.format(path_key, full_ip, cmd_removeImages)
-        #f.write(cmd + "\n")
-        copyFiles = True
+        f.write(cmd + "\n")
+        copyFiles = False
         if copyFiles:
             cmd = "mkdir " + tsl.DIRECTORY_TEST_IMAGES_DATE + str(pos)
             f.write(cmd + "\n")

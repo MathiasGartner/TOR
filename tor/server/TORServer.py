@@ -29,6 +29,12 @@ def getMeshpoints(clientId):
 def saveMeshpoints(clientId, type, points):
     DBManager.saveMeshpoints(clientId, type, points)
 
+def exitUserMode(clientId):
+    DBManager.exitUserMode(clientId)
+
+def setCurrentStateForUserMode(clientId, state):
+    DBManager.setCurrentStateForUserMode(clientId, state)
+
 def handleRequest(conn):
     request = NetworkUtils.recvData(conn)
     if "C" in request: #request from client C
@@ -45,31 +51,20 @@ def handleRequest(conn):
             log.warning(request["MESSAGE"])
             NetworkUtils.sendOK(conn)
         elif "J" in request: #client asks for job
-            #jobIds = [1, 1, 1, 1, 1, 1, 3, 4, 5, 6, 7, 8]
-            #jobIds = [1]
-            #job = random.choice(jobIds)
             job = DBManager.getNextJobForClientId(clientId)
             log.info("client {} asks for job, send {}".format(clientId, job))
             NetworkUtils.sendData(conn, {
                 job.JobCode: job.JobParameters,
                 "T": job.ExecuteAt.__str__()
             })
-            # if job == 1:
-            #     NetworkUtils.sendData(conn, {"R" : 1})
-            # elif job == 2:
-            #     NetworkUtils.sendData(conn, {"C" : 1})
-            # elif job == 3: #move to center bottom
-            #     NetworkUtils.sendData(conn, {"M": 1, "P" : "CENTER_BOTTOM"})
-            # elif job == 4: #move to CX
-            #     NetworkUtils.sendData(conn, {"M": 1, "P" : "CX"})
-            # elif job == 5: #move to CY
-            #     NetworkUtils.sendData(conn, {"M": 1, "P" : "CY"})
-            # elif job == 6: #move to CZ
-            #     NetworkUtils.sendData(conn, {"M": 1, "P" : "CZ"})
-            # elif job == 7: #move to CE
-            #     NetworkUtils.sendData(conn, {"M": 1, "P" : "CE"})
-            # elif job == 8: #do homing
-            #     NetworkUtils.sendData(conn, {"H": 1})
+        elif "U" in request:
+            # TODO: send to server:
+            # TODO: - clean up database after usermode
+            # TODO: - set next job to previous job before "U", if there is none set to "W"
+            if request["U"] == "EXIT":
+                exitUserMode(clientId)
+            else:
+                setCurrentStateForUserMode(clientId, request["U"])
         elif "A" in request:
             log.info("send next user action")
             action = DBManager.getUserAction(clientId)
