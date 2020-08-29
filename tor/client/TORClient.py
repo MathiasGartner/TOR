@@ -187,6 +187,13 @@ def doJobs():
                 lm.loadUserMode()
                 inUserMode = True
             mm.setFeedratePercentage(cs.FR_DEFAULT)
+        elif "UU" in nextJob: # UU... end user mode
+            mm.setFeedratePercentage(cs.FR_DEFAULT)
+            mm.moveToPos(cs.CENTER_TOP)
+            mm.waitForMovementFinished()
+            lm.setAllLeds()
+            inUserMode = False
+            time.sleep(cs.STANDARD_CLIENT_SLEEP_TIME)
         elif "A" in nextJob: # A...action from user
             action = nextJob["A"]
             param = nextJob["PARAM"]
