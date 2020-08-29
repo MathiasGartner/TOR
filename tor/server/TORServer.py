@@ -58,9 +58,6 @@ def handleRequest(conn):
                 "T": job.ExecuteAt.__str__()
             })
         elif "U" in request:
-            # TODO: send to server:
-            # TODO: - clean up database after usermode
-            # TODO: - set next job to previous job before "U", if there is none set to "W"
             if request["U"] == "EXIT":
                 exitUserMode(clientId)
             else:

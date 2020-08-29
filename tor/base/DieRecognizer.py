@@ -238,5 +238,6 @@ class DieRecognizer:
         return 0
 
     def checkIfDiePickedUp(self):
+        #TODO: not implemented yet
         #TODO: compare to previous image and check if die is now missing
         return True
