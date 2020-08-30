@@ -202,7 +202,7 @@ class MovementRoutines:
         self.pickupDie_pickup(dieRollResult, onSendResult)
         return dieRollResult
 
-    def getDropoffPosition(self, pos, stage=1):
+    def getDropoffAdvancePosition(self, pos, stage=1):
         if stage == 1:
             p = Position(pos[0], pos[1] + cs.DROPOFF_ADVANCE_OFFSET_Y, pos[2] + cs.DROPOFF_ADVANCE_OFFSET_Z)
         elif stage == 2:
@@ -213,8 +213,8 @@ class MovementRoutines:
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
         if not isinstance(dropoffPos, Position):
             dropoffPos = Position(dropoffPos[0], dropoffPos[1], dropoffPos[2])
-        dropoffAdvancePos = self.getDropoffPosition(dropoffPos, stage=1)
-        dropoffAdvancePos2 = self.getDropoffPosition(dropoffPos, stage=2)
+        dropoffAdvancePos = self.getDropoffAdvancePosition(dropoffPos, stage=1)
+        dropoffAdvancePos2 = self.getDropoffAdvancePosition(dropoffPos, stage=2)
         self.mm.moveToPos(dropoffAdvancePos, True)
         self.mm.setFeedratePercentage(cs.FR_DROPOFF_ADVANCE * speedupFactor1)
         self.mm.moveToPos(dropoffAdvancePos2, True)
@@ -223,32 +223,37 @@ class MovementRoutines:
         self.mm.waitForMovementFinished()
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
 
+    def getDropoffPosByPercent(self, percent, invert=False):
+        dropoffPos = cs.MESH_MAGNET[0, :]
+        if invert:
+            px = np.clip(1 - percent, 0.0, 1.0)
+        else:
+            px = percent
+        if px < 0.5:
+            if not cs.USE_MAGNET_BETWEEN_P0P1:
+                px = 1 - px
+        elif not cs.USE_MAGNET_BETWEEN_P2P3:
+            px = 1 - px
+        #TODO: @David: is this okay?
+        if px < 0.5:
+            dropoffPos = 2 * px * cs.MESH_MAGNET[1, :] + (1 - 2 * px) * cs.MESH_MAGNET[0, :]
+        else:
+            dropoffPos = 2 * (px - 0.5) * cs.MESH_MAGNET[3, :] + 2 * (1 - px) * cs.MESH_MAGNET[2, :]
+        return dropoffPos
+
+    def getDropoffPosByXCoordinate(self, x, invert=False):
+        percent = x / cs.LX
+        return self.getDropoffPosByPercent(percent, invert)
+
     def run(self, lastPickupX, onSendResult=None):
         # move to dropoff position
-        dropoffPos = cs.MESH_MAGNET[1, :]
-        px = np.clip(1 - lastPickupX / cs.LX, 0.0, 1.0)
-        if (px < 0.5 and cs.USE_MAGNET_BETWEEN_P0P1):
-            dropoffPos = 2 * px * cs.MESH_MAGNET[1, :] + (1 - 2 * px) * cs.MESH_MAGNET[0, :]
-        if (px < 0.5 and (not cs.USE_MAGNET_BETWEEN_P0P1)):
-            px=1-px
-        if (px >= 0.5 and cs.USE_MAGNET_BETWEEN_P2P3):
-            dropoffPos = 2 * (px - 0.5) * cs.MESH_MAGNET[3, :] + 2 * (1 - px) * cs.MESH_MAGNET[2, :]
-        if (px>=0.5 and (not cs.USE_MAGNET_BETWEEN_P2P3)):
-            px=1-px
-            dropoffPos = 2 * px * cs.MESH_MAGNET[1, :] + (1 - 2 * px) * cs.MESH_MAGNET[0, :]
-
-        #dropoffPos = cs.MESH_MAGNET[2, :]
-
-        #dropoffPos = (cs.MESH_MAGNET[3, :] +  cs.MESH_MAGNET[2, :]) / 2.0
+        dropoffPos = self.getDropoffPosByXCoordinate(lastPickupX, invert=True)
 
         #dropoffPos = cs.MESH_MAGNET[1, :]
-
+        #dropoffPos = cs.MESH_MAGNET[2, :]
+        #dropoffPos = (cs.MESH_MAGNET[3, :] +  cs.MESH_MAGNET[2, :]) / 2.0
+        #dropoffPos = cs.MESH_MAGNET[1, :]
         #dropoffPos = (cs.MESH_MAGNET[1, :] + cs.MESH_MAGNET[0, :]) / 2.0
-
-        import random
-        random.seed(time.time())
-        index = random.randint(0, 3)
-        dropoffPos = cs.MESH_MAGNET[index, :]
 
         self.moveToDropoffPosition(dropoffPos)
 
@@ -300,7 +305,9 @@ class MovementRoutines:
             posTo = posFrom + Position(0, -int(steps), 0)
         elif action == "ROLL":
             log.info("roll die")
-            dropoffPos = cs.MESH_MAGNET[2]
+            dropoffPosPercent = steps
+            dropoffPos = self.getDropoffPosByPercent(dropoffPosPercent)
+            #dropoffPos = cs.MESH_MAGNET[2]
             self.rollDie(dropoffPos)
             dieRollResult, processedImages = self.findDie()
             if dieRollResult.found:
