@@ -29,6 +29,10 @@ class MovementRoutines:
     def relativeBedCoordinatesToPosition(self, px, py):
         p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12 = self.loadPoints()
         #TODO: @David check the out of range logic. die was found correctly at y=1.002
+        #      why is y < 0 allowed? is the calculation correct for py < 0?
+        #      for now just clip
+        px = np.clip(px, 0.0, 1.0)
+        py = np.clip(py, -0.1, 1.0)
         if (px < 0 or px > 1 or py < -0.1 or py > 1):
             log.warning("Out of range in relativeBedCoordinatesToPosition: [x,y]=[{},{}]".format(px, py))
             return cs.BEFORE_PICKUP_POSITION
