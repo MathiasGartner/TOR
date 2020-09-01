@@ -62,10 +62,11 @@ def handleRequest(conn):
                 exitUserMode(clientId)
             else:
                 setCurrentStateForUserMode(clientId, request["U"])
+            NetworkUtils.sendOK(conn)
         elif "A" in request:
             log.info("send next user action")
             action = DBManager.getUserAction(clientId)
-            log.info("action: {}".format(action))
+            #log.info("action: {}".format(action))
             NetworkUtils.sendData(conn, {
                 "A": action["Action"],
                 "PARAM": action["Parameters"]
@@ -106,3 +107,4 @@ log.info("start server")
 while True:
     (clientSocket, address) = serverSocket.accept()
     handleRequest(clientSocket)
+

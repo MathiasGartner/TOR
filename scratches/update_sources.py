@@ -12,10 +12,10 @@ from tor.base import DBManager
 #ips = [107, 112]
 ips = []
 #positions = [1, 2, 3, 4,5, 6, 7, 8, 9]
-positions = range(18, 28)
+positions = range(1, 28)
 #positions = [10, 11, 12, 13, 14, 15]
 #positions = [1, 2, 3]
-positions = [1]
+positions = [26]
 
 #from itertools import chain
 #positions = chain(range(1, 21), range(23, 28))

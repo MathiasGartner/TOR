@@ -18,7 +18,7 @@ if cs.ON_RASPI:
     from tor.client.Camera import Camera
 
 class MovementRoutines:
-    def __init__(self, cm):
+    def __init__(self, cm = None):
         self.cm = cm
         self.mm = MovementManager()
         self.dr = DieRecognizer()
@@ -229,6 +229,7 @@ class MovementRoutines:
 
     def getDropoffPosByPercent(self, percent, invert=False):
         dropoffPos = cs.MESH_MAGNET[0, :]
+        percent = np.clip(percent, 0.0, 1.0)
         if invert:
             px = np.clip(1 - percent, 0.0, 1.0)
         else:
@@ -287,8 +288,14 @@ class MovementRoutines:
         return validPos
 
     def performUserAction(self, action, steps):
+        if action != "NONE":
+            log.info("perform action: {},{}".format(action, steps))
         posFrom = self.mm.currentPosition
         posTo = None
+        try:
+            steps = int(steps)
+        except ValueError:
+            steps = 0
         if action == "DOWN":
             log.info("move down")
             posTo = posFrom + Position(0, 0, int(steps))
@@ -309,18 +316,20 @@ class MovementRoutines:
             posTo = posFrom + Position(0, -int(steps), 0)
         elif action == "ROLL":
             log.info("roll die")
-            dropoffPosPercent = steps
-            dropoffPos = self.getDropoffPosByPercent(dropoffPosPercent)
+            self.mm.moveToPos(cs.AFTER_PICKUP_POSITION)
+            dropoffPosPercent = int(steps)
+            dropoffPos = self.getDropoffPosByPercent(1.0 - (dropoffPosPercent / 100.0))
             #dropoffPos = cs.MESH_MAGNET[2]
             self.rollDie(dropoffPos)
             dieRollResult, processedImages = self.findDie()
             if dieRollResult.found:
                 log.info("dieRollResult: {}".format(dieRollResult))
                 self.cm.sendDieRollResult(dieRollResult)
-            self.cm.exitUserMode()
+            else:
+                log.info("die not found...")
         else:
-            log.warning("Action {} not known.".format(action))
-            time.sleep(2 * cs.ASK_EVERY_NTH_SECOND_FOR_JOB_USERMODE)
+            #log.warning("Action {} not known.".format(action))
+            time.sleep(0.7 * cs.ASK_EVERY_NTH_SECOND_FOR_JOB_USERMODE)
         if posTo is not None:
             validPos = self.getValidUserPosition(posTo)
             self.mm.moveToPos(validPos, True)

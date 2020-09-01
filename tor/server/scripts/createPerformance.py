@@ -73,7 +73,7 @@ if args.thenwait:
 if args.id is not None:
     ids = int(args.id)
 
-jobsToCreate = [jW]
+jobsToCreate = [jR]
 #jobsToCreate = [jH, jW]
 #ids = [15]4
 
@@ -83,11 +83,11 @@ positions = range(1, 28)
 #positions = [1, 2, 3]
 #positions = [16]
 #positions = [4, 5, 6]
-positions = [17]
+positions = [26]
 
-from itertools import chain
+#from itertools import chain
 #positions = chain(range(1, 22), range(23, 28))
-positions = chain(range(1, 21), range(23, 28))
+#positions = chain(range(1, 21), range(23, 28))
 
 for p in positions:
     ids.append(DBManager.getIdByPosition(p))

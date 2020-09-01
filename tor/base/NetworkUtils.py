@@ -47,7 +47,8 @@ def recvData(conn):
         msgData = json.loads(msg)
     except Exception as e:
         log.error("Error parsing JSON message:")
-        print(repr(e))
+        log.error("{}".format(repr(e)))
+        log.error("msg: {}".format(msg))
     return msgData
 
 def sendData(conn, data):

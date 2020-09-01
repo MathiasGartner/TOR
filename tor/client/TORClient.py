@@ -41,8 +41,6 @@ def keepAskingForNextJob(askEveryNthSecond = None):
     while not exitTOR:
         if inUserMode:
             askEveryNthSecond = userModeWaitTime
-            if exitUserModeAtTime is not None and datetime.now() > exitUserModeAtTime:
-                exitUserMode()
         else:
             askEveryNthSecond = standardWaitTime
         nextTime = time.time() + askEveryNthSecond
@@ -52,7 +50,8 @@ def keepAskingForNextJob(askEveryNthSecond = None):
         if "U" in nextJob:
             userModeRequested = True
         lock.release()
-        log.info("nextJob: {}".format(nextJob))
+        if not inUserMode:
+            log.info("nextJob: {}".format(nextJob))
         sleepFor = nextTime - time.time()
         if sleepFor > 0:
             time.sleep(sleepFor)
@@ -134,12 +133,13 @@ def exitUserMode():
     inUserMode = False
     currentState = ""
 
-    lm.clear()
+    cm.exitUserMode()
+    lm.unloadUserMode()
     mm.setFeedratePercentage(cs.FR_DEFAULT)
     mm.moveToPos(cs.CENTER_TOP)
     mm.waitForMovementFinished()
-    cm.exitUserMode()
     time.sleep(cs.STANDARD_CLIENT_SLEEP_TIME)
+    lm.setAllLeds()
 
 def doJobsDummy():
     global exitTOR
@@ -234,16 +234,22 @@ def doJobs():
                 lm.clear()
                 lm.loadUserMode()
                 inUserMode = True
+                log.info("userModeReady: {}".format(currentState))
+                if currentState == "":
+                    currentState = "PICKUP_PICKUP"
                 cm.setUserModeReady(currentState)
             mm.setFeedratePercentage(cs.FR_DEFAULT)
+            exitUserModeAtTime = datetime.now() + timedelta(seconds=cs.EXIT_USER_MODE_AFTER_N_SECONDS + 10)
         elif "A" in nextJob: # A...action from user
             action = nextJob["A"]
-            if action == "EXIT":
+            #log.info("action: {}".format(action))
+            if action == "EXIT" or (exitUserModeAtTime is not None and datetime.now() > exitUserModeAtTime):
                 exitUserMode()
             else:
                 param = nextJob["PARAM"]
                 mr.performUserAction(action, param)
-                exitUserModeAtTime = datetime.now() + timedelta(seconds=cs.EXIT_USER_MODE_AFTER_N_SECONDS)
+                if action != "NONE":
+                    exitUserModeAtTime = datetime.now() + timedelta(seconds=cs.EXIT_USER_MODE_AFTER_N_SECONDS)
     mm.moveToParkingPosition(True)
     log.info("finished")
     exitTOR = True

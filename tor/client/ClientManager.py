@@ -193,7 +193,7 @@ class ClientManager:
         answer = self.sendAndGetAnswer(msg)
         # TODO: check server response
 
-    def exitUserMode(self, clientId):
+    def exitUserMode(self):
         msg = {
             "C": self.clientId,
             "U": "EXIT"

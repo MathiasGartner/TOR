@@ -105,6 +105,13 @@ class LedManager:
             self.strip.show()
         self.blink(blinkTime=0.6, col=col)
 
+    def unloadUserMode(self):
+        col = self.getColorFromTuple(cs.USER_LOAD_COLOR)
+        for i in range(self.strip.numPixels()):
+            self.strip.setPixelColor(i, self.OFF_COLOR)
+            time.sleep(0.1)
+            self.strip.show()
+
     def showResult(self, result):
         for i in range(self.strip.numPixels()):
             self.strip.setPixelColor(i, self.R if (i < result*self.strip.numPixels()/6.) else self.OFF_COLOR)
