@@ -137,8 +137,129 @@ class DieRecognizer:
             im_color = cv2.rectangle(im_color, (minX, minY), (maxX, maxY), (0, 0, 255), thickness=10)
         return im_color
 
+    def markDiePointsOnImage(self, im, keypoints, isGray=False):
+        if isGray:
+            im_color = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
+        else:
+            im_color = im.copy()
+        if len(keypoints) > 0:
+            for p in keypoints:
+                x = np.int(p.pt[0])
+                y = np.int(p.pt[1])
+                size = np.int(p.size)
+                im_color = cv2.circle(im_color, (x, y), int(size / 2), (0, 0, 255), thickness=3)
+                im_color = cv2.circle(im_color, (x, y), int(size / 2)+30, (0, 0, 255), thickness=10)
+                # print("mark fake blob at",x,y)
+        return im_color
 
-    def getDieRollResult(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False, alreadyGray=False, threshold=110, markDie=False):
+    def chooseCorrectBlobs(self, blobs, im, already_removed = False):
+        orig_blobs = blobs.copy()
+        fake_blobs = []
+        diePositionRelative = Point2D(-1, -1)
+        if len(blobs) > 0:
+            maxdist = 60
+            too_far_away = True
+            while too_far_away:
+                meanX = np.mean([blob.pt[0] for blob in blobs])
+                meanY = np.mean([blob.pt[1] for blob in blobs])
+
+                coordinates = [blob.pt for blob in blobs]
+                dist_from_mean = [np.linalg.norm(np.array([x - meanX, y - meanY])) for x, y in coordinates]
+                too_far_away = np.array([(dist > maxdist) for dist in dist_from_mean]).any()
+
+                if too_far_away:
+                    index = dist_from_mean.index(max(dist_from_mean))
+                    fake_blobs.append(blobs[index])
+                    del blobs[index]
+
+            if len(blobs) > 6:
+                # TODO: choose the correct ones
+                found = False
+                result = 0
+            else:
+                # TODO: check if the detected blobs correspond to the face of a die
+                #      eg. distance between blobs, arrangement, ...
+                diePositionPX = Point2D(meanX, meanY)
+
+                px = diePositionPX.x / im.shape[1]
+                py = diePositionPX.y / im.shape[0]
+
+                # new edge trafo
+                log.info("shape: {}".format(im.shape))
+                diePositionRelative.x = px + cs.DIE_SIZE_X / (2.0 * im.shape[1]) * (2 * px - 1)
+                diePositionRelative.y = 1 - (py + cs.DIE_SIZE_Y / (2.0 * im.shape[0]) * (2 * py - 1))
+
+                found = True
+                result = min(len(blobs), 6)
+
+                # extra checks
+                if len(blobs) == 2:
+                    mindist = 35
+                    too_close = np.array([(dist < mindist) for dist in dist_from_mean]).any()
+                    if too_close:
+                        result = 0
+        else:
+            found = False
+            result = 0
+
+        if (result == 1 or result == 2) and not already_removed:
+            blobs = self.removeFakeBlobs(orig_blobs)
+            blobs, fake_blobs, found, result, diePositionRelative = self.chooseCorrectBlobs(blobs, im, already_removed=True)
+
+        return blobs, fake_blobs, found, result, diePositionRelative
+
+    def removeFakeBlobs(self, blobs):
+
+        from tor.client.ClientManager import ClientManager
+        cm = ClientManager()
+        ccsModuleName = "tor.client.CustomClientSettings." + cm.clientIdentity["Material"]
+        try:
+            import importlib
+            ccs = importlib.import_module(ccsModuleName)
+            # print("Custom config file loaded.")
+
+            # FAKE_BLOB_POSITIONS = []
+            #01: [(1543, 295), (653, 425)]
+            #02: []
+            #03: []
+            #04: [(957, 480), (1057, 483)]
+            #05: []
+            #06: []
+            #07: [(1072, 562), (1089, 495)]
+            #08: []
+            #09: []
+            #10: []
+            #11: []
+            #12: []
+            #13: [(1065, 522)]
+            #14: [(1145, 492)]
+            #15: []
+            #16: [(1090, 485)]
+            #17: [(1467, 488), (1476, 425)]
+            #18: []
+            #19: []
+            #20: []
+            #21:
+            #22:
+            #23: []
+            #24: []
+            #25: []
+            #26: []
+            #27: []
+
+            for i, blob in enumerate(blobs[:]):
+                # print(blob.pt)
+                for fake_blob_position in ccs.FAKE_BLOB_POSITIONS:
+                    if np.isclose(blob.pt, fake_blob_position, atol=8).all():
+                        # print(f"removed fake blob at {blob.pt}.")
+                        blobs.remove(blob)
+        except Exception as e:
+            pass
+            # print(e)
+            # print("No CustomClientSettings found. no fake blobs removed.")
+        return blobs
+
+    def getDieRollResult(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False, alreadyGray=False, threshold=108, markDie=False):
         if not alreadyCropped:
             im = self.transformImage(im)
         im_original = im
@@ -159,58 +280,14 @@ class DieRecognizer:
 
         blobs = self.blobDetector.detect(im)
 
-        diePositionRelative = Point2D(-1, -1)
-        if len(blobs) > 0:
-            maxdist = 60
-            too_far_away = True
-            while too_far_away:
-                    meanX = np.mean([blob.pt[0] for blob in blobs])
-                    meanY = np.mean([blob.pt[1] for blob in blobs])
-
-                    coordinates = [blob.pt for blob in blobs]
-                    dist_from_mean = [np.linalg.norm(np.array([x-meanX, y-meanY])) for x,y in coordinates]
-                    too_far_away = np.array([(dist > maxdist) for dist in dist_from_mean]).any()
-
-                    if too_far_away:
-                        index = dist_from_mean.index(max(dist_from_mean))
-                        del blobs[index]
-            
-            if len(blobs) > 6:
-                #TODO: choose the correct ones
-                found = False
-                result = 0
-            else:
-                #TODO: check if the detected blobs correspond to the face of a die
-                #      eg. distance between blobs, arrangement, ...               
-                diePositionPX = Point2D(meanX, meanY)
-                
-                px = diePositionPX.x / im.shape[1]
-                py = diePositionPX.y / im.shape[0]
-
-                #new edge trafo
-                log.info("shape: {}".format(im.shape))
-                diePositionRelative.x = px + cs.DIE_SIZE_X / (2.0 * im.shape[1]) * (2 * px - 1)
-                diePositionRelative.y = 1 - (py + cs.DIE_SIZE_Y / (2.0 * im.shape[0]) * (2 * py - 1))
-
-                found = True
-                result = min(len(blobs), 6)
-
-                #extra checks
-                if len(blobs) == 2:
-                    mindist = 35
-                    too_close = np.array([(dist < mindist) for dist in dist_from_mean]).any()
-                    if too_close:
-                        result = 0
-        else:
-            found = False
-            result = 0
+        blobs, fake_blobs, found, result, diePositionRelative = self.chooseCorrectBlobs(blobs=blobs, im=im, already_removed=False)
 
         #im_with_blobs = cv2.drawKeypoints(im, blobs, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
         if markDie:
             if returnOriginalImg:
-                im_with_blobs = self.markDieOnImage(im_original, blobs)
+                im_with_blobs = self.markDieOnImage(self.markDiePointsOnImage(im_original, fake_blobs), blobs)
             else:
-                im_with_blobs = self.markDieOnImage(im, blobs)
+                im_with_blobs = self.markDieOnImage(self.markDiePointsOnImage(im, fake_blobs), blobs)
         else:
             im_with_blobs = None
 

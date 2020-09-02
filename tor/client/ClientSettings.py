@@ -135,6 +135,8 @@ IMG_PX_Y = 1944 #PiCameraResolutionRounded: frame size rounded up from 2592x1944
 BLOB_MIN_DIAMETER = 20 #18
 BLOB_MAX_DIAMETER = 31
 
+FAKE_BLOB_POSITIONS = []
+
 # movement configuration:
 G_HOMING = "G28 N{} A0 S50 P130 F68 R8 D1.05 B1.15"
 
