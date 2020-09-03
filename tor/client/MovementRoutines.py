@@ -324,7 +324,7 @@ class MovementRoutines:
             dieRollResult, processedImages = self.findDie()
             if dieRollResult.found:
                 log.info("dieRollResult: {}".format(dieRollResult))
-                self.cm.sendDieRollResult(dieRollResult)
+                self.cm.sendDieRollResult(dieRollResult, userGenerated=True)
             else:
                 log.info("die not found...")
         else:

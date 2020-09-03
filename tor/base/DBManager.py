@@ -27,9 +27,9 @@ def saveClientSettings(clientId, settings):
     data = [(clientId, s[0], str(s[1]) if type(s[1]) is list else s[1]) for s in settings]
     cursor.executemany(query, data)
 
-def writeResult(clientId, result, x, y):
-    query = "INSERT INTO diceresult (ClientId, Result, X, Y) VALUES (%s, %s, %s, %s)"
-    data = (clientId, result, x, y)
+def writeResult(clientId, result, x, y, userGenerated):
+    query = "INSERT INTO diceresult (ClientId, Result, X, Y, UserGenerated) VALUES (%s, %s, %s, %s, %s)"
+    data = (clientId, result, x, y, userGenerated)
     cursor.execute(query, data)
     db.commit()
 

@@ -37,63 +37,67 @@ def setCurrentStateForUserMode(clientId, state):
 
 def handleRequest(conn):
     request = NetworkUtils.recvData(conn)
-    if "C" in request: #request from client C
-        clientId = request["C"]
-        if "RESULT" in request: #die roll result
-            dieResult = request["RESULT"]
-            x = request["POSX"]
-            y = request["POSY"]
-            log.info("Client {} rolled {} at [{}, {}]".format(clientId, dieResult, x, y))
-            NetworkUtils.sendOK(conn)
-            DBManager.writeResult(clientId, dieResult, x, y)
-        elif "E" in request: #error on client
-            log.warning("Error {} @ Client {}".format(request["E"], clientId))
-            log.warning(request["MESSAGE"])
-            NetworkUtils.sendOK(conn)
-        elif "J" in request: #client asks for job
-            job = DBManager.getNextJobForClientId(clientId)
-            log.info("client {} asks for job, send {}".format(clientId, job))
-            NetworkUtils.sendData(conn, {
-                job.JobCode: job.JobParameters,
-                "T": job.ExecuteAt.__str__()
-            })
-        elif "U" in request:
-            if request["U"] == "EXIT":
-                exitUserMode(clientId)
-            else:
-                setCurrentStateForUserMode(clientId, request["U"])
-            NetworkUtils.sendOK(conn)
-        elif "A" in request:
-            log.info("send next user action")
-            action = DBManager.getUserAction(clientId)
-            #log.info("action: {}".format(action))
-            NetworkUtils.sendData(conn, {
-                "A": action["Action"],
-                "PARAM": action["Parameters"]
-            })
-        elif "GET" in request:
-            if request["GET"] == "MESH":
-                meshpoints = getMeshpoints(clientId)
-                NetworkUtils.sendData(conn, meshpoints)
-            elif request["GET"] == "SETTINGS":
-                settings = getClientSettings(clientId)
-                NetworkUtils.sendData(conn, settings)
-        elif "PUT" in request:
-            if request["PUT"] == "MESH":
+    if isinstance(request, dict):
+        if "C" in request: #request from client C
+            clientId = request["C"]
+            if "RESULT" in request: #die roll result
+                dieResult = request["RESULT"]
+                x = request["POSX"]
+                y = request["POSY"]
+                userGenerated = request["USER"]
+                log.info("Client {} rolled {} at [{}, {}]".format(clientId, dieResult, x, y))
                 NetworkUtils.sendOK(conn)
-                saveMeshpoints(clientId, request["TYPE"], request["POINTS"])
-            elif request["PUT"] == "SETTINGS":
+                DBManager.writeResult(clientId, dieResult, x, y, userGenerated)
+            elif "E" in request: #error on client
+                log.warning("Error {} @ Client {}".format(request["E"], clientId))
+                log.warning(request["MESSAGE"])
                 NetworkUtils.sendOK(conn)
-                saveClientSettings(clientId, request["SETTINGS"])
-    elif "MAC" in request:
-        cId = DBManager.getClientIdentity(request["MAC"])
-        NetworkUtils.sendData(conn, {"Id": cId.Id,
-                                     "IP": cId.IP,
-                                     "Material": cId.Material,
-                                     "Position": cId.Position
-                                     })
+            elif "J" in request: #client asks for job
+                job = DBManager.getNextJobForClientId(clientId)
+                log.info("client {} asks for job, send {}".format(clientId, job))
+                NetworkUtils.sendData(conn, {
+                    job.JobCode: job.JobParameters,
+                    "T": job.ExecuteAt.__str__()
+                })
+            elif "U" in request:
+                if request["U"] == "EXIT":
+                    exitUserMode(clientId)
+                else:
+                    setCurrentStateForUserMode(clientId, request["U"])
+                NetworkUtils.sendOK(conn)
+            elif "A" in request:
+                log.info("send next user action")
+                action = DBManager.getUserAction(clientId)
+                #log.info("action: {}".format(action))
+                NetworkUtils.sendData(conn, {
+                    "A": action["Action"],
+                    "PARAM": action["Parameters"]
+                })
+            elif "GET" in request:
+                if request["GET"] == "MESH":
+                    meshpoints = getMeshpoints(clientId)
+                    NetworkUtils.sendData(conn, meshpoints)
+                elif request["GET"] == "SETTINGS":
+                    settings = getClientSettings(clientId)
+                    NetworkUtils.sendData(conn, settings)
+            elif "PUT" in request:
+                if request["PUT"] == "MESH":
+                    NetworkUtils.sendOK(conn)
+                    saveMeshpoints(clientId, request["TYPE"], request["POINTS"])
+                elif request["PUT"] == "SETTINGS":
+                    NetworkUtils.sendOK(conn)
+                    saveClientSettings(clientId, request["SETTINGS"])
+        elif "MAC" in request:
+            cId = DBManager.getClientIdentity(request["MAC"])
+            NetworkUtils.sendData(conn, {"Id": cId.Id,
+                                         "IP": cId.IP,
+                                         "Material": cId.Material,
+                                         "Position": cId.Position
+                                         })
+        else:
+            log.warning("could not identify client.")
     else:
-        log.warning("could not identify client.")
+        log.warning("request not defined: {}".format(request))
 
 
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=ts.SERVER_LOG_LEVEL)
