@@ -1,4 +1,7 @@
 import logging
+
+from tor.base.utils import Utils
+
 log = logging.getLogger(__name__)
 
 from datetime import datetime
@@ -341,12 +344,6 @@ class MovementRoutines:
             self.mm.moveToPos(validPos, True)
             self.mm.waitForMovementFinished()
 
-    def sleepUntilTimestamp(self, step, timestamps):
-        sleepFor = timestamps[step] - time.time()
-        print("sleep:", sleepFor)
-        if sleepFor > 0:
-            time.sleep(sleepFor)
-
     def doTestPerformance(self, startTime):
         log.info("start performance")
         startTimestamp = datetime.timestamp(startTime)
@@ -356,7 +353,7 @@ class MovementRoutines:
         lm = LedManager()
 
         step = 0
-        self.sleepUntilTimestamp(step, timestamps)
+        Utils.sleepUntilTimestamp(step, timestamps)
         for i in range(15):
             lm.setLeds(range(0, i * 5), 255, 255, 255)
             time.sleep(0.05)
@@ -364,21 +361,21 @@ class MovementRoutines:
             time.sleep(0.05)
 
         step += 1
-        self.sleepUntilTimestamp(step, timestamps)
+        Utils.sleepUntilTimestamp(step, timestamps)
         for i in range(10):
             lm.setLeds(range(0, i*5), i*10, i*3, i)
             time.sleep(0.5)
 
         step += 1
-        self.sleepUntilTimestamp(step, timestamps)
+        Utils.sleepUntilTimestamp(step, timestamps)
         self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
 
         step += 1
-        self.sleepUntilTimestamp(step, timestamps)
+        Utils.sleepUntilTimestamp(step, timestamps)
         self.searchForDie()
 
         step += 1
-        self.sleepUntilTimestamp(step, timestamps)
+        Utils.sleepUntilTimestamp(step, timestamps)
         self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
 
     def doDieRollAndPickupPerformance(self, startTime):
@@ -410,44 +407,44 @@ class MovementRoutines:
         log.info(timestamps)
 
         step = 0
-        self.sleepUntilTimestamp(step, timestamps)
+        Utils.sleepUntilTimestamp(step, timestamps)
         #cam = Camera(doWarmup=False)
         lm.setAllLeds()
 
         step += 1
-        self.sleepUntilTimestamp(step, timestamps)
+        Utils.sleepUntilTimestamp(step, timestamps)
         self.moveToDropoffPosition(cs.MESH_MAGNET[2], speedupFactor1=1.5, speedupFactor2=1)
         #self.moveToDropoffPosition(cs.MESH_MAGNET[2], speedupFactor1=3, speedupFactor2=3)
 
         step += 1
-        self.sleepUntilTimestamp(step, timestamps)
+        Utils.sleepUntilTimestamp(step, timestamps)
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
         self.mm.rollDie()
         time.sleep(0.4)
         self.mm.moveToPos(cs.CENTER_TOP, True)
 
         step += 1
-        self.sleepUntilTimestamp(step, timestamps)
+        Utils.sleepUntilTimestamp(step, timestamps)
         #image = self.takePicture(cam)
         image = self.takePicture()
 
         step += 1
-        self.sleepUntilTimestamp(step, timestamps)
+        Utils.sleepUntilTimestamp(step, timestamps)
         self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
 
         step += 1
-        self.sleepUntilTimestamp(step, timestamps)
+        Utils.sleepUntilTimestamp(step, timestamps)
         dieRollResult, _ = self.dr.getDieRollResult(image, returnOriginalImg=True)
 
         step += 1
-        self.sleepUntilTimestamp(step, timestamps)
+        Utils.sleepUntilTimestamp(step, timestamps)
         if dieRollResult.found:
             self.pickupDieFromPosition(dieRollResult.position)
         else:
             self.searchForDie()
 
         step += 1
-        self.sleepUntilTimestamp(step, timestamps)
+        Utils.sleepUntilTimestamp(step, timestamps)
         self.mm.moveToPos(dropoffAdvancePos, True)
         lm.clear()
 
@@ -466,7 +463,7 @@ class MovementRoutines:
         log.info(timestamps)
 
         step = 0
-        self.sleepUntilTimestamp(step, timestamps)
+        Utils.sleepUntilTimestamp(step, timestamps)
         p = int(clientIdentity["Position"])
         f = x + y + z
         r = cs.LED_STRIP_DEFAULT_COLOR[0] + 10 * f
@@ -475,7 +472,7 @@ class MovementRoutines:
         lm.setAllLeds(r=r, g=g, b=b)
 
         step += 1
-        self.sleepUntilTimestamp(step, timestamps)
+        Utils.sleepUntilTimestamp(step, timestamps)
         lm.clear()
 
     def doLightTest(self, startTime):
@@ -490,7 +487,7 @@ class MovementRoutines:
         log.info(timestamps)
 
         step = 0
-        self.sleepUntilTimestamp(step, timestamps)
+        Utils.sleepUntilTimestamp(step, timestamps)
         for r in range(0, 150, 10):
             for g in range(0, 150, 10):
                 for b in range(0, 150, 10):
@@ -507,7 +504,7 @@ class MovementRoutines:
         log.info(timestamps)
 
         step = 0
-        self.sleepUntilTimestamp(step, timestamps)
+        Utils.sleepUntilTimestamp(step, timestamps)
         dropoffPos = cs.MESH_MAGNET[2, :]
         self.moveToDropoffPosition(dropoffPos)
 

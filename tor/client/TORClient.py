@@ -8,6 +8,7 @@ import threading
 import tor.TORSettings as ts
 from tor.base.DieRecognizer import DieRecognizer
 from tor.base.DieRollResult import DieRollResult
+from tor.base.utils import Utils
 from tor.client.ClientManager import ClientManager
 import tor.client.ClientSettings as cs
 
@@ -193,6 +194,10 @@ def doJobs():
     while not done:
         #log.info("nextJob: {}".format(nextJob))
         if "R" in nextJob:
+            if "T" in nextJob:
+                startTime = datetime.strptime(nextJob["T"], '%Y-%m-%d %H:%M:%S')
+                startTimestamp = datetime.timestamp(startTime)
+                Utils.sleepUntilTimestamp(startTimestamp)
             run()
         elif "H" in nextJob: # H...homing
             mm.doHoming()
