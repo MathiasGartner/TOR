@@ -130,13 +130,13 @@ class MovementRoutines:
         self.mm.waitForMovementFinished()
 
     def pickupDieFromPosition(self, pos):
-        log.info("die position: {}".format(pos))
+        log.debug("die position: {}".format(pos))
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
         self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
         self.mm.waitForMovementFinished()
 
         pickupPos = self.relativeBedCoordinatesToPosition(pos.x, pos.y)
-        log.info("pickupPos: {}".format(pickupPos))
+        log.debug("pickupPos: {}".format(pickupPos))
         #move to pick-up position
         if pickupPos.y < cs.RAMP_CRITICAL_Y:
             self.mm.moveCloseToRamp(pickupPos,segmented=True)

@@ -174,6 +174,7 @@ class DieRecognizer:
 
             if len(blobs) > 6:
                 # TODO: choose the correct ones
+                # TODO: is it okay to simply use result = 6?
                 found = False
                 result = 0
             else:
@@ -184,8 +185,7 @@ class DieRecognizer:
                 px = diePositionPX.x / im.shape[1]
                 py = diePositionPX.y / im.shape[0]
 
-                # new edge trafo
-                log.info("shape: {}".format(im.shape))
+                log.debug("shape: {}".format(im.shape))
                 diePositionRelative.x = px + cs.DIE_SIZE_X / (2.0 * im.shape[1]) * (2 * px - 1)
                 diePositionRelative.y = 1 - (py + cs.DIE_SIZE_Y / (2.0 * im.shape[0]) * (2 * py - 1))
 
@@ -209,54 +209,57 @@ class DieRecognizer:
         return blobs, fake_blobs, found, result, diePositionRelative
 
     def removeFakeBlobs(self, blobs):
+        #INFO: CustomClientSettings already loaded in TORClient
+        #from tor.client.ClientManager import ClientManager
+        #cm = ClientManager()
+        #ccsModuleName = "tor.client.CustomClientSettings." + cm.clientIdentity["Material"]
 
-        from tor.client.ClientManager import ClientManager
-        cm = ClientManager()
-        ccsModuleName = "tor.client.CustomClientSettings." + cm.clientIdentity["Material"]
-        try:
-            import importlib
-            ccs = importlib.import_module(ccsModuleName)
-            # print("Custom config file loaded.")
+        #try:
+        #    import importlib
+        #    ccs = importlib.import_module(ccsModuleName)
+        #    # print("Custom config file loaded.")
 
-            # FAKE_BLOB_POSITIONS = []
-            #01: [(1543, 295), (653, 425)]
-            #02: []
-            #03: []
-            #04: [(957, 480), (1057, 483)]
-            #05: []
-            #06: []
-            #07: [(1072, 562), (1089, 495)]
-            #08: []
-            #09: []
-            #10: []
-            #11: []
-            #12: []
-            #13: [(1065, 522)]
-            #14: [(1145, 492)]
-            #15: []
-            #16: [(1090, 485)]
-            #17: [(1467, 488), (1476, 425)]
-            #18: []
-            #19: []
-            #20: []
-            #21:
-            #22:
-            #23: []
-            #24: []
-            #25: []
-            #26: []
-            #27: []
+        #cs.FAKE_BLOB_POSITIONS = [(1467, 488), (1476, 425)]
+        # FAKE_BLOB_POSITIONS = []
+        #01: [(1543, 295), (653, 425)]
+        #02: []
+        #03: []
+        #04: [(957, 480), (1057, 483)]
+        #05: []
+        #06: []
+        #07: [(1072, 562), (1089, 495)]
+        #08: []
+        #09: []
+        #10: []
+        #11: []
+        #12: []
+        #13: [(1065, 522)]
+        #14: [(1145, 492)]
+        #15: []
+        #16: [(1090, 485)]
+        #17: [(1467, 488), (1476, 425)]
+        #18: []
+        #19: []
+        #20: []
+        #21:
+        #22:
+        #23: []
+        #24: []
+        #25: []
+        #26: []
+        #27: []
 
-            for i, blob in enumerate(blobs[:]):
-                # print(blob.pt)
-                for fake_blob_position in ccs.FAKE_BLOB_POSITIONS:
-                    if np.isclose(blob.pt, fake_blob_position, atol=8).all():
-                        # print(f"removed fake blob at {blob.pt}.")
-                        blobs.remove(blob)
-        except Exception as e:
-            pass
-            # print(e)
-            # print("No CustomClientSettings found. no fake blobs removed.")
+        for i, blob in enumerate(blobs[:]):
+            print(blob.pt)
+            for fake_blob_position in cs.FAKE_BLOB_POSITIONS:
+                if np.isclose(blob.pt, fake_blob_position, atol=8).all():
+                    log.info("removed fake blob at {}.".format(blob.pt))
+                    blobs.remove(blob)
+
+        #except Exception as e:
+        #    pass
+        #    # print(e)
+        #    # print("No CustomClientSettings found. no fake blobs removed.")
         return blobs
 
     def getDieRollResult(self, im, withUI = False, returnOriginalImg=True, alreadyCropped=False, alreadyGray=False, threshold=108, markDie=False):

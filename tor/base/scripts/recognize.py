@@ -346,7 +346,13 @@ path, start, end = directory + r"img ({}){}", 1, 6
 tags = [3,3,3,3,2,6]  #th [100, 105, 110, 115] [6, 6, 6, 6]
 end, tags =3, [0,0,0]
 
+######################################################################################################################
 
+directory = tsl.DIRECTORY_TEST_IMAGES + r"\20200904\essigbaum\found\\"
+file_extension = ".jpg"
+path, start, end = directory + r"img ({}){}", 1, 9
+#tags = [3,3,3,3,2,6]  #th [100, 105, 110, 115] [6, 6, 6, 6]
+end, tags = 8, [0, 2, 1, 2, 2, 1, 1, 1]
 
 ######################################################################################################################
 
@@ -358,7 +364,8 @@ borderCol = (0, 0, 0)
 dr = DieRecognizer()
 
 nr_correct_array = []
-thresholds = [100,105,110,115]  #range(40,201,20)
+#thresholds = [100,105,110,115]  #range(40,201,20)
+thresholds = [108]
 
 for threshold in thresholds:
     images = []

@@ -55,7 +55,7 @@ class ClientManager:
         }
         answer = self.sendAndGetAnswer(msg)
         if "STATUS" in answer:
-            log.info("server response: {}".format(answer["STATUS"]))
+            log.debug("server response: {}".format(answer["STATUS"]))
 
     def sendDieNotFound(self):
         msg = {
