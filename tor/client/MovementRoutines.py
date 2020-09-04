@@ -31,11 +31,14 @@ class MovementRoutines:
         #TODO: @David check the out of range logic. die was found correctly at y=1.002
         #      why is y < 0 allowed? is the calculation correct for py < 0?
         #      for now just clip
-        px = np.clip(px, 0.0, 1.0)
-        py = np.clip(py, -0.1, 1.0)
-        if (px < 0 or px > 1 or py < -0.1 or py > 1):
+        minX = -0.1
+        maxX = 1.1
+        minY = -0.1
+        maxY = 1.1
+        if (px < minX or px > maxX or py < minY or py > maxY):
             log.warning("Out of range in relativeBedCoordinatesToPosition: [x,y]=[{},{}]".format(px, py))
-            return cs.BEFORE_PICKUP_POSITION
+            px = np.clip(px, minX, maxX)
+            py = np.clip(py, minY, maxY)
         if (px < 0.5):
             x = (1 - py) * (p4[0] + px * (p6[0] - p4[0])) + py * (p1[0] + px * (p3[0] - p1[0]))
             y = (1 - 2 * px) * (p4[1] + py * (p1[1] - p4[1])) + 2 * px * (p5[1] + py * (p2[1] - p5[1]))
@@ -228,7 +231,7 @@ class MovementRoutines:
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
 
     def getDropoffPosByPercent(self, percent, invert=False):
-        dropoffPos = cs.MESH_MAGNET[0, :]
+        dropoffPos = cs.MESH_MAGNET[3, :]
         percent = np.clip(percent, 0.0, 1.0)
         if invert:
             px = np.clip(1 - percent, 0.0, 1.0)
@@ -239,11 +242,14 @@ class MovementRoutines:
                 px = 1 - px
         elif not cs.USE_MAGNET_BETWEEN_P2P3:
             px = 1 - px
-        #TODO: @David: is this okay?
-        if px < 0.5:
-            dropoffPos = 2 * px * cs.MESH_MAGNET[1, :] + (1 - 2 * px) * cs.MESH_MAGNET[0, :]
+
+        if cs.ALWAYS_USE_P3:
+            dropoffPos = cs.MESH_MAGNET[3, :]
         else:
-            dropoffPos = 2 * (px - 0.5) * cs.MESH_MAGNET[3, :] + 2 * (1 - px) * cs.MESH_MAGNET[2, :]
+            if px < 0.5:
+                dropoffPos = 2 * px * cs.MESH_MAGNET[1, :] + (1 - 2 * px) * cs.MESH_MAGNET[0, :]
+            else:
+                dropoffPos = 2 * (px - 0.5) * cs.MESH_MAGNET[3, :] + 2 * (1 - px) * cs.MESH_MAGNET[2, :]
         return dropoffPos
 
     def getDropoffPosByXCoordinate(self, x, invert=False):
@@ -318,7 +324,7 @@ class MovementRoutines:
             log.info("roll die")
             self.mm.moveToPos(cs.AFTER_PICKUP_POSITION)
             dropoffPosPercent = int(steps)
-            dropoffPos = self.getDropoffPosByPercent(1.0 - (dropoffPosPercent / 100.0))
+            dropoffPos = self.getDropoffPosByPercent(1.0 - (dropoffPosPercent / 100.0), invert=True)
             #dropoffPos = cs.MESH_MAGNET[2]
             self.rollDie(dropoffPos)
             dieRollResult, processedImages = self.findDie()
