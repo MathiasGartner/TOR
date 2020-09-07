@@ -198,6 +198,7 @@ class DieRecognizer:
                     too_close = np.array([(dist < mindist) for dist in dist_from_mean]).any()
                     if too_close:
                         result = 0
+                        found = False
         else:
             found = False
             result = 0
