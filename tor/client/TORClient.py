@@ -194,7 +194,7 @@ def doJobs():
     while not done:
         #log.info("nextJob: {}".format(nextJob))
         if "R" in nextJob:
-            if "T" in nextJob:
+            if "T" in nextJob and nextJob["T"] is not None and nextJob["T"] != "None":
                 startTime = datetime.strptime(nextJob["T"], '%Y-%m-%d %H:%M:%S')
                 startTimestamp = datetime.timestamp(startTime)
                 Utils.sleepUntilTimestamp(startTimestamp)

@@ -21,7 +21,7 @@ positions = range(1, 28)
 
 from itertools import chain
 #positions = chain(range(1, 22), range(23, 28))
-positions = chain(range(1, 21), range(23, 28))
+#positions = chain(range(1, 21), range(23, 28))
 
 for p in positions:
     ips.append(DBManager.getIPByPosition(p))
@@ -49,8 +49,8 @@ with open(filename, 'w') as f:
     for ip, pos in zip(ips, poses):
         #full_ip = tsl.CLIENT_IP_NETWORK + "." + str(ip)
         full_ip = ip
-        #cmd = cmd_ssh.format(path_key, full_ip, cmd_startService)
-        cmd = cmd_ssh.format(path_key, full_ip, cmd_stopService)
+        cmd = cmd_ssh.format(path_key, full_ip, cmd_startService)
+        #cmd = cmd_ssh.format(path_key, full_ip, cmd_stopService)
         #cmd = cmd_ssh.format(path_key, full_ip, cmd_removeImages)
         f.write(cmd + "\n")
         copyFiles = False

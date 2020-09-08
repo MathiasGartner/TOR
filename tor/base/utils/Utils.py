@@ -9,11 +9,11 @@ def clamp(n, smallest, largest):
 def clamp255(n):
     return clamp(n, 0, 255)
 
-def sleepUntilTimestamp(step, timestamps):
+def sleepUntilTimestampIndex(step, timestamps):
     sleepFor = timestamps[step] - time.time()
-    log.info("sleep:", sleepFor)
+    log.info("sleep: {}".format(sleepFor))
     if sleepFor > 0:
         time.sleep(sleepFor)
 
 def sleepUntilTimestamp(timestamp):
-    sleepUntilTimestamp(0, [timestamp])
+    sleepUntilTimestampIndex(0, [timestamp])
