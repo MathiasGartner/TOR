@@ -91,7 +91,7 @@ def run():
             lastResult = dieRollResult.result
             countNotFound = 0
         else:
-            lastPickupX = cs.LX / 2.0
+            lastPickupX = 0.0
             cm.sendDieResultNotRecognized()
             countNotFound += 1
 
@@ -112,12 +112,8 @@ def run():
             runsSinceLastHoming = 0
         elif countSameResult >= cs.HOME_AFTER_N_SAME_RESULTS:
             log.info("count same result: {} -> do homing...".format(countSameResult))
-            dieRollResult, processedImages = mr.findDieWhileHoming()
-            mm.waitForMovementFinished()
-            mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
-            if dieRollResult.found:
-                mr.pickupDieFromPosition(dieRollResult.position)
-            else:
+            dieRollResult = mr.pickupDieWhileHoming()
+            if not dieRollResult.found:
                 mr.searchForDie()
             mm.moveToPos(cs.CENTER_TOP, True)
             countSameResult = 0
@@ -168,13 +164,7 @@ def doJobs():
     log.warning("current position: {}".format(MovementManager.currentPosition))
 
     if args.doHomingOnStartup:
-        dieRollResult, processedImages = mr.findDieWhileHoming()
-        mm.waitForMovementFinished()
-
-        mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
-        mm.moveToPos(cs.CENTER_TOP)
-        if dieRollResult.found:
-            mr.pickupDieFromPosition(dieRollResult.position)
+        mr.pickupDieWhileHoming()
     else:
         #TODO: get current position from BTT SKR Board
         #mm.refreshCurrentPositionFromBoard()
@@ -201,10 +191,11 @@ def doJobs():
             run()
         elif "H" in nextJob: # H...homing
             mm.doHoming()
+            mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
             mm.moveToPos(cs.CENTER_TOP)
             mm.waitForMovementFinished()
         elif "HH" in nextJob:  # H...homing with die pickup
-            mr.findDieWhileHoming()
+            mr.pickupDieWhileHoming()
             mm.waitForMovementFinished()
             mm.moveToPos(cs.CENTER_TOP)
             mm.waitForMovementFinished()

@@ -142,6 +142,7 @@ class MovementRoutines:
         self.mm.waitForMovementFinished()
 
         pickupPos = self.relativeBedCoordinatesToPosition(pos.x, pos.y)
+        pickupPos.z += cs.EXTRA_Z_FOR_PICKUP
         log.debug("pickupPos: {}".format(pickupPos))
         #move to pick-up position
         if pickupPos.y < cs.RAMP_CRITICAL_Y:
@@ -181,6 +182,15 @@ class MovementRoutines:
         self.mm.doHoming(mode=3)
         dieRollResult, processedImages = self.dr.getDieRollResult(image, returnOriginalImg=True)
         return dieRollResult, processedImages
+
+    def pickupDieWhileHoming(self):
+        dieRollResult, processedImages = self.findDieWhileHoming()
+        self.mm.waitForMovementFinished()
+        self.mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
+        self.mm.moveToPos(cs.CENTER_TOP)
+        if dieRollResult.found:
+            self.pickupDieFromPosition(dieRollResult.position)
+        return dieRollResult
 
     def pickupDie_takeImage(self, cam=None):
         dieRollResult = DieRollResult()
