@@ -339,7 +339,7 @@ class MovementRoutines:
             log.info("roll die")
             self.mm.moveToPos(cs.AFTER_PICKUP_POSITION)
             dropoffPosPercent = int(steps)
-            dropoffPos = self.getDropoffPosByPercent(1.0 - (dropoffPosPercent / 100.0), invert=True)
+            dropoffPos = self.getDropoffPosByPercent(1.0 - (dropoffPosPercent / 100.0), invert=False)
             #dropoffPos = cs.MESH_MAGNET[2]
             self.rollDie(dropoffPos)
             dieRollResult, processedImages = self.findDie()
