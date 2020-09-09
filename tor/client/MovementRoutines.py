@@ -142,11 +142,12 @@ class MovementRoutines:
         self.mm.waitForMovementFinished()
 
         pickupPos = self.relativeBedCoordinatesToPosition(pos.x, pos.y)
-        pickupPos.z += cs.EXTRA_Z_FOR_PICKUP
+        if pickupPos.y > cs.RAMP_CRITICAL_Y:
+            pickupPos.z += cs.EXTRA_Z_FOR_PICKUP
         log.debug("pickupPos: {}".format(pickupPos))
         #move to pick-up position
         if pickupPos.y < cs.RAMP_CRITICAL_Y:
-            self.mm.moveCloseToRamp(pickupPos,segmented=True)
+            self.mm.moveCloseToRamp(pickupPos, segmented=True)
         else:
             self.mm.moveToPos(pickupPos, True)
         self.mm.waitForMovementFinished()

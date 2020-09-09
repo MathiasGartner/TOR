@@ -105,7 +105,7 @@ log = logging.getLogger(__name__)
 
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serverSocket.bind((ts.SERVER_IP, ts.SERVER_PORT))
-serverSocket.listen(5)
+serverSocket.listen(10)
 
 log.info("start server")
 while True:
