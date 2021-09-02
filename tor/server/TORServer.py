@@ -47,7 +47,7 @@ def handleRequest(conn):
                 userGenerated = request["USER"]
                 log.info("Client {} rolled {} at [{}, {}]".format(clientId, dieResult, x, y))
                 NetworkUtils.sendOK(conn)
-                DBManager.writeResult(clientId, dieResult, x, y, userGenerated)
+                DBManager.writeResult(clientId, dieResult, x, y, userGenerated, ts.DICE_RESULT_EVENT_SOURCE)
             elif "E" in request: #error on client
                 log.warning("Error {} @ Client {}".format(request["E"], clientId))
                 log.warning(request["MESSAGE"])
