@@ -257,9 +257,9 @@ class MovementRoutines:
         elif not cs.USE_MAGNET_BETWEEN_P2P3:
             px = 1 - px
 
-        if cs.ALWAYS_USE_P3:
-            log.info("return p3")
-            dropoffPos = cs.MESH_MAGNET[3, :]
+        if cs.ALWAYS_USE_PX >= 0 and cs.ALWAYS_USE_PX <= 3:
+            #log.info("use fixed magnet point")
+            dropoffPos = cs.MESH_MAGNET[cs.ALWAYS_USE_PX, :]
         else:
             if px < 0.5:
                 dropoffPos = 2 * px * cs.MESH_MAGNET[1, :] + (1 - 2 * px) * cs.MESH_MAGNET[0, :]

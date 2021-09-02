@@ -73,20 +73,24 @@ if args.thenwait:
 if args.id is not None:
     ids = int(args.id)
 
+jobsToCreate = [jR]
 jobsToCreate = [jW]
-#jobsToCreate = [jH, jW]
-#ids = [15]4
+#jobsToCreate = [j2, jR]
+#jobsToCreate = [j2, jW]
+#jobsToCreate = [j4, jW]
+#ids = [15]
 
 ids = []
+positions = []
 #positions = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 positions = range(1, 28)
 #positions = [1, 2, 3]
 #positions = [16]
 #positions = [4, 5, 6]
-#positions = [1]
+#positions = [8]
 
-#from itertools import chain
-#positions = chain(range(1, 22), range(23, 28))
+from itertools import chain
+#positions = chain(range(2, 16), range(17, 28))
 #positions = chain(range(1, 21), range(23, 28))
 
 for p in positions:

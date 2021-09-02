@@ -20,7 +20,8 @@ positions = range(1, 28)
 #positions = [3]
 
 from itertools import chain
-#positions = chain(range(1, 22), range(23, 28))
+#positions = chain(range(2, 16), range(17, 28))
+#positions = chain(range(1, 15), range(16, 28))
 #positions = chain(range(1, 21), range(23, 28))
 
 for p in positions:
@@ -40,6 +41,7 @@ cmd_startService = "sudo systemctl daemon-reload; sudo systemctl restart TORClie
 cmd_stopService = "sudo systemctl daemon-reload; sudo systemctl stop TORClient"
 cmd_removeImages = "sudo rm -r fail/*; sudo rm -r found/*;"
 cmd_copyImages = "sudo rm -r fail/*; sudo rm -r found/*;"
+cmd_led = "sudo torenv/bin/python3 -m tor.client.scripts.led 40 140 120 -b 20;"
 
 if args.cmd != "":
     cmd = args.cmd
@@ -52,6 +54,7 @@ with open(filename, 'w') as f:
         cmd = cmd_ssh.format(path_key, full_ip, cmd_startService)
         #cmd = cmd_ssh.format(path_key, full_ip, cmd_stopService)
         #cmd = cmd_ssh.format(path_key, full_ip, cmd_removeImages)
+        #cmd = cmd_ssh.format(path_key, full_ip, cmd_led)
         f.write(cmd + "\n")
         copyFiles = False
         if copyFiles:
