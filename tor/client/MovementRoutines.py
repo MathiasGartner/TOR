@@ -275,12 +275,6 @@ class MovementRoutines:
         # move to dropoff position
         dropoffPos = self.getDropoffPosByPercent(lastPickupX, invert=True)
 
-        #dropoffPos = cs.MESH_MAGNET[1, :]
-        #dropoffPos = cs.MESH_MAGNET[2, :]
-        #dropoffPos = (cs.MESH_MAGNET[3, :] +  cs.MESH_MAGNET[2, :]) / 2.0
-        #dropoffPos = cs.MESH_MAGNET[1, :]
-        #dropoffPos = (cs.MESH_MAGNET[1, :] + cs.MESH_MAGNET[0, :]) / 2.0
-
         self.moveToDropoffPosition(dropoffPos)
 
         #TODO: why is this not working?

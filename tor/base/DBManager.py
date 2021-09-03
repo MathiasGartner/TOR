@@ -100,7 +100,8 @@ def getUserAction(clientId, deleteAction=True):
 def exitUserMode(clientId):
     query = "UPDATE client SET CurrentState = '', UserModeActive = 0 WHERE Id = %(clientId)s"
     cursor.execute(query, {"clientId": clientId})
-    query = "INSERT INTO jobqueue (ClientId, JobCode) SELECT %(clientId)s As ClientId, IFNULL( (SELECT JobCode FROM jobqueue WHERE ClientId = %(clientId)s AND JobCode <> 'U' ORDER BY Id DESC LIMIT 1), 'W') AS JobCode;"
+    #TODO: do not query same data twice (for JobCode and JobParameters)
+    query = "INSERT INTO jobqueue (ClientId, JobCode, JobParameters) SELECT %(clientId)s As ClientId, IFNULL( (SELECT JobCode FROM jobqueue WHERE ClientId = %(clientId)s AND JobCode <> 'U' ORDER BY Id DESC LIMIT 1), 'W') AS JobCode, IFNULL( (SELECT JobParameters FROM jobqueue WHERE ClientId = %(clientId)s AND JobCode <> 'U' ORDER BY Id DESC LIMIT 1), 'W') AS JobParameters;"
     cursor.execute(query, {"clientId": clientId})
 
 def setCurrentStateForUserMode(clientId, state):

@@ -1,6 +1,7 @@
 import argparse
 from datetime import datetime, timedelta
 import logging
+import math
 import numpy as np
 import time
 import threading
@@ -180,15 +181,43 @@ def doJobs():
 
     lm.setAllLeds()
 
+    finishedRWRuns = 0
+    finishedRWWaits = 0
+    isFirstRWJob = True
     done = False
     while not done:
         #log.info("nextJob: {}".format(nextJob))
+        if not "RW" in nextJob:
+            finishedRWRuns = 0
+            finishedRWWaits = 0
         if "R" in nextJob:
             if "T" in nextJob and nextJob["T"] is not None and nextJob["T"] != "None":
                 startTime = datetime.strptime(nextJob["T"], '%Y-%m-%d %H:%M:%S')
                 startTimestamp = datetime.timestamp(startTime)
                 Utils.sleepUntilTimestamp(startTimestamp)
             run()
+        elif "RW" in nextJob:
+            runWaitParams = nextJob["RW"].split()
+            runNTimes = int(runWaitParams[0]) or 1
+            waitNTimes = int(runWaitParams[1]) or 1
+            waitNSeconds = int(runWaitParams[2]) or 1
+            if isFirstRWJob:
+                #waitNTimes = pow(math.sin(cm.clientIdentity.x + cm.clientIdentity.y + cm.clientIdentity.z)+ 1, 4) * 20
+                waitNTimes = pow(math.sin(int(cm.clientIdentity["Position"])) + 1.2, 4) / 25.0 * waitNTimes
+            if finishedRWRuns < runNTimes:
+                log.info("perform run {}/{} ...".format(finishedRWRuns+1, runNTimes))
+                run()
+                finishedRWRuns += 1
+            elif finishedRWWaits < waitNTimes:
+                if finishedRWWaits == 0:
+                    log.info("wait time is {} seconds".format(waitNSeconds))
+                log.info("perform wait {}/{} ...".format(finishedRWWaits+1, waitNTimes))
+                time.sleep(waitNSeconds)
+                finishedRWWaits += 1
+            else:
+                finishedRWRuns = 0
+                finishedRWWaits = 0
+                isFirstRWJob = False
         elif "H" in nextJob: # H...homing
             mm.doHoming()
             mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
