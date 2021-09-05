@@ -197,10 +197,15 @@ def doJobs():
                 Utils.sleepUntilTimestamp(startTimestamp)
             run()
         elif "RW" in nextJob:
-            runWaitParams = nextJob["RW"].split()
-            runNTimes = int(runWaitParams[0]) or 1
-            waitNTimes = int(runWaitParams[1]) or 1
-            waitNSeconds = int(runWaitParams[2]) or 1
+            if nextJob["RW"] is None:
+                runNTimes = 1
+                waitNTimes = 1
+                waitNSeconds = 1
+            else:
+                runWaitParams = nextJob["RW"].split()
+                runNTimes = int(runWaitParams[0]) or 1
+                waitNTimes = int(runWaitParams[1]) or 1
+                waitNSeconds = int(runWaitParams[2]) or 1
             if isFirstRWJob:
                 #waitNTimes = pow(math.sin(cm.clientIdentity.x + cm.clientIdentity.y + cm.clientIdentity.z)+ 1, 4) * 20
                 waitNTimes = pow(math.sin(int(cm.clientIdentity["Position"])) + 1.2, 4) / 25.0 * waitNTimes

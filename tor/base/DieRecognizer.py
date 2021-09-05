@@ -287,7 +287,7 @@ class DieRecognizer:
         blobs, fake_blobs, found, result, diePositionRelative = self.chooseCorrectBlobs(blobs=blobs, im=im, already_removed=False)
 
         #im_with_blobs = cv2.drawKeypoints(im, blobs, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-        if markDie:
+        if markDie or cs.ALWAYS_MARK_DIE_ON_IMAGE:
             if returnOriginalImg:
                 im_with_blobs = self.markDieOnImage(self.markDiePointsOnImage(im_original, fake_blobs), blobs)
             else:

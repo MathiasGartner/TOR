@@ -15,7 +15,7 @@ ips = []
 positions = range(1, 28)
 #positions = [10, 11, 12, 13, 14, 15]
 #positions = [1, 2, 3]
-positions = [24]
+#positions = [21]
 
 #from itertools import chain
 #positions = chain(range(1, 21), range(23, 28))

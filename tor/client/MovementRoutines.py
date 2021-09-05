@@ -200,7 +200,7 @@ class MovementRoutines:
             log.info("result: {}".format(dieRollResult.result))
             if cs.STORE_IMAGES:
                 directory = "found" if dieRollResult.found else "fail"
-                self.dr.writeImage(processedImages[0], directory=directory)
+                self.dr.writeImage(processedImages[1], directory=directory)
                 self.dr.writeImage(processedImages[0], directory=cs.WEB_DIRECTORY, fileName='current_view.jpg')
                 self.dr.writeRGBArray(processedImages[0], directory=directory)
         return dieRollResult

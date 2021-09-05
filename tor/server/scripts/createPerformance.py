@@ -23,9 +23,9 @@ jR.JobCode = "R"
 
 jRW = Job()
 jRW.JobCode = "RW"
-#JobCode: "r w t"
+#JobParameters: "r w t"
 #run r times, then wait w times for t seconds
-jRW.JobParameters = "3 20 5"
+jRW.JobParameters = "4 50 6"
 
 jQ = Job()
 jQ.JobCode = "Q"
@@ -81,11 +81,11 @@ if args.id is not None:
 
 #jobsToCreate = [jR]
 jobsToCreate = [jW]
-jobsToCreate = [jRW]
+#jobsToCreate = [jRW]
 #jobsToCreate = [j2, jR]
 #jobsToCreate = [j2, jW]
 #jobsToCreate = [j4, jW]
-#ids = [15]
+#ids = [21]
 
 ids = []
 positions = []
@@ -94,7 +94,8 @@ positions = range(1, 28)
 #positions = [1, 2, 3]
 #positions = [16]
 #positions = [4, 5, 6]
-positions = [24]
+#positions = [21]
+#positions = range(1, 25)
 
 from itertools import chain
 #positions = chain(range(2, 16), range(17, 28))
