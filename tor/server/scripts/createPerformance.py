@@ -25,7 +25,7 @@ jRW = Job()
 jRW.JobCode = "RW"
 #JobParameters: "r w t"
 #run r times, then wait w times for t seconds
-jRW.JobParameters = "4 50 6"
+jRW.JobParameters = "3 60 6"
 
 jQ = Job()
 jQ.JobCode = "Q"
@@ -79,7 +79,7 @@ if args.thenwait:
 if args.id is not None:
     ids = int(args.id)
 
-#jobsToCreate = [jR]
+jobsToCreate = [jR]
 jobsToCreate = [jW]
 #jobsToCreate = [jRW]
 #jobsToCreate = [j2, jR]
@@ -94,8 +94,8 @@ positions = range(1, 28)
 #positions = [1, 2, 3]
 #positions = [16]
 #positions = [4, 5, 6]
-#positions = [21]
-#positions = range(1, 25)
+#positions = [7]
+positions = range(5, 28)
 
 from itertools import chain
 #positions = chain(range(2, 16), range(17, 28))
@@ -116,4 +116,5 @@ for jobToCreate in jobsToCreate:
         j.ClientId = id
         jobs.append(j)
     DBManager.saveJobs(jobs)
-    time.sleep(10)
+    if len(jobsToCreate) > 1:
+        time.sleep(10)
