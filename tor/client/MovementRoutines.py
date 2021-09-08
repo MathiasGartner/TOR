@@ -288,6 +288,15 @@ class MovementRoutines:
         self.mm.moveToPos(cs.CENTER_TOP, True)
         time.sleep(cs.DIE_ROLL_TIME / 2.0)
 
+    def doQuickRoll(self):
+        dropoffPos = self.getDropoffPosByPercent(0.1, invert=True)
+        self.moveToDropoffPosition(dropoffPos)
+        time.sleep(cs.WAIT_BEFORE_ROLL_TIME)
+        self.mm.rollDie()
+        time.sleep(cs.WAIT_BEFORE_ROLL_TIME)
+        self.mm.setFeedratePercentage(cs.FR_DEFAULT)
+        self.mm.moveToPos(cs.CENTER_TOP, True)
+
     def rollDie(self, dropoffPos):
         self.moveToDropoffPosition(dropoffPos)
 

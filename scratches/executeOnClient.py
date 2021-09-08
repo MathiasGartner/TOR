@@ -17,7 +17,7 @@ positions = range(1, 28)
 #positions = [1, 2, 3]
 #positions = [18]
 #positions = [3, 6, 17, 22, 27]
-#positions = [14, 15]
+#positions = [20, 21]
 
 from itertools import chain
 #positions = chain(range(2, 16), range(17, 28))

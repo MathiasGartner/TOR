@@ -2,6 +2,7 @@ import argparse
 from datetime import datetime, timedelta
 import logging
 import math
+from multiprocessing import Process
 import numpy as np
 import time
 import threading
@@ -190,6 +191,7 @@ def doJobs():
         if not "RW" in nextJob:
             finishedRWRuns = 0
             finishedRWWaits = 0
+            isFirstRWJob = True
         if "R" in nextJob:
             if "T" in nextJob and nextJob["T"] is not None and nextJob["T"] != "None":
                 startTime = datetime.strptime(nextJob["T"], '%Y-%m-%d %H:%M:%S')
@@ -214,6 +216,7 @@ def doJobs():
                 run()
                 finishedRWRuns += 1
             elif finishedRWWaits < waitNTimes:
+                currentState = "WAIT"
                 if finishedRWWaits == 0:
                     log.info("wait time is {} seconds".format(waitNSeconds))
                 log.info("perform wait {}/{} ...".format(finishedRWWaits+1, waitNTimes))
@@ -250,6 +253,7 @@ def doJobs():
             elif performanceNo == 5:
                 mr.doRollDie(startTime)
         elif "W" in nextJob: # W...wait
+            currentState = "WAIT"
             sleepTime = int(nextJob["W"] or cs.STANDARD_CLIENT_SLEEP_TIME)
             if sleepTime <= 0:
                 sleepTime = cs.STANDARD_CLIENT_SLEEP_TIME
@@ -262,7 +266,16 @@ def doJobs():
             userModeRequested = False
             if not inUserMode:
                 lm.clear()
-                lm.loadUserMode()
+                if currentState == "WAIT":
+                    currentState = "ROLL"
+                    pQuickRoll = Process(target=lm.loadUserMode())
+                    pQuickRoll.start()
+                    pLoadUserMode = Process(target=mr.doQuickRoll())
+                    pLoadUserMode.start()
+                    pQuickRoll.join()
+                    pLoadUserMode.join()
+                else:
+                    lm.loadUserMode()
                 inUserMode = True
                 log.info("userModeReady: {}".format(currentState))
                 if currentState == "":

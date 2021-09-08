@@ -25,7 +25,7 @@ jRW = Job()
 jRW.JobCode = "RW"
 #JobParameters: "r w t"
 #run r times, then wait w times for t seconds
-jRW.JobParameters = "3 60 6"
+jRW.JobParameters = "4 60 6"
 
 jQ = Job()
 jQ.JobCode = "Q"
@@ -82,6 +82,7 @@ if args.id is not None:
 jobsToCreate = [jR]
 jobsToCreate = [jW]
 #jobsToCreate = [jRW]
+#jobsToCreate = [jH]
 #jobsToCreate = [j2, jR]
 #jobsToCreate = [j2, jW]
 #jobsToCreate = [j4, jW]
@@ -91,15 +92,16 @@ ids = []
 positions = []
 #positions = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 positions = range(1, 28)
-#positions = [1, 2, 3]
+#positions = [1, 3]
 #positions = [16]
 #positions = [4, 5, 6]
-#positions = [7]
-positions = range(5, 28)
+positions = [10]
+#positions = range(5, 28)
 
 from itertools import chain
 #positions = chain(range(2, 16), range(17, 28))
 #positions = chain(range(1, 21), range(23, 28))
+#positions = chain(range(1, 4), range(5, 28))
 
 for p in positions:
     ids.append(DBManager.getIdByPosition(p))
