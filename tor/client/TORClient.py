@@ -268,8 +268,8 @@ def doJobs():
                 lm.clear()
                 if currentState == "WAIT":
                     currentState = "ROLL"
-                    pQuickRoll = threading.Thread(target=mr.doQuickRoll())
-                    pLoadUserMode = threading.Thread(target=lm.loadUserMode())
+                    pQuickRoll = threading.Thread(target=mr.doQuickRoll)
+                    pLoadUserMode = threading.Thread(target=lm.loadUserMode)
                     pQuickRoll.start()
                     pLoadUserMode.start()
                     pQuickRoll.join()
