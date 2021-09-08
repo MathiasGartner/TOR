@@ -2,7 +2,7 @@ import argparse
 from datetime import datetime, timedelta
 import logging
 import math
-from multiprocessing import Process
+#from multiprocessing import Process
 import numpy as np
 import time
 import threading
@@ -268,9 +268,9 @@ def doJobs():
                 lm.clear()
                 if currentState == "WAIT":
                     currentState = "ROLL"
-                    pQuickRoll = Process(target=lm.loadUserMode())
+                    pQuickRoll = threading.Thread(target=mr.doQuickRoll())
+                    pLoadUserMode = threading.Thread(target=lm.loadUserMode())
                     pQuickRoll.start()
-                    pLoadUserMode = Process(target=mr.doQuickRoll())
                     pLoadUserMode.start()
                     pQuickRoll.join()
                     pLoadUserMode.join()
