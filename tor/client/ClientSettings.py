@@ -3,11 +3,12 @@ log = logging.getLogger(__name__)
 
 import math
 import numpy as np
+import platform
 import sys
 
 from tor.client.Position import Position
 
-if sys.platform == "linux":
+if sys.platform == "linux" and platform.platform() == "Linux-4.19.118+-armv6l-with-debian-10.4":
     ON_RASPI = True
 else:
     ON_RASPI = False
