@@ -118,6 +118,9 @@ class ClientManager:
         settings = self.sendAndGetAnswer(msg)
         log.info("{}".format(settings))
         availableSettingTypes = {
+            "USE_MAGNET_BETWEEN_P0P1": "BOOL",
+            "USE_MAGNET_BETWEEN_P2P3": "BOOL",
+            "ALWAYS_USE_PX": "INT",
             "IMAGE_CROP_X_LEFT": "INT",
             "IMAGE_CROP_X_RIGHT": "INT",
             "IMAGE_CROP_Y_TOP": "INT",
@@ -153,6 +156,19 @@ class ClientManager:
                     setattr(cs, name, value)
                 else:
                     log.warning("Failed setting {}={}".format(name, raw_value))
+
+    def saveDropoffPointSettings(self):
+        msg = {
+            "C": self.clientId,
+            "PUT": "SETTINGS",
+            "SETTINGS": [
+                ["USE_MAGNET_BETWEEN_P0P1", cs.USE_MAGNET_BETWEEN_P0P1],
+                ["USE_MAGNET_BETWEEN_P2P3", cs.USE_MAGNET_BETWEEN_P2P3],
+                ["ALWAYS_USE_PX", cs.ALWAYS_USE_PX]
+            ]
+        }
+        answer = self.sendAndGetAnswer(msg)
+        # TODO: check server response
 
     def saveCameraSettings(self):
         msg = {
