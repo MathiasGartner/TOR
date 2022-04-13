@@ -7,9 +7,23 @@ from functools import partial
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QVBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QIcon
 
 app = QApplication(sys.argv)
+window = None
+
+class WaitCursor(object):
+    def __enter__(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        if window is not None:
+            window.setEnabled(False)
+        app.processEvents()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        QApplication.restoreOverrideCursor()
+        if window is not None:
+            window.setEnabled(True)
+        app.processEvents()
 
 #####################################
 ### check if TORClient is running ###
@@ -45,14 +59,15 @@ while torClientServiceStatus == 0:
             time.sleep(0.1)
             app.processEvents()
             #TODO: stop TORCLient in a more controlled way, eg. create performance to move to parking pos ("Q") and make sure that the service is not restarted automatically
-            #os.system('systemctl stop TORClient')
+            if cs.ON_RASPI:
+                os.system('sudo systemctl stop TORClient')
             attemptsToWaitForTORClientQuit = 0
             while torClientServiceStatus == 0 and attemptsToWaitForTORClientQuit < 5:
                 app.processEvents()
                 time.sleep(2)
                 torClientServiceStatus = getTORClientServiceStatus()
                 attemptsToWaitForTORClientQuit += 1
-                print(attemptsToWaitForTORClientQuit)
+                print("{}/5".format(attemptsToWaitForTORClientQuit))
             msgInfo.hide()
     else:
         exit()
@@ -117,17 +132,6 @@ if cs.ON_RASPI:
 if cs.ON_RASPI:
     import cv2
 
-class WaitCursor(object):
-    def __enter__(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        window.setEnabled(False)
-        app.processEvents()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        QApplication.restoreOverrideCursor()
-        window.setEnabled(True)
-        app.processEvents()
-
 class CalibrationPoint(QWidget):
     def __init__(self):
         super().__init__()
@@ -138,10 +142,10 @@ class CalibrationPoint(QWidget):
         self.txtCoordX.setRange(-50, 300)
 
         self.txtCoordY = QDoubleSpinBox()
-        self.txtCoordY.setRange(100, 300)
+        self.txtCoordX.setRange(-50, 300)
 
         self.txtCoordZ = QDoubleSpinBox()
-        self.txtCoordZ.setRange(100, 300)
+        self.txtCoordX.setRange(-50, 300)
 
         self.btnTestPoint = QPushButton()
         self.btnTestPoint.setText("move to point")
@@ -170,6 +174,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        self.setWindowIcon(QIcon("../../resources/logo.png"))
         self.setWindowTitle("Calibration")
 
         # Homing
@@ -192,6 +197,7 @@ class MainWindow(QMainWindow):
             for c in range(3):
                 bcp = CalibrationPoint()
                 bcp.Id = 3 * r + c + 1
+                bcp.isCloseToRamp = r == 1
                 bcp.grpMainGroup.setTitle("Point {}".format(bcp.Id))
                 bcp.btnTestPoint.clicked.connect(partial(self.moveToBedPoint_clicked, bcp))
                 bcp.btnMoveToCenter.clicked.connect(partial(self.moveToCenterFromBed_clicked, bcp))
@@ -239,6 +245,8 @@ class MainWindow(QMainWindow):
 
         self.btnMagnetCalibrationDoHoming = QPushButton("Do homing")
         self.btnMagnetCalibrationDoHoming.clicked.connect(self.btnMagnetCalibrationDoHoming_clicked)
+        self.btnPickupDie = QPushButton("Pick up")
+        self.btnPickupDie.clicked.connect(self.btnPickupDie_clicked)
         self.btnRestoreMagnetCalibration = QPushButton("Restore settings")
         self.btnRestoreMagnetCalibration.clicked.connect(self.btnRestoreMagnetCalibration_clicked)
         self.btnSaveMagnetCalibration = QPushButton("Save settings")
@@ -246,7 +254,7 @@ class MainWindow(QMainWindow):
 
         layMagnet = QGridLayout()
         row = 0
-        layMagnet.addWidget(QLabel("<h3>Calibrate the dropoff points.</h3>\n<h3>Make sure that the dropoff works when the point is approached from the center and freshly homed.</h3>"), row, 0, 1, 3)
+        layMagnet.addWidget(QLabel("<h3>Calibrate the dropoff points.</h3>\n<h3>Make sure that the dropoff works when the point is approached from the center and freshly homed.</h3>"), row, 0, 1, 4)
         row += 1
         layMagnet.addWidget(QLabel("points to use for dropoff:"), row, 0)
         layMagnetPointsSelection = QGridLayout()
@@ -258,11 +266,12 @@ class MainWindow(QMainWindow):
         wdgMagnetPointsSelection.setLayout(layMagnetPointsSelection)
         layMagnet.addWidget(wdgMagnetPointsSelection, row, 1)
         row += 1
-        layMagnet.addWidget(wdgMagnetPoints, row, 0, 1, 3)
+        layMagnet.addWidget(wdgMagnetPoints, row, 0, 1, 4)
         row += 1
         layMagnet.addWidget(self.btnMagnetCalibrationDoHoming, row, 0)
-        layMagnet.addWidget(self.btnRestoreMagnetCalibration, row, 1)
-        layMagnet.addWidget(self.btnSaveMagnetCalibration, row, 2)
+        layMagnet.addWidget(self.btnPickupDie, row, 1)
+        layMagnet.addWidget(self.btnRestoreMagnetCalibration, row, 2)
+        layMagnet.addWidget(self.btnSaveMagnetCalibration, row, 3)
 
         wdgMagnet = QWidget()
         layMagnet.setSizeConstraint(QLayout.SetFixedSize)
@@ -282,12 +291,8 @@ class MainWindow(QMainWindow):
         self.btnTakePicture.clicked.connect(self.btnTakePicture_clicked)
         self.btnCameraSave = QPushButton("Save settings")
         self.btnCameraSave.clicked.connect(self.btnCameraSave_clicked)
-        self.pixImageOriginal = QPixmap()
-        self.lblImageOriginal = QLabel()
-        self.lblImageOriginal.setPixmap(self.pixImageOriginal)
-        self.pixImageRecognition = QPixmap()
-        self.lblImageRecognition = QLabel()
-        self.lblImageRecognition.setPixmap(self.pixImageRecognition)
+        self.lblCameraOriginal = QLabel()
+        self.lblCameraProcessed = QLabel()
         layCamera = QGridLayout()
         row = 0
         layCamera.addWidget(QLabel("<h3>Configuration for the camera settings</h3>"), row, 0, 1, 2)
@@ -302,10 +307,10 @@ class MainWindow(QMainWindow):
         layCamera.addWidget(self.txtContrast, row, 1)
         row += 1
         layCamera.addWidget(QLabel("original image:"), row, 0)
-        layCamera.addWidget(self.lblImageOriginal, row, 1)
+        layCamera.addWidget(self.lblCameraOriginal, row, 1)
         row += 1
-        layCamera.addWidget(QLabel("analyzed image:"), row, 0)
-        layCamera.addWidget(self.lblImageRecognition, row, 1)
+        layCamera.addWidget(QLabel("processed image:"), row, 0)
+        layCamera.addWidget(self.lblCameraProcessed, row, 1)
         row += 1
         layCamera.addWidget(self.btnTakePicture, row, 0)
         layCamera.addWidget(self.btnCameraSave, row, 1)
@@ -315,8 +320,37 @@ class MainWindow(QMainWindow):
         wdgCamera.setLayout(layCamera)
 
         # Image
+        self.spnImageTLX = QSpinBox()
+        self.spnImageTLX.setRange(1, cs.IMG_PX_X)
+        self.spnImageTLY = QSpinBox()
+        self.spnImageTLY.setRange(1, cs.IMG_PX_Y)
+        self.spnImageBRX = QSpinBox()
+        self.spnImageBRX.setRange(1, cs.IMG_PX_X)
+        self.spnImageBRY = QSpinBox()
+        self.spnImageBRY.setRange(1, cs.IMG_PX_Y)
+        self.lblImageOriginal = QLabel()
+        self.lblImageProcessed = QLabel()
+        self.btnTakeImage = QPushButton("Take image")
+        self.btnTakeImage.clicked.connect(self.btnTakeImage_clicked)
+        self.btnImageSave = QPushButton("Save settings")
+        self.btnImageSave.clicked.connect(self.btnImageSave_clicked)
+
         layImage = QGridLayout()
-        layImage.addWidget(QLabel("<h3>Configuration for image cropping/scaling/...</h3>\n<h3>not implemented yet...</h3>"))
+        layImage.addWidget(QLabel("<h3>Configuration for image cropping/scaling/...</h3>\n<h3>not implemented yet...</h3>"), 0, 0, 1, 3)
+        layImage.addWidget(QLabel("top left X:"), 1, 0)
+        layImage.addWidget(self.spnImageTLX, 1, 1)
+        layImage.addWidget(QLabel("top left Y:"), 2, 0)
+        layImage.addWidget(self.spnImageTLY, 2, 1)
+        layImage.addWidget(QLabel("bottom right X:"), 3, 0)
+        layImage.addWidget(self.spnImageBRX, 3, 1)
+        layImage.addWidget(QLabel("bottom right Y:"), 4, 0)
+        layImage.addWidget(self.spnImageBRY, 4, 1)
+        layImage.addWidget(QLabel("original image:"), 5, 0)
+        layImage.addWidget(self.lblImageOriginal, 5, 1)
+        layImage.addWidget(QLabel("processed image:"), 6, 0)
+        layImage.addWidget(self.lblImageProcessed, 6, 1)
+        layImage.addWidget(self.btnTakeImage, 7, 0)
+        layImage.addWidget(self.btnImageSave, 7, 1)
 
         wdgImage = QWidget()
         layImage.setSizeConstraint(QLayout.SetFixedSize)
@@ -324,25 +358,35 @@ class MainWindow(QMainWindow):
 
         # Move
         layMove = QGridLayout()
-        layMove.addWidget(QLabel("<h3>Manual movement</h3>\n<h3>Be careful! Movement ist not restricted!</h3>"), 0, 0, 1, 5)
+        layMove.addWidget(QLabel("<h3>Manual movement</h3>\n<h3>Be careful! Movement ist not restricted!</h3>"), 0, 0, 1, 8)
         movementButtonSettings = [
-            ("↞", 3, 1, "X", -10),
-            ("←", 3, 2, "X", -1),
-            ("↟", 1, 3, "Y", 10),
-            ("↑", 2, 3, "Y", 1),
-            ("→", 3, 4, "X", 1),
-            ("↠", 3, 5, "X", 10),
-            ("↓", 4, 3, "Y", -1),
-            ("↡", 5, 3, "Y", -10),
-            ("↟", 1, 6, "Z", 10),
-            ("↑", 2, 6, "Z", 1),
-            ("↓", 4, 6, "Z", -1),
-            ("↡", 5, 6, "Z", -10)
+            ("↞", 3, 1, "X", 10),
+            ("←", 3, 2, "X", 1),
+            ("↟", 1, 3, "Y", -10),
+            ("↑", 2, 3, "Y", -1),
+            ("→", 3, 4, "X", -1),
+            ("↠", 3, 5, "X", -10),
+            ("↓", 4, 3, "Y", 1),
+            ("↡", 5, 3, "Y", 10),
+            ("↟", 1, 7, "Z", -10),
+            ("↑", 2, 7, "Z", -1),
+            ("↓", 4, 7, "Z", 1),
+            ("↡", 5, 7, "Z", 10)
         ]
         for (symbol, row, col, direction, speed) in movementButtonSettings:
             btn = QPushButton(symbol)
+            btn.setMaximumWidth(30)
+            btn.setMaximumHeight(30)
             btn.clicked.connect(partial(self.movementButton_clicked, direction, speed))
-            layMove.addWidget(btn, row, col)
+            layMove.addWidget(btn, row+1, col)
+        layMove.setColumnMinimumWidth(6, 30)
+        layMove.setRowMinimumHeight(1, 30)
+
+        layMove.addWidget(QLabel("use W,A,S,D and Q,E on the keyboard for movement."), 7, 0, 1, 8)
+        layMove.addWidget(QLabel("Keyboard step size:"), 8, 0)
+        self.spnKeyboardStepsize = QSpinBox()
+        self.spnKeyboardStepsize.setRange(1, 10)
+        layMove.addWidget(self.spnKeyboardStepsize, 8, 1)
 
         wdgMove = QWidget()
         layMove.setSizeConstraint(QLayout.SetFixedSize)
@@ -383,6 +427,11 @@ class MainWindow(QMainWindow):
         self.txtShutter.setValue(cs.CAM_SHUTTER_SPEED)
         self.txtContrast.setValue(cs.CAM_CONTRAST)
 
+        self.spnImageTLX.setValue(cs.IMG_TL[0])
+        self.spnImageTLY.setValue(cs.IMG_TL[1])
+        self.spnImageBRX.setValue(cs.IMG_BR[0])
+        self.spnImageBRY.setValue(cs.IMG_BR[1])
+
         for i in range(len(cs.MESH_BED)):
             self.bcps[i].txtCoordX.setValue(cs.MESH_BED[i, 0])
             self.bcps[i].txtCoordY.setValue(cs.MESH_BED[i, 1])
@@ -421,7 +470,10 @@ class MainWindow(QMainWindow):
         if cs.ON_RASPI:
             mm.doHoming()
             if moveToCenterAfterHoming:
+                mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
                 mm.moveToPos(cs.CENTER_TOP)
+                mm.waitForMovementFinished()
+                mm.setFeedratePercentage(cs.FR_DEFAULT)
         else:
             time.sleep(3)
         self.addStatusText("homing finished", spacerLineAfter=True)
@@ -434,11 +486,11 @@ class MainWindow(QMainWindow):
     ### bed ###
     ###########
 
-    def moveToBedPoint(self, id, x, y, z):
+    def moveToBedPoint(self, id, x, y, z, isCloseToRamp):
         self.addStatusText("Test point {}, move to position ({},{},{})".format(id, x, y, z), spacerLineBefore=True)
         if cs.ON_RASPI:
             pos = Position(x, y, z)
-            if id > 2: # close to ramp
+            if isCloseToRamp:
                 mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
                 mm.waitForMovementFinished()
                 mm.moveCloseToRamp(pos, True)
@@ -452,13 +504,13 @@ class MainWindow(QMainWindow):
 
     def moveToBedPoint_clicked(self, bcp):
         with WaitCursor():
-            self.moveToBedPoint(bcp.Id, bcp.txtCoordX.value(), bcp.txtCoordY.value(), bcp.txtCoordZ.value())
+            self.moveToBedPoint(bcp.Id, bcp.txtCoordX.value(), bcp.txtCoordY.value(), bcp.txtCoordZ.value(), bcp.isCloseToRamp)
 
     def moveToCenterFromBed_clicked(self, bcp):
         with WaitCursor():
             self.addStatusText("move to center position", spacerLineBefore=True)
             if cs.ON_RASPI:
-                if bcp.Id > 2: # close to ramp
+                if bcp.isCloseToRamp:
                     mm.moveCloseToRamp(cs.BEFORE_PICKUP_POSITION, segmented=True, moveto=False)
                     mm.waitForMovementFinished()
                 else:
@@ -492,8 +544,15 @@ class MainWindow(QMainWindow):
 
     def moveToMagnetPoint(self, id, x, y, z):
         self.addStatusText("Test point {}, move to position ({},{},{})".format(id, x, y, z), spacerLineBefore=True)
-        #TODO: move
-        time.sleep(2)
+        if cs.ON_RASPI:
+            pos = Position(x, y, z)
+            mr.moveToDropoffPosition(pos)
+            mm.waitForMovementFinished()
+            time.sleep(2)
+            mm.rollDie()
+            time.sleep(0.1)
+        else:
+            time.sleep(2)
         self.addStatusText("reached position ({},{},{})".format(x, y, z), spacerLineAfter=True)
 
     def moveToMagnetPoint_clicked(self, mcp):
@@ -503,12 +562,20 @@ class MainWindow(QMainWindow):
     def moveToCenterFromMagnet_clicked(self, mcp):
         with WaitCursor():
             self.addStatusText("move to center position", spacerLineBefore=True)
-            time.sleep(2)
+            if cs.ON_RASPI:
+                mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
+                mm.waitForMovementFinished()
+            else:
+                time.sleep(2)
             self.addStatusText("reached center position", spacerLineAfter=True)
 
     def btnMagnetCalibrationDoHoming_clicked(self):
         with WaitCursor():
             self.doHoming(moveToCenterAfterHoming=True)
+
+    def btnPickupDie_clicked(self):
+        with WaitCursor():
+            mr.pickupDie()
 
     def btnRestoreMagnetCalibration_clicked(self):
         with WaitCursor():
@@ -518,7 +585,7 @@ class MainWindow(QMainWindow):
     def btnSaveMagnetCalibration_clicked(self):
         with WaitCursor():
             cs.ALWAYS_USE_PX = -1
-            cs.USE_MAGNET_BETWEEN_P0P1 = True9
+            cs.USE_MAGNET_BETWEEN_P0P1 = True
             cs.USE_MAGNET_BETWEEN_P2P3 = True
             if self.radOnlyUseSpecificMagnetPoints[3].isChecked():
                 cs.ALWAYS_USE_PX = 0
@@ -538,8 +605,7 @@ class MainWindow(QMainWindow):
                 cs.MESH_MAGNET[i, 1] = self.mcps[i].txtCoordY.value()
                 cs.MESH_MAGNET[i, 2] = self.mcps[i].txtCoordZ.value()
 
-            cm.save
-            cm.saveMeshpoints("M", cs.MESH_BED)
+            cm.saveMeshpoints("M", cs.MESH_MAGNET)
             self.addStatusText("settings saved", spacerLineBefore=True, spacerLineAfter=True)
 
     ##############
@@ -573,17 +639,60 @@ class MainWindow(QMainWindow):
                 self.addStatusText("see full images at http://" + cm.clientIdentity["IP"] + "/camera.html")
                 lm.clear()
                 mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
+                pixCameraOriginal = QPixmap(os.path.join(cs.WEB_DIRECTORY, "camera.jpg"))
+                pixCameraProcessed = QPixmap(os.path.join(cs.WEB_DIRECTORY, "recognized.jpg"))
+                self.lblCameraOriginal.setPixmap(pixCameraOriginal.scaled(500, 500, Qt.KeepAspectRatio))
+                self.lblCameraProcessed.setPixmap(pixCameraProcessed.scaled(400, 400, Qt.KeepAspectRatio))
+                app.processEvents()
             else:
                 time.sleep(3)
-            #self.pixImageOriginal.load(os.path.join(cs.WEB_DIRECTORY, "camera.jpg"))
-            #self.pixImageRecognition.load(os.path.join(cs.WEB_DIRECTORY, "recognized.jpg"))
-            #self.lblImageRecognition.pixmap(self.pixImageRecognition)
-            #self.lblImageRecognition.show()
-            self.addStatusText("image recognition fished. save settings?", spacerLineAfter=True)
+            self.addStatusText("image recognition finished. save settings?", spacerLineAfter=True)
 
     def btnCameraSave_clicked(self):
         cm.saveCameraSettings()
         self.addStatusText("settings saved", spacerLineBefore=True, spacerLineAfter=True)
+
+    ##############
+    ### image ###
+    ##############
+
+    def btnTakeImage_clicked(self):
+        with WaitCursor():
+            self.addStatusText("taking image...", spacerLineBefore=True)
+            if cs.ON_RASPI:
+                if not cs.IMG_USE_WARPING:
+                    cs.IMG_TL = [self.spnImageTLX.value(), self.spnImageTLY.value()]
+                    cs.IMG_BR = [self.spnImageBRX.value(), self.spnImageBRY.value()]
+                    dr = DieRecognizer()
+                    cam = Camera()
+                    lm.setAllLeds()
+                    mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
+                    image = cam.takePicture()
+                    cam.close()
+                    lm.clear()
+                    mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
+                    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                    transformedImage = dr.cropImage(image, cs.IMG_TL, cs.IMG_BR)
+                    markedImage = dr.markCropLines(image, cs.IMG_TL, cs.IMG_BR, isGray=True)
+                    dr.writeImage(markedImage, "marked.jpg", directory=cs.WEB_DIRECTORY)
+                    dr.writeImage(transformedImage, "transformed.jpg", directory=cs.WEB_DIRECTORY)
+                    self.addStatusText("see full image at http://" + cm.clientIdentity["IP"] + "/image.html")
+                    pixImageOriginal = QPixmap(os.path.join(cs.WEB_DIRECTORY, "marked.jpg"))
+                    pixImageProcessed = QPixmap(os.path.join(cs.WEB_DIRECTORY, "transformed.jpg"))
+                    self.lblImageOriginal.setPixmap(pixImageOriginal.scaled(200, 200, Qt.KeepAspectRatio))
+                    self.lblImageProcessed.setPixmap(pixImageProcessed.scaled(350, 250, Qt.KeepAspectRatio))
+                else:
+                    self.addStatusText("Warping is specified for this camera. Changing settings is not possible.", spacerLineBefore=True, spacerLineAfter=True)
+            else:
+                time.sleep(3)
+            self.addStatusText("image cropping finished. save settings?", spacerLineAfter=True)
+
+    def btnImageSave_clicked(self):
+        if not cs.IMG_USE_WARPING:
+            cm.saveImageSettingsCropping(cs.IMG_TL, cs.IMG_BR)
+            self.addStatusText("settings saved", spacerLineBefore=True, spacerLineAfter=True)
+        else:
+            self.addStatusText("Warping is specified for this camera. Changing settings is not possible.", spacerLineBefore=True, spacerLineAfter=True)
 
     ############
     ### move ###
@@ -601,14 +710,14 @@ class MainWindow(QMainWindow):
             deltaPos = Position(0, 0, steps)
         posTo = posFrom + deltaPos
         if posTo is not None:
-            mm.moveToPos(validPos, True)
+            mm.moveToPos(posTo, True)
             mm.waitForMovementFinished()
 
     def movementButton_clicked(self, direction, steps):
         with WaitCursor():
             self.addStatusText("move {} steps in {}-direction".format(steps, direction))
             if cs.ON_RASPI:
-                move(direction, steps)
+                self.move(direction, steps)
             else:
                 time.sleep(abs(steps) * 0.2)
 
@@ -617,21 +726,20 @@ class MainWindow(QMainWindow):
     ############
 
     def keyPressEvent(self, event):
-        if self.isBusy:
-            return
         if self.tabFunctions.currentIndex() == self.movementTabIndex:
+            stepsize = self.spnKeyboardStepsize.value()
             if event.key() == Qt.Key_A:
-                self.move("X", -1)
+                self.move("X", stepsize)
             elif event.key() == Qt.Key_D:
-                self.move("X", 1)
+                self.move("X", -stepsize)
             elif event.key() == Qt.Key_S:
-                self.move("Y", -1)
+                self.move("Y", stepsize)
             elif event.key() == Qt.Key_W:
-                self.move("Y", 1)
+                self.move("Y", -stepsize)
             elif event.key() == Qt.Key_Q:
-                self.move("Z", -1)
+                self.move("Z", stepsize)
             elif event.key() == Qt.Key_E:
-                self.move("Z", 1)
+                self.move("Z", -stepsize)
 
 ###################
 ### application ###
@@ -641,5 +749,18 @@ window = MainWindow()
 window.show()
 
 window.setWindowTitle("Calibrate \"{}\"".format(cm.clientIdentity["Material"]))
+
+if cs.ON_RASPI:
+    msgHoming = QMessageBox()
+    msgHoming.setIcon(QMessageBox.Information)
+    msgHoming.setText("Do you want to perform homing before you proceed?")
+    msgHoming.setInformativeText("Homing is required in order to localize the magnet.")
+    msgHoming.setWindowTitle("TOR Calibration")
+    yesBtn = msgHoming.addButton("Yes", QMessageBox.YesRole)
+    moBtn = msgHoming.addButton("No", QMessageBox.NoRole)
+    msgHoming.exec_()
+    if msgHoming.clickedButton() == yesBtn:
+        with WaitCursor():
+            window.doHoming(moveToCenterAfterHoming=True)
 
 app.exec()
