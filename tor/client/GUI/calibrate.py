@@ -32,30 +32,28 @@ while torClientServiceStatus == 0:
     msg.exec_()
     if msg.clickedButton() == closeBtn:
         print("closing TORClient service")
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        msgInfo = QMessageBox()
-        msgInfo.setIcon(QMessageBox.Information)
-        msgInfo.setText("Closing service \"TORClient\"...")
-        msgInfo.setInformativeText("This window will be closed automatically as soon as the service is finished.")
-        msgInfo.setWindowTitle("TOR Calibration")
-        msgInfo.setWindowFlags(Qt.CustomizeWindowHint or Qt.WindowTitleHint)
-        dummyBtn = msgInfo.addButton("Dummy", QMessageBox.NoRole)
-        msgInfo.removeButton(dummyBtn)
-        msgInfo.show()
-        time.sleep(0.1)
-        app.processEvents()
-        #TODO: stop TORCLient in a more controlled way, eg. create performance to move to parking pos ("Q") and make sure that the service is not restarted automatically
-        #os.system('systemctl stop TORClient')
-        attemptsToWaitForTORClientQuit = 0
-        while torClientServiceStatus == 0 and attemptsToWaitForTORClientQuit < 5:
+        with WaitCursor():
+            msgInfo = QMessageBox()
+            msgInfo.setIcon(QMessageBox.Information)
+            msgInfo.setText("Closing service \"TORClient\"...")
+            msgInfo.setInformativeText("This window will be closed automatically as soon as the service is finished.")
+            msgInfo.setWindowTitle("TOR Calibration")
+            msgInfo.setWindowFlags(Qt.CustomizeWindowHint or Qt.WindowTitleHint)
+            dummyBtn = msgInfo.addButton("Dummy", QMessageBox.NoRole)
+            msgInfo.removeButton(dummyBtn)
+            msgInfo.show()
+            time.sleep(0.1)
             app.processEvents()
-            time.sleep(2)
-            torClientServiceStatus = getTORClientServiceStatus()
-            attemptsToWaitForTORClientQuit += 1
-            print(attemptsToWaitForTORClientQuit)
-        msgInfo.hide()
-        QApplication.restoreOverrideCursor()
-        app.processEvents()
+            #TODO: stop TORCLient in a more controlled way, eg. create performance to move to parking pos ("Q") and make sure that the service is not restarted automatically
+            #os.system('systemctl stop TORClient')
+            attemptsToWaitForTORClientQuit = 0
+            while torClientServiceStatus == 0 and attemptsToWaitForTORClientQuit < 5:
+                app.processEvents()
+                time.sleep(2)
+                torClientServiceStatus = getTORClientServiceStatus()
+                attemptsToWaitForTORClientQuit += 1
+                print(attemptsToWaitForTORClientQuit)
+            msgInfo.hide()
     else:
         exit()
 
@@ -118,6 +116,17 @@ if cs.ON_RASPI:
 ########################
 if cs.ON_RASPI:
     import cv2
+
+class WaitCursor(object):
+    def __enter__(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        window.setEnabled(False)
+        app.processEvents()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        QApplication.restoreOverrideCursor()
+        window.setEnabled(True)
+        app.processEvents()
 
 class CalibrationPoint(QWidget):
     def __init__(self):
@@ -346,6 +355,7 @@ class MainWindow(QMainWindow):
         self.tabFunctions.addTab(wdgCamera, "Camera")
         self.tabFunctions.addTab(wdgImage, "Image")
         self.tabFunctions.addTab(wdgMove, "Manual Movement")
+        self.movementTabIndex = 5
 
         self.txtStatus = QPlainTextEdit()
         self.txtStatus.setReadOnly(True)
@@ -406,25 +416,25 @@ class MainWindow(QMainWindow):
     ### homing ###
     ##############
 
-    def doHoming(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+    def doHoming(self, moveToCenterAfterHoming=False):
         self.addStatusText("started homing...", spacerLineBefore=True)
         if cs.ON_RASPI:
             mm.doHoming()
+            if moveToCenterAfterHoming:
+                mm.moveToPos(cs.CENTER_TOP)
         else:
             time.sleep(3)
-        QApplication.restoreOverrideCursor()
         self.addStatusText("homing finished", spacerLineAfter=True)
 
     def btnStartHoming_clicked(self):
-        self.doHoming()
+        with WaitCursor():
+            self.doHoming()
 
     ###########
     ### bed ###
     ###########
 
     def moveToBedPoint(self, id, x, y, z):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         self.addStatusText("Test point {}, move to position ({},{},{})".format(id, x, y, z), spacerLineBefore=True)
         if cs.ON_RASPI:
             pos = Position(x, y, z)
@@ -438,105 +448,99 @@ class MainWindow(QMainWindow):
                 mm.waitForMovementFinished()
         else:
             time.sleep(2)
-        QApplication.restoreOverrideCursor()
         self.addStatusText("reached position ({},{},{})".format(x, y, z), spacerLineAfter=True)
 
     def moveToBedPoint_clicked(self, bcp):
-        self.moveToBedPoint(bcp.Id, bcp.txtCoordX.value(), bcp.txtCoordY.value(), bcp.txtCoordZ.value())
+        with WaitCursor():
+            self.moveToBedPoint(bcp.Id, bcp.txtCoordX.value(), bcp.txtCoordY.value(), bcp.txtCoordZ.value())
 
     def moveToCenterFromBed_clicked(self, bcp):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.addStatusText("move to center position", spacerLineBefore=True)
-        if cs.ON_RASPI:
-            if bcp.Id > 2: # close to ramp
-                mm.moveCloseToRamp(cs.BEFORE_PICKUP_POSITION, segmented=True, moveto=False)
-                mm.waitForMovementFinished()
+        with WaitCursor():
+            self.addStatusText("move to center position", spacerLineBefore=True)
+            if cs.ON_RASPI:
+                if bcp.Id > 2: # close to ramp
+                    mm.moveCloseToRamp(cs.BEFORE_PICKUP_POSITION, segmented=True, moveto=False)
+                    mm.waitForMovementFinished()
+                else:
+                    mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
+                    mm.waitForMovementFinished()
             else:
-                mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
-                mm.waitForMovementFinished()
-        else:
-            time.sleep(2)
-        QApplication.restoreOverrideCursor()
-        self.addStatusText("reached center position", spacerLineAfter=True)
+                time.sleep(2)
+            self.addStatusText("reached center position", spacerLineAfter=True)
 
     def btnBedCalibrationDoHoming_clicked(self):
-        self.doHoming()
+        with WaitCursor():
+            self.doHoming(moveToCenterAfterHoming=True)
 
     def btnRestoreBedCalibration_clicked(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.initSettings()
-        QApplication.restoreOverrideCursor()
-        self.addStatusText("settings restored", spacerLineBefore=True, spacerLineAfter=True)
+        with WaitCursor():
+            self.initSettings()
+            self.addStatusText("settings restored", spacerLineBefore=True, spacerLineAfter=True)
 
     def btnSaveBedCalibration_clicked(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        for i in range(len(cs.MESH_BED)):
-            cs.MESH_BED[i, 0] = self.bcps[i].txtCoordX.value()
-            cs.MESH_BED[i, 1] = self.bcps[i].txtCoordY.value()
-            cs.MESH_BED[i, 2] = self.bcps[i].txtCoordZ.value()
-        cm.saveMeshpoints("B", cs.MESH_BED)
-        self.addStatusText("settings saved", spacerLineBefore=True, spacerLineAfter=True)
-        QApplication.restoreOverrideCursor()
+        with WaitCursor():
+            for i in range(len(cs.MESH_BED)):
+                cs.MESH_BED[i, 0] = self.bcps[i].txtCoordX.value()
+                cs.MESH_BED[i, 1] = self.bcps[i].txtCoordY.value()
+                cs.MESH_BED[i, 2] = self.bcps[i].txtCoordZ.value()
+            cm.saveMeshpoints("B", cs.MESH_BED)
+            self.addStatusText("settings saved", spacerLineBefore=True, spacerLineAfter=True)
 
     ##############
     ### magnet ###
     ##############
 
     def moveToMagnetPoint(self, id, x, y, z):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         self.addStatusText("Test point {}, move to position ({},{},{})".format(id, x, y, z), spacerLineBefore=True)
         #TODO: move
         time.sleep(2)
-        QApplication.restoreOverrideCursor()
         self.addStatusText("reached position ({},{},{})".format(x, y, z), spacerLineAfter=True)
 
     def moveToMagnetPoint_clicked(self, mcp):
-        self.moveToMagnetPoint(mcp.Id, mcp.txtCoordX.value(), mcp.txtCoordY.value(), mcp.txtCoordZ.value())
+        with WaitCursor():
+            self.moveToMagnetPoint(mcp.Id, mcp.txtCoordX.value(), mcp.txtCoordY.value(), mcp.txtCoordZ.value())
 
     def moveToCenterFromMagnet_clicked(self, mcp):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.addStatusText("move to center position", spacerLineBefore=True)
-        time.sleep(2)
-        QApplication.restoreOverrideCursor()
-        self.addStatusText("reached center position", spacerLineAfter=True)
+        with WaitCursor():
+            self.addStatusText("move to center position", spacerLineBefore=True)
+            time.sleep(2)
+            self.addStatusText("reached center position", spacerLineAfter=True)
 
     def btnMagnetCalibrationDoHoming_clicked(self):
-        self.doHoming()
+        with WaitCursor():
+            self.doHoming(moveToCenterAfterHoming=True)
 
     def btnRestoreMagnetCalibration_clicked(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.initSettings()
-        QApplication.restoreOverrideCursor()
-        self.addStatusText("settings restored", spacerLineBefore=True, spacerLineAfter=True)
+        with WaitCursor():
+            self.initSettings()
+            self.addStatusText("settings restored", spacerLineBefore=True, spacerLineAfter=True)
 
     def btnSaveMagnetCalibration_clicked(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        with WaitCursor():
+            cs.ALWAYS_USE_PX = -1
+            cs.USE_MAGNET_BETWEEN_P0P1 = True9
+            cs.USE_MAGNET_BETWEEN_P2P3 = True
+            if self.radOnlyUseSpecificMagnetPoints[3].isChecked():
+                cs.ALWAYS_USE_PX = 0
+            elif self.radOnlyUseSpecificMagnetPoints[4].isChecked():
+                cs.ALWAYS_USE_PX = 1
+            elif self.radOnlyUseSpecificMagnetPoints[5].isChecked():
+                cs.ALWAYS_USE_PX = 2
+            elif self.radOnlyUseSpecificMagnetPoints[6].isChecked():
+                cs.ALWAYS_USE_PX = 3
+            elif self.radOnlyUseSpecificMagnetPoints[1].isChecked():
+                cs.USE_MAGNET_BETWEEN_P2P3 = False
+            elif self.radOnlyUseSpecificMagnetPoints[2].isChecked():
+                cs.USE_MAGNET_BETWEEN_P0P1 = False
 
-        cs.ALWAYS_USE_PX = -1
-        cs.USE_MAGNET_BETWEEN_P0P1 = True9
-        cs.USE_MAGNET_BETWEEN_P2P3 = True
-        if self.radOnlyUseSpecificMagnetPoints[3].isChecked():
-            cs.ALWAYS_USE_PX = 0
-        elif self.radOnlyUseSpecificMagnetPoints[4].isChecked():
-            cs.ALWAYS_USE_PX = 1
-        elif self.radOnlyUseSpecificMagnetPoints[5].isChecked():
-            cs.ALWAYS_USE_PX = 2
-        elif self.radOnlyUseSpecificMagnetPoints[6].isChecked():
-            cs.ALWAYS_USE_PX = 3
-        elif self.radOnlyUseSpecificMagnetPoints[1].isChecked():
-            cs.USE_MAGNET_BETWEEN_P2P3 = False
-        elif self.radOnlyUseSpecificMagnetPoints[2].isChecked():
-            cs.USE_MAGNET_BETWEEN_P0P1 = False
+            for i in range(len(cs.MESH_MAGNET)):
+                cs.MESH_MAGNET[i, 0] = self.mcps[i].txtCoordX.value()
+                cs.MESH_MAGNET[i, 1] = self.mcps[i].txtCoordY.value()
+                cs.MESH_MAGNET[i, 2] = self.mcps[i].txtCoordZ.value()
 
-        for i in range(len(cs.MESH_MAGNET)):
-            cs.MESH_MAGNET[i, 0] = self.mcps[i].txtCoordX.value()
-            cs.MESH_MAGNET[i, 1] = self.mcps[i].txtCoordY.value()
-            cs.MESH_MAGNET[i, 2] = self.mcps[i].txtCoordZ.value()
-
-        cm.save
-        cm.saveMeshpoints("M", cs.MESH_BED)
-        self.addStatusText("settings saved", spacerLineBefore=True, spacerLineAfter=True)
-        QApplication.restoreOverrideCursor()
+            cm.save
+            cm.saveMeshpoints("M", cs.MESH_BED)
+            self.addStatusText("settings saved", spacerLineBefore=True, spacerLineAfter=True)
 
     ##############
     ### camera ###
@@ -552,31 +556,30 @@ class MainWindow(QMainWindow):
         cs.CAM_CONTRAST = value
 
     def btnTakePicture_clicked(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.addStatusText("take picture with settings: {}, {}, {}".format(cs.CAM_ISO, cs.CAM_SHUTTER_SPEED, cs.CAM_CONTRAST), spacerLineBefore=True)
-        self.addStatusText("waiting...")
-        if cs.ON_RASPI:
-            dr = DieRecognizer()
-            lm.setAllLeds()
-            mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
-            cam = Camera()
-            image = cam.takePicture()
-            cam.close()
-            dieRollResult, processedImages = dr.getDieRollResult(image, returnOriginalImg=True, markDie=True)
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            dr.writeImage(image, "camera.jpg", directory=cs.WEB_DIRECTORY)
-            dr.writeImage(processedImages[1], "recognized.jpg", directory=cs.WEB_DIRECTORY)
-            self.addStatusText("see full images at http://" + cm.clientIdentity["IP"] + "/camera.html")
-            lm.clear()
-            mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
-        else:
-            time.sleep(3)
-        #self.pixImageOriginal.load(os.path.join(cs.WEB_DIRECTORY, "camera.jpg"))
-        #self.pixImageRecognition.load(os.path.join(cs.WEB_DIRECTORY, "recognized.jpg"))
-        #self.lblImageRecognition.pixmap(self.pixImageRecognition)
-        #self.lblImageRecognition.show()
-        QApplication.restoreOverrideCursor()
-        self.addStatusText("image recognition fished. save settings?", spacerLineAfter=True)
+        with WaitCursor():
+            self.addStatusText("take picture with settings: {}, {}, {}".format(cs.CAM_ISO, cs.CAM_SHUTTER_SPEED, cs.CAM_CONTRAST), spacerLineBefore=True)
+            self.addStatusText("waiting...")
+            if cs.ON_RASPI:
+                dr = DieRecognizer()
+                lm.setAllLeds()
+                mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
+                cam = Camera()
+                image = cam.takePicture()
+                cam.close()
+                dieRollResult, processedImages = dr.getDieRollResult(image, returnOriginalImg=True, markDie=True)
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                dr.writeImage(image, "camera.jpg", directory=cs.WEB_DIRECTORY)
+                dr.writeImage(processedImages[1], "recognized.jpg", directory=cs.WEB_DIRECTORY)
+                self.addStatusText("see full images at http://" + cm.clientIdentity["IP"] + "/camera.html")
+                lm.clear()
+                mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
+            else:
+                time.sleep(3)
+            #self.pixImageOriginal.load(os.path.join(cs.WEB_DIRECTORY, "camera.jpg"))
+            #self.pixImageRecognition.load(os.path.join(cs.WEB_DIRECTORY, "recognized.jpg"))
+            #self.lblImageRecognition.pixmap(self.pixImageRecognition)
+            #self.lblImageRecognition.show()
+            self.addStatusText("image recognition fished. save settings?", spacerLineAfter=True)
 
     def btnCameraSave_clicked(self):
         cm.saveCameraSettings()
@@ -602,20 +605,21 @@ class MainWindow(QMainWindow):
             mm.waitForMovementFinished()
 
     def movementButton_clicked(self, direction, steps):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.addStatusText("move {} steps in {}-direction".format(steps, direction))
-        if cs.ON_RASPI:
-            move(direction, steps)
-        else:
-            time.sleep(abs(steps) * 0.2)
-        QApplication.restoreOverrideCursor()
+        with WaitCursor():
+            self.addStatusText("move {} steps in {}-direction".format(steps, direction))
+            if cs.ON_RASPI:
+                move(direction, steps)
+            else:
+                time.sleep(abs(steps) * 0.2)
 
-    #############
+    ############
     ### main ###
-    #############
+    ############
 
     def keyPressEvent(self, event):
-        if self.tabFunctions.currentIndex() == 5: #this should be the movment tab index
+        if self.isBusy:
+            return
+        if self.tabFunctions.currentIndex() == self.movementTabIndex:
             if event.key() == Qt.Key_A:
                 self.move("X", -1)
             elif event.key() == Qt.Key_D:
