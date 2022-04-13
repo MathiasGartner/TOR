@@ -281,7 +281,7 @@ class MainWindow(QMainWindow):
         self.lblImageRecognition.setPixmap(self.pixImageRecognition)
         layCamera = QGridLayout()
         row = 0
-        layCamera.addWidget(QLabel("<h3>Configuration for the camera settings</h3>"), row, 0)
+        layCamera.addWidget(QLabel("<h3>Configuration for the camera settings</h3>"), row, 0, 1, 2)
         row += 1
         layCamera.addWidget(QLabel("ISO:"), row, 0)
         layCamera.addWidget(self.cmbISO, row, 1)
@@ -315,25 +315,43 @@ class MainWindow(QMainWindow):
 
         # Move
         layMove = QGridLayout()
-        layMove.addWidget(QLabel("<h3>Manual movement</h3>\n<h3>not implemented yet...</h3>"))
+        layMove.addWidget(QLabel("<h3>Manual movement</h3>\n<h3>Be careful! Movement ist not restricted!</h3>"), 0, 0, 1, 5)
+        movementButtonSettings = [
+            ("↞", 3, 1, "X", -10),
+            ("←", 3, 2, "X", -1),
+            ("↟", 1, 3, "Y", 10),
+            ("↑", 2, 3, "Y", 1),
+            ("→", 3, 4, "X", 1),
+            ("↠", 3, 5, "X", 10),
+            ("↓", 4, 3, "Y", -1),
+            ("↡", 5, 3, "Y", -10),
+            ("↟", 1, 6, "Z", 10),
+            ("↑", 2, 6, "Z", 1),
+            ("↓", 4, 6, "Z", -1),
+            ("↡", 5, 6, "Z", -10)
+        ]
+        for (symbol, row, col, direction, speed) in movementButtonSettings:
+            btn = QPushButton(symbol)
+            btn.clicked.connect(partial(self.movementButton_clicked, direction, speed))
+            layMove.addWidget(btn, row, col)
 
         wdgMove = QWidget()
         layMove.setSizeConstraint(QLayout.SetFixedSize)
         wdgMove.setLayout(layMove)
 
-        tabFunctions = QTabWidget()
-        tabFunctions.addTab(wdgHoming, "Homing")
-        tabFunctions.addTab(wdgBed, "Bed")
-        tabFunctions.addTab(wdgMagnet, "Magnet")
-        tabFunctions.addTab(wdgCamera, "Camera")
-        tabFunctions.addTab(wdgImage, "Image")
-        tabFunctions.addTab(wdgMove, "Manual Movement")
+        self.tabFunctions = QTabWidget()
+        self.tabFunctions.addTab(wdgHoming, "Homing")
+        self.tabFunctions.addTab(wdgBed, "Bed")
+        self.tabFunctions.addTab(wdgMagnet, "Magnet")
+        self.tabFunctions.addTab(wdgCamera, "Camera")
+        self.tabFunctions.addTab(wdgImage, "Image")
+        self.tabFunctions.addTab(wdgMove, "Manual Movement")
 
         self.txtStatus = QPlainTextEdit()
         self.txtStatus.setReadOnly(True)
 
         layMain = QGridLayout()
-        layMain.addWidget(tabFunctions, 0, 0)
+        layMain.addWidget(self.tabFunctions, 0, 0)
         layMain.addWidget(self.txtStatus, 1, 0)
 
         wdgMain = QWidget()
@@ -495,7 +513,7 @@ class MainWindow(QMainWindow):
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
         cs.ALWAYS_USE_PX = -1
-        cs.USE_MAGNET_BETWEEN_P0P1 = True
+        cs.USE_MAGNET_BETWEEN_P0P1 = True9
         cs.USE_MAGNET_BETWEEN_P2P3 = True
         if self.radOnlyUseSpecificMagnetPoints[3].isChecked():
             cs.ALWAYS_USE_PX = 0
@@ -563,6 +581,53 @@ class MainWindow(QMainWindow):
     def btnCameraSave_clicked(self):
         cm.saveCameraSettings()
         self.addStatusText("settings saved", spacerLineBefore=True, spacerLineAfter=True)
+
+    ############
+    ### move ###
+    ############
+
+    def move(self, direction, steps):
+        posFrom = mm.currentPosition
+        posTo = None
+        deltaPos = None
+        if direction == "X":
+            deltaPos = Position(steps, 0, 0)
+        elif direction == "Y":
+            deltaPos = Position(0, steps, 0)
+        elif direction == "Z":
+            deltaPos = Position(0, 0, steps)
+        posTo = posFrom + deltaPos
+        if posTo is not None:
+            mm.moveToPos(validPos, True)
+            mm.waitForMovementFinished()
+
+    def movementButton_clicked(self, direction, steps):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        self.addStatusText("move {} steps in {}-direction".format(steps, direction))
+        if cs.ON_RASPI:
+            move(direction, steps)
+        else:
+            time.sleep(abs(steps) * 0.2)
+        QApplication.restoreOverrideCursor()
+
+    #############
+    ### main ###
+    #############
+
+    def keyPressEvent(self, event):
+        if self.tabFunctions.currentIndex() == 5: #this should be the movment tab index
+            if event.key() == Qt.Key_A:
+                self.move("X", -1)
+            elif event.key() == Qt.Key_D:
+                self.move("X", 1)
+            elif event.key() == Qt.Key_S:
+                self.move("Y", -1)
+            elif event.key() == Qt.Key_W:
+                self.move("Y", 1)
+            elif event.key() == Qt.Key_Q:
+                self.move("Z", -1)
+            elif event.key() == Qt.Key_E:
+                self.move("Z", 1)
 
 ###################
 ### application ###
