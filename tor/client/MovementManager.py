@@ -144,6 +144,7 @@ class MovementManager:
 
     def moveCloseToRamp(self, pos, segmented=False, moveto=True):
         if moveto:
+            #TODO: when to use this moveto option? why do we move first do (x,y+...,z-...)? does it mean we are moving towards the ramp?
             self.moveToPos(Position(pos.x,pos.y+cs.CRITICAL_AREA_APPROACH_Y,pos.z-cs.CRITICAL_AREA_APPROACH_Z), useSlowDownEnd=False, segmented=segmented)
             self.moveToPos(pos,useSlowDownStart=False, segmented=segmented)
         else:
