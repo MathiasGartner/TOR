@@ -240,7 +240,7 @@ class MainWindow(QMainWindow):
 
         self.brpOnlyUseSpecificMagnetPoints = QButtonGroup()
         self.radOnlyUseSpecificMagnetPoints = []
-        for option in ["all", "left", "right", "1", "2", "3", "4"]:
+        for option in ["all", "left (1-2)", "right (3-4)", "1", "2", "3", "4"]:
             self.radOnlyUseSpecificMagnetPoints.append(QRadioButton(option))
 
         self.btnMagnetCalibrationDoHoming = QPushButton("Do homing")
