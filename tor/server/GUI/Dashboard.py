@@ -425,7 +425,7 @@ class MainWindow(QMainWindow):
             cdv.lblIsOnline.setToolTip("Id: {}\nIP: {}\nMaterial: {}\nLatin name: {}".format(cdv.clientDetails.Id, cdv.clientDetails.IP, cdv.clientDetails.Material, cdv.clientDetails.Latin))
 
     def updateDashboard(self):
-        print("initSettings")
+        print("updateDashboard")
         jobs = DBManager.getCurrentJobs()
         for j in jobs:
             for c in self.cds:
@@ -481,12 +481,12 @@ class MainWindow(QMainWindow):
     def btnStartAllClientService_clicked(self):
         print("start")
         self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_START, onlyActive=True)
-        self.initSettings()
+        self.updateDashboard()
 
     def btnStopAllClientService_clicked(self):
         print("stop")
         self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_STOP)
-        self.initSettings()
+        self.updateDashboard()
 
     def btnSaveSettings_clicked(self):
         print("saved")
