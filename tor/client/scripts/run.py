@@ -69,6 +69,7 @@ elif mode == 5: #move to x y z segmented
 
 elif mode == 6: #home to Z anchor
     mm.doHoming()
+    print("Position after homing: {}".format(mm.currentPosition))
 
 elif mode == 7: #test dropoff
     while (True):
@@ -201,16 +202,27 @@ elif mode == 18: # read and search dice dots #like mode 9 but read image and tes
     print("result:", dieRollResult.result)
     #lm.showResult(result)
 
+# sudo torenv/bin/python3 -m tor.client.scripts.run 19 6 125 200 50 10 240 200 240 240 200 125 200 50 60 60 30 200 60 30 400
 elif mode == 19: # move forever between two positions
     mm.doHoming()
-    pos1 = Position(float(sys.argv[2]), float(sys.argv[3]), float(sys.argv[4]))
-    pos2 = Position(float(sys.argv[5]), float(sys.argv[6]), float(sys.argv[7]))
-    mm.setFeedratePercentage(float(sys.argv[8]))
+    numOfPositions = int(sys.argv[2])
+    index = 3
+    positions = []
+    for i in range(numOfPositions):
+        pos = Position(float(sys.argv[index]), float(sys.argv[index+1]), float(sys.argv[index+2]))
+        positions.append(pos)
+        index += 3
+    mm.setFeedratePercentage(float(sys.argv[index]))
+    movementCount = 0
     while True:
-        mm.moveToPos(pos1, segmented=True)
-        mm.waitForMovementFinished(0.5)
-        mm.moveToPos(pos2, segmented=True)
-        mm.waitForMovementFinished(0.5)
+        for pos in positions:
+            mm.moveToPos(pos, segmented=True)
+            mm.waitForMovementFinished(0.5)
+        movementCount += 1
+        if movementCount % 500 == 0:
+            mm.doHoming()
+        if movementCount % 100 == 0:
+            print("movementCount: {}".format(movementCount))
 
 if mm is not None:
     mm.waitForMovementFinished(2)

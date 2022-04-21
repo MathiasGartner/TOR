@@ -25,6 +25,22 @@ class WaitCursor(object):
             window.setEnabled(True)
         app.processEvents()
 
+###################
+### TOR imports ###
+###################
+
+from tor.client import ClientSettings as cs
+from tor.client.MovementManager import MovementManager
+if cs.ON_RASPI:
+    from tor.client.MovementRoutines import MovementRoutines
+from tor.client.Position import Position
+if cs.ON_RASPI:
+    from tor.base.DieRecognizer import DieRecognizer
+if cs.ON_RASPI:
+    from tor.client.Camera import Camera
+from tor.client.ClientManager import ClientManager
+from tor.client.LedManager import LedManager
+
 #####################################
 ### check if TORClient is running ###
 #####################################
@@ -71,22 +87,6 @@ while torClientServiceStatus == 0:
             msgInfo.hide()
     else:
         exit()
-
-###################
-### TOR imports ###
-###################
-
-from tor.client import ClientSettings as cs
-from tor.client.MovementManager import MovementManager
-if cs.ON_RASPI:
-    from tor.client.MovementRoutines import MovementRoutines
-from tor.client.Position import Position
-if cs.ON_RASPI:
-    from tor.base.DieRecognizer import DieRecognizer
-if cs.ON_RASPI:
-    from tor.client.Camera import Camera
-from tor.client.ClientManager import ClientManager
-from tor.client.LedManager import LedManager
 
 ###############
 ### logging ###
@@ -139,13 +139,16 @@ class CalibrationPoint(QWidget):
         self.Id = -1
 
         self.txtCoordX = QDoubleSpinBox()
-        self.txtCoordX.setRange(-50, 300)
+        self.txtCoordX.setMinimum(-50.0)
+        self.txtCoordX.setMaximum(300.0)
 
         self.txtCoordY = QDoubleSpinBox()
-        self.txtCoordX.setRange(-50, 300)
+        self.txtCoordY.setMinimum(-50.0)
+        self.txtCoordY.setMaximum(300.0)
 
         self.txtCoordZ = QDoubleSpinBox()
-        self.txtCoordX.setRange(-50, 300)
+        self.txtCoordZ.setMinimum(-50.0)
+        self.txtCoordZ.setMaximum(300.0)
 
         self.btnTestPoint = QPushButton()
         self.btnTestPoint.setText("move to point")

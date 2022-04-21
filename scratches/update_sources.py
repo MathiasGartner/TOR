@@ -1,8 +1,6 @@
 
 import tor.TORSettingsLocal as tsl
 
-from tor.base import DBManager
-
 ################################
 ### update source on clients ###
 ################################
@@ -10,15 +8,20 @@ from tor.base import DBManager
 #ips = range(101, 131) #[107]
 
 #ips = [107, 112]
-ips = []
+ips = ["192.168.1.120", "192.168.1.125"]
+ips = ["192.168.28.231"]
+positions = []
 #positions = [1, 2, 3, 4,5, 6, 7, 8, 9]
-positions = range(1, 28)
+#positions = range(1, 28)
 #positions = [10, 11, 12, 13, 14, 15]
 #positions = [1, 2, 3]
-#positions = [21]
+#positions = [4]
 
 #from itertools import chain
 #positions = chain(range(1, 21), range(23, 28))
+
+if len(positions) > 0:
+    from tor.base import DBManager
 
 for p in positions:
     ips.append(DBManager.getIPByPosition(p))
@@ -91,7 +94,7 @@ with open(filename, 'w') as f:
         cmds = ""
         #full_ip = tsl.CLIENT_IP_NETWORK + "." + str(ip)
         full_ip = ip
-        cmd = "echo " + full_ip
+        cmd = "echo {}".format(full_ip)
         cmds = cmds + cmd + "; "
         cmd = cmd_delete.format(path_key, full_ip)
         cmds = cmds + cmd + "; "
