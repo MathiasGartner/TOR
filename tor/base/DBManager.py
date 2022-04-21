@@ -133,3 +133,7 @@ def getAllClientStatistics():
     cursor.execute(query)
     data = cursor.fetchall()
     return data
+
+def setUserModeEnabled(clientId, enabled):
+    query = "UPDATE client SET AllowUserMode = %(userMode)s WHERE Id = %(clientId)s"
+    cursor.execute(query, {"userMode": enabled, "clientId": clientId})

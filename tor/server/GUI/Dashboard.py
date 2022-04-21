@@ -170,6 +170,7 @@ class ClientDetailView(QWidget):
 
         # Options
         self.chkUserMode = QCheckBox()
+        self.chkUserMode.clicked.connect(self.chkUserMode_clicked)
         self.chkIsActivated = QCheckBox()
 
         layClientOptions = QGridLayout()
@@ -226,6 +227,10 @@ class ClientDetailView(QWidget):
 
     def btnTurnOffLEDs_clicked(self):
         self.clientDetails.executeSSH(TORCommands.CLIENT_TURN_OFF_LEDS)
+
+    def chkUserMode_clicked(self, checked):
+        print("{}".format(checked))
+        DBManager.setUserModeEnabled(self.clientDetails.Id, checked)
 
     def refreshClientServiceStatus(self):
         self.clientDetails.getClientServiceStatus()
