@@ -43,13 +43,22 @@ log = logging.getLogger(__name__)
 
 class TORCommands:
     r'ssh -i {0} pi@{1} "sudo rm -r tor; sudo rm -r scripts"'
+    SERVER_SSH_CONNECTION = "ssh -i {0} pi@{1}"
     CLIENT_SSH_CONNECTION = "ssh -i {0} pi@{1}"
 
-    SERVER_SERVICE_START = "sudo systemctl start TORServer"
+    SERVER_SERVICE_START = "sudo systemctl daemon-reload; sudo systemctl restart TORServer"
     SERVER_SERVICE_STOP = "sudo systemctl stop TORServer"
 
-    CLIENT_SERVICE_START = "sudo systemctl start TORClient"
+    INTERACTIVE_START = "sudo systemctl daemon-reload; sudo systemctl restart TORInteractive"
+    INTERACTIVE_STOP = "sudo systemctl stop TORInteractive"
+
+    CLIENT_PING = "ping -i 0.2 -c 1 {}"
+
+    CLIENT_SERVICE_START = "sudo systemctl daemon-reload; sudo systemctl restart TORClient"
     CLIENT_SERVICE_STOP = "sudo systemctl stop TORClient"
+
+    CLIENT_TURN_ON_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 40 140 120 -b 20;"
+    CLIENT_TURN_OFF_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 0 0 0;"
 
 class TORIcons:
     APP_ICON = QIcon(os.path.join(os.path.dirname(__file__), r'../../resources/logo.png'))
@@ -67,9 +76,25 @@ class ClientDetails:
         self.Latin = None
         self.AllowUserMode = False
         self.ServiceStatus = None
+        self.CurrentJobCode = None
+        self.ResultAverage = -1
+        self.ResultStddev = -1
+        self.IsOnline = False
+
+    def IsBadStatistics(self):
+        maxStddevResult = 0.17
+        return self.ResultAverage < (3.5-maxStddevResult) or self.ResultAverage > (3.5+maxStddevResult) or self.ResultStddev > 1.77
 
     def getClientServiceStatus(self):
         self.ServiceStatus = "active" if self.Id % 2 == 0 else "inactive"
+
+    def checkOnlineStatus(self):
+        cmd = TORCommands.CLIENT_PING.format(self.IP)
+        val = os.system(cmd)
+        if val == 0:
+            self.IsOnline = True
+        else:
+            self.IsOnline = False
 
     def executeSSH(self, cmd):
         cmdSSH = TORCommands.CLIENT_SSH_CONNECTION.format(tsl.PATH_TO_SSH_KEY, self.IP)
@@ -83,6 +108,45 @@ class ClientDetailView(QWidget):
 
         self.clientDetails = None
 
+        # Status
+        self.lblIsOnline = QLabel()
+        self.lblCurrentJob = QLabel()
+        self.lblResultAverage = QLabel()
+        self.lblResultStddev = QLabel()
+
+        layClientStatus = QGridLayout()
+        layClientStatus.setContentsMargins(0, 0, 0, 0)
+        layClientStatus.addWidget(QLabel("online:"), 0, 0)
+        layClientStatus.addWidget(self.lblIsOnline, 0, 1)
+        layClientStatus.addWidget(QLabel("current job:"), 1, 0)
+        layClientStatus.addWidget(self.lblCurrentJob, 1, 1)
+        layClientStatus.addWidget(QLabel("avg result:"), 2, 0)
+        layClientStatus.addWidget(self.lblResultAverage, 2, 1)
+        layClientStatus.addWidget(QLabel("stddev:"), 3, 0)
+        layClientStatus.addWidget(self.lblResultStddev, 3, 1)
+
+        grpClientStatus = QGroupBox("Status")
+        grpClientStatus.setLayout(layClientStatus)
+
+        # LEDs
+        self.btnTurnOnLEDs = QPushButton()
+        self.btnTurnOnLEDs.setText("ON")
+        self.btnTurnOnLEDs.setFixedSize(22, 22)
+        self.btnTurnOnLEDs.clicked.connect(self.btnTurnOnLEDs_clicked)
+        self.btnTurnOffLEDs = QPushButton()
+        self.btnTurnOffLEDs.setText("OFF")
+        self.btnTurnOffLEDs.setFixedSize(22, 22)
+        self.btnTurnOffLEDs.clicked.connect(self.btnTurnOffLEDs_clicked)
+
+        layLEDs = QHBoxLayout()
+        layLEDs.setContentsMargins(0, 0, 0, 0)
+        layLEDs.addWidget(self.btnTurnOnLEDs)
+        layLEDs.addWidget(self.btnTurnOffLEDs)
+
+        grpLEDs = QGroupBox("LEDs")
+        grpLEDs.setLayout(layLEDs)
+
+        # Options
         self.chkUserMode = QCheckBox()
         self.chkIsActivated = QCheckBox()
 
@@ -93,9 +157,10 @@ class ClientDetailView(QWidget):
         layClientOptions.addWidget(QLabel("Client activated"), 1, 0)
         layClientOptions.addWidget(self.chkIsActivated, 1, 1)
 
-        grpClientOptions = QGroupBox("TORClient options")
+        grpClientOptions = QGroupBox("Options")
         grpClientOptions.setLayout(layClientOptions)
 
+        # TORCLient Service
         self.lblStatusClientService = QLabel()
         self.lblStatusClientService.setPixmap(TORIcons.LED_RED)
         self.btnStartClientService = QPushButton()
@@ -117,8 +182,11 @@ class ClientDetailView(QWidget):
         grpClientService = QGroupBox("TORClient service")
         grpClientService.setLayout(layClientService)
 
+        # Main Layout
         layMain = QVBoxLayout()
         layMain.setContentsMargins(0, 0, 0, 0)
+        layMain.addWidget(grpClientStatus)
+        layMain.addWidget(grpLEDs)
         layMain.addWidget(grpClientOptions)
         layMain.addWidget(grpClientService)
 
@@ -131,6 +199,12 @@ class ClientDetailView(QWidget):
         layMainGroup.setContentsMargins(0, 0, 0, 0)
         layMainGroup.addWidget(self.grpMainGroup)
         self.setLayout(layMainGroup)
+
+    def btnTurnOnLEDs_clicked(self):
+        self.clientDetails.executeSSH(TORCommands.CLIENT_TURN_ON_LEDS)
+
+    def btnTurnOffLEDs_clicked(self):
+        self.clientDetails.executeSSH(TORCommands.CLIENT_TURN_OFF_LEDS)
 
     def refreshClientServiceStatus(self):
         self.clientDetails.getClientServiceStatus()
@@ -211,9 +285,33 @@ class MainWindow(QMainWindow):
         self.btnRestoreSettings.setText("Restore Settings")
         self.btnRestoreSettings.clicked.connect(self.btnRestoreSettings_clicked)
 
+        self.btnStartTORServer = QPushButton()
+        self.btnStartTORServer.setText("Start TOR Server")
+        self.btnStartTORServer.clicked.connect(self.btnStartTORServer_clicked)
+
+        self.btnStopTORServer = QPushButton()
+        self.btnStopTORServer.setText("Stop TOR Server")
+        self.btnStopTORServer.clicked.connect(self.btnStopTORServer_clicked)
+
+        self.btnStartTORInteractive = QPushButton()
+        self.btnStartTORInteractive.setText("Start Visitor App")
+        self.btnStartTORInteractive.clicked.connect(self.btnStartTORInteractive_clicked)
+
+        self.btnStopTORInteractive = QPushButton()
+        self.btnStopTORInteractive.setText("Stop Visitor App")
+        self.btnStopTORInteractive.clicked.connect(self.btnStopTORInteractive_clicked)
+
         self.btnEndAllUserModes = QPushButton()
         self.btnEndAllUserModes.setText("End all visitor control")
         self.btnEndAllUserModes.clicked.connect(self.btnEndAllUserModes_clicked)
+
+        self.btnTurnOnLEDs = QPushButton()
+        self.btnTurnOnLEDs.setText("Turn on LEDs")
+        self.btnTurnOnLEDs.clicked.connect(self.btnTurnOnLEDs_clicked)
+
+        self.btnTurnOffLEDs = QPushButton()
+        self.btnTurnOffLEDs.setText("Turn off LEDs")
+        self.btnTurnOffLEDs.clicked.connect(self.btnTurnOffLEDs_clicked)
 
         layDashboardButtonsTop = QHBoxLayout()
         layDashboardButtonsTop.addWidget(self.btnStartAllClientService)
@@ -223,13 +321,24 @@ class MainWindow(QMainWindow):
         wdgDashboardButtonsTop = QWidget()
         wdgDashboardButtonsTop.setLayout(layDashboardButtonsTop)
 
+        layDashboardButtons2 = QHBoxLayout()
+        layDashboardButtons2.addWidget(self.btnTurnOnLEDs)
+        layDashboardButtons2.addWidget(self.btnTurnOffLEDs)
+        wdgDashboardButtons2 = QWidget()
+        wdgDashboardButtons2.setLayout(layDashboardButtons2)
+
         layDashboardButtonsBottom = QHBoxLayout()
+        layDashboardButtonsBottom.addWidget(self.btnStartTORServer)
+        layDashboardButtonsBottom.addWidget(self.btnStopTORServer)
+        layDashboardButtonsBottom.addWidget(self.btnStartTORInteractive)
+        layDashboardButtonsBottom.addWidget(self.btnStopTORInteractive)
         layDashboardButtonsBottom.addWidget(self.btnEndAllUserModes)
         wdgDashboardButtonsBottom = QWidget()
         wdgDashboardButtonsBottom.setLayout(layDashboardButtonsBottom)
 
         layDashboard = QVBoxLayout()
         layDashboard.addWidget(wdgDashboardButtonsTop)
+        layDashboard.addWidget(wdgDashboardButtons2)
         layDashboard.addWidget(wdgClientDetails)
         layDashboard.addWidget(wdgDashboardButtonsBottom)
 
@@ -263,10 +372,43 @@ class MainWindow(QMainWindow):
     ### methods ###
     ###############
 
+    def executeCommandOnTORServer(self, cmd):
+        cmdSSH = TORCommands.SERVER_SSH_CONNECTION.format(tsl.PATH_TO_SSH_KEY, tsl.SERVER_IP)
+        cmdFull = cmdSSH + " \"" + cmd + "\""
+        print("EXECUTE: {}".format(cmdFull))
+        window.addStatusText("<font color=\"Red\">{}</font>".format(cmdFull))
+
+    def executeCommandOnAllClients(self, cmd):
+        for c in self.cds:
+            c.executeSSH(cmd)
+
     def initSettings(self):
+        jobs = DBManager.getCurrentJobs()
+        for j in jobs:
+            for c in self.cds:
+                if c.Id == j.Id:
+                    c.CurrentJobCode = j.JobCode
+        results = DBManager.getAllClientStatistics()
+        for r in results:
+            for c in self.cds:
+                if c.Id == r.Id:
+                    c.ResultAverage = r.ResultAverage
+                    c.ResultStddev = r.ResultStddev
         for cdv in self.cdvs:
-            cdv.refreshClientServiceStatus()
+            cdv.lblCurrentJob.setText(cdv.clientDetails.CurrentJobCode)
+            cdv.lblResultAverage.setText("{}".format(cdv.clientDetails.ResultAverage))
+            cdv.lblResultStddev.setText("+-{}".format(cdv.clientDetails.ResultStddev))
+            if cdv.clientDetails.IsBadStatistics():
+                cdv.lblResultAverage.setStyleSheet("QLabel { color: \"red\"; }")
+                cdv.lblResultStddev.setStyleSheet("QLabel { color: \"red\"; }")
+        for cdv in self.cdvs:
             cdv.chkUserMode.setChecked(cdv.clientDetails.AllowUserMode)
+            cdv.clientDetails.checkOnlineStatus()
+            if cdv.clientDetails.IsOnline:
+                cdv.lblIsOnline.setPixmap(TORIcons.LED_GREEN)
+                cdv.refreshClientServiceStatus()
+            else:
+                cdv.lblIsOnline.setPixmap(TORIcons.LED_RED)
 
     def addSpacerLineToStatusText(self):
         self.txtStatus.appendPlainText("----------------------")
@@ -297,8 +439,32 @@ class MainWindow(QMainWindow):
     def btnRestoreSettings_clicked(self):
         print("restored")
 
+    def btnStartTORServer_clicked(self):
+        self.executeCommandOnTORServer(TORCommands.SERVER_SERVICE_START)
+        print("start TORServer")
+
+    def btnStopTORServer_clicked(self):
+        self.executeCommandOnTORServer(TORCommands.SERVER_SERVICE_STOP)
+        print("stop TORServer")
+
+    def btnStartTORInteractive_clicked(self):
+        self.executeCommandOnTORServer(TORCommands.INTERACTIVE_START)
+        print("start tor interactive")
+
+    def btnStopTORInteractive_clicked(self):
+        self.executeCommandOnTORServer(TORCommands.INTERACTIVE_STOP)
+        print("stop tor interactive")
+
     def btnEndAllUserModes_clicked(self):
         print("ended all user modes")
+
+    def btnTurnOnLEDs_clicked(self):
+        self.executeCommandOnAllClients(TORCommands.CLIENT_TURN_ON_LEDS)
+        print("turn on LEDs")
+
+    def btnTurnOffLEDs_clicked(self):
+        self.executeCommandOnAllClients(TORCommands.CLIENT_TURN_OFF_LEDS)
+        print("turn off LEDs")
 
 
 ###################
