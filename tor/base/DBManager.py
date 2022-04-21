@@ -54,6 +54,16 @@ def getNextJobForClientId(clientId):
         data.ExecuteAt = None
     return data
 
+def getCurrentJobs():
+    query = """ WITH ranked_jobs AS (
+                    SELECT j.ClientId, j.JobCode, ROW_NUMBER() OVER (PARTITION BY ClientId ORDER BY id DESC) AS rj
+                    FROM jobqueue AS j
+                )
+                SELECT c.Id, j.JobCode FROM ranked_jobs j LEFT JOIN client c ON c.ID = j.ClientId WHERE rj = 1 AND c.Position IS NOT NULL"""
+    cursor.execute(query)
+    data = cursor.fetchall()
+    return data
+
 def getMeshpoints(clientId):
     query = "SELECT Type, No, X, Y, Z FROM meshpoints WHERE ClientId = %(clientId)s ORDER BY Type, No"
     cursor.execute(query, { "clientId" : clientId })
@@ -107,3 +117,19 @@ def exitUserMode(clientId):
 def setCurrentStateForUserMode(clientId, state):
     query = "UPDATE client SET CurrentState = %(state)s WHERE Id = %(clientId)s"
     cursor.execute(query, { "state": state, "clientId" : clientId })
+
+def getAllClients():
+    query = "SELECT Id, IP, Material, Position, Latin, AllowUserMode FROM client WHERE Position IS NOT NULL ORDER BY Position"
+    cursor.execute(query)
+    data = cursor.fetchall()
+    return data
+
+def getAllClientStatistics():
+    query = """ WITH ranked_results AS (
+                    SELECT d.ClientId, d.Result, ROW_NUMBER() OVER (PARTITION BY ClientId ORDER BY id DESC) AS rr
+                    FROM diceresult AS d
+                )
+                SELECT c.Id, AVG(r.Result) AS ResultAverage, STDDEV(r.Result) AS ResultStddev FROM ranked_results r LEFT JOIN client c ON c.ID = r.ClientId WHERE rr < 100 AND c.Position IS NOT NULL GROUP BY r.ClientId"""
+    cursor.execute(query)
+    data = cursor.fetchall()
+    return data
