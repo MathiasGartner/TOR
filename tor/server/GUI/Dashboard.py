@@ -10,7 +10,27 @@ from PyQt5.QtWidgets import QSizePolicy, QApplication, QMainWindow, QPushButton,
 from PyQt5.QtGui import QPixmap, QIcon, QPainter
 
 app = QApplication(sys.argv)
-app.setStyleSheet("* { font-size: 11px } QGroupBox { font-weight: bold; }")
+app.setStyleSheet("""
+        * 
+        { 
+            font-size: 11px 
+        } 
+
+        QGroupBox 
+        { 
+            font-weight: bold; 
+        }
+
+        QGroupBox#ClientDetails 
+        { 
+            font-size: 13px;
+        }
+
+        QGroupBox#ClientGroup 
+        { 
+            font-weight: bold; font-size: 16px; 
+        } 
+    """)
 window = None
 
 class WaitCursor(object):
@@ -89,6 +109,8 @@ class ClientDetails:
         self.ServiceStatus = "active" if self.Id % 2 == 0 else "inactive"
 
     def checkOnlineStatus(self):
+        self.IsOnline = True
+        return
         cmd = TORCommands.CLIENT_PING.format(self.IP)
         val = os.system(cmd)
         if val == 0:
@@ -192,7 +214,6 @@ class ClientDetailView(QWidget):
 
         self.grpMainGroup = QGroupBox()
         self.grpMainGroup.setObjectName("ClientDetails")
-        self.grpMainGroup.setStyleSheet(" QGroupBox#ClientDetails { font-size: 13px; } ")
         self.grpMainGroup.setTitle("Client #")
         self.grpMainGroup.setLayout(layMain)
         layMainGroup = QVBoxLayout()
@@ -238,7 +259,6 @@ class MainWindow(QMainWindow):
         grpClientDetailsRegions = [QGroupBox() for i in range(3)]
         for g in grpClientDetailsRegions:
             g.setObjectName("ClientGroup")
-            g.setStyleSheet(" QGroupBox#ClientGroup { font-weight: bold; font-size: 16px; } ")
         grpClientDetailsRegions[0].setTitle("Front")
         grpClientDetailsRegions[1].setTitle("Middle")
         grpClientDetailsRegions[2].setTitle("Back")
@@ -401,6 +421,9 @@ class MainWindow(QMainWindow):
             if cdv.clientDetails.IsBadStatistics():
                 cdv.lblResultAverage.setStyleSheet("QLabel { color: \"red\"; }")
                 cdv.lblResultStddev.setStyleSheet("QLabel { color: \"red\"; }")
+            else:
+                cdv.lblResultAverage.setStyleSheet("")
+                cdv.lblResultStddev.setStyleSheet("")
         for cdv in self.cdvs:
             cdv.chkUserMode.setChecked(cdv.clientDetails.AllowUserMode)
             cdv.clientDetails.checkOnlineStatus()
