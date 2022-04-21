@@ -231,10 +231,11 @@ class ClientDetailView(QWidget):
         self.clientDetails.executeSSH(TORCommands.CLIENT_TURN_OFF_LEDS)
 
     def chkUserMode_clicked(self, checked):
-        print("clicked")
+        self.clientDetails.AllowUserMode = checked
         DBManager.setUserModeEnabled(self.clientDetails.Id, checked)
 
     def chkIsActivated_clicked(self, checked):
+        self.clientDetails.IsActive = checked
         DBManager.setClientIsActive(self.clientDetails.Id, checked)
 
     def refreshClientServiceStatus(self):
@@ -413,9 +414,11 @@ class MainWindow(QMainWindow):
         print("EXECUTE: {}".format(cmdFull))
         window.addStatusText("<font color=\"Red\">{}</font>".format(cmdFull))
 
-    def executeCommandOnAllClients(self, cmd):
+    def executeCommandOnAllClients(self, cmd, onlyActive=False):
         for c in self.cds:
-            c.executeSSH(cmd)
+            if c.IsOnline:
+                if not onlyActive or c.IsActive:
+                    c.executeSSH(cmd)
 
     def initDashboard(self):
         for cdv in self.cdvs:
@@ -476,15 +479,13 @@ class MainWindow(QMainWindow):
         app.processEvents()
 
     def btnStartAllClientService_clicked(self):
-        for cd in self.cds:
-            cd.executeSSH(TORCommands.CLIENT_SERVICE_START)
-            cd.Id *= 2
+        print("start")
+        self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_START, onlyActive=True)
         self.initSettings()
 
     def btnStopAllClientService_clicked(self):
-        for cd in self.cds:
-            cd.executeSSH(TORCommands.CLIENT_SERVICE_STOP)
-            cd.Id /= 2
+        print("stop")
+        self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_STOP)
         self.initSettings()
 
     def btnSaveSettings_clicked(self):
