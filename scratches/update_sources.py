@@ -15,7 +15,7 @@ ips = []
 positions = range(1, 28)
 #positions = [10, 11, 12, 13, 14, 15]
 #positions = [1, 2, 3]
-#positions = [21]
+positions = [4]
 
 #from itertools import chain
 #positions = chain(range(1, 21), range(23, 28))
@@ -34,9 +34,9 @@ cmd_new_shell = "invoke-expression 'cmd /c start powershell -Command {{ {0} }}'"
 #### TOR ####
 filename = "update_tor.cmd"
 cmd_delete = r'ssh -i {0} pi@{1} "sudo rm -r tor; sudo rm -r scripts"'
-cmd_copy = r"scp -i {0} -r " + tsl.PATH_TO_TOR_SOURCE + r"\TOR\tor pi@{1}:/home/pi"
+cmd_copy = r"scp -i {0} -r " + tsl.PATH_TO_TOR_SOURCE + r"/TOR/tor pi@{1}:/home/pi"
 #cmd_delete_service = r'ssh -i {0} pi@{1} "sudo rm -r scripts"'
-cmd_copy_service = r"scp -i {0} -r " + tsl.PATH_TO_TOR_SCRIPTS + r"\TOR\scripts pi@{1}:/home/pi"
+cmd_copy_service = r"scp -i {0} -r " + tsl.PATH_TO_TOR_SCRIPTS + r"/TOR/scripts pi@{1}:/home/pi"
 #cmd_copy_service_system = r'ssh -i {0} pi@{1} "sudo cp /home/pi/scripts/TORClient.service /etc/systemd/system/TORClient.service"'
 #cmd_chmod_marlin = r'ssh -i {0} pi@{1} "sudo chmod +x /home/pi/scripts/flashTORMarlin.sh"'
 #cmd_chmod_temp = r'ssh -i {0} pi@{1} "sudo chmod +x /home/pi/scripts/temperature.sh"'

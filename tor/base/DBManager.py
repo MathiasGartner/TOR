@@ -107,3 +107,9 @@ def exitUserMode(clientId):
 def setCurrentStateForUserMode(clientId, state):
     query = "UPDATE client SET CurrentState = %(state)s WHERE Id = %(clientId)s"
     cursor.execute(query, { "state": state, "clientId" : clientId })
+
+def getAllClients():
+    query = "SELECT Id, IP, Material, Position, Latin, AllowUserMode FROM client WHERE Position IS NOT NULL ORDER BY Position"
+    cursor.execute(query)
+    data = cursor.fetchall()
+    return data
