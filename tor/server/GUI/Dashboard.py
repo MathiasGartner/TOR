@@ -5,7 +5,7 @@ import sys
 
 from functools import partial
 
-from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox, QCheckBox
 from PyQt5.QtGui import QPixmap, QIcon, QPainter
 
@@ -95,6 +95,7 @@ class ClientDetails:
         self.Position = -1
         self.Latin = None
         self.AllowUserMode = False
+        self.IsActive = False
         self.ServiceStatus = None
         self.CurrentJobCode = None
         self.ResultAverage = -1
@@ -172,6 +173,7 @@ class ClientDetailView(QWidget):
         self.chkUserMode = QCheckBox()
         self.chkUserMode.clicked.connect(self.chkUserMode_clicked)
         self.chkIsActivated = QCheckBox()
+        self.chkIsActivated.clicked.connect(self.chkIsActivated_clicked)
 
         layClientOptions = QGridLayout()
         layClientOptions.setContentsMargins(0, 0, 0, 0)
@@ -229,8 +231,11 @@ class ClientDetailView(QWidget):
         self.clientDetails.executeSSH(TORCommands.CLIENT_TURN_OFF_LEDS)
 
     def chkUserMode_clicked(self, checked):
-        print("{}".format(checked))
+        print("clicked")
         DBManager.setUserModeEnabled(self.clientDetails.Id, checked)
+
+    def chkIsActivated_clicked(self, checked):
+        DBManager.setClientIsActive(self.clientDetails.Id, checked)
 
     def refreshClientServiceStatus(self):
         self.clientDetails.getClientServiceStatus()
@@ -284,6 +289,7 @@ class MainWindow(QMainWindow):
                     cd.Position = c.Position
                     cd.Latin = c.Latin
                     cd.AllowUserMode = c.AllowUserMode
+                    cd.IsActive = c.IsActive
                     cdv.clientDetails = cd
                     cdv.grpMainGroup.setTitle("#{}: {}...".format(cd.Position, cd.Latin[0:8]))
                     layClientDetailsRegions[i].addWidget(cdv, 3*i + j, k)
@@ -391,7 +397,11 @@ class MainWindow(QMainWindow):
         wdgMain.setLayout(layMain)
         self.setCentralWidget(wdgMain)
 
-        self.initSettings()
+        self.initDashboard()
+        timerFetchData = QTimer(self)
+        timerFetchData.timeout.connect(self.updateDashboard)
+        timerFetchData.start(10 * 1000)
+        self.updateDashboard()
 
     ###############
     ### methods ###
@@ -407,7 +417,12 @@ class MainWindow(QMainWindow):
         for c in self.cds:
             c.executeSSH(cmd)
 
-    def initSettings(self):
+    def initDashboard(self):
+        for cdv in self.cdvs:
+            cdv.lblIsOnline.setToolTip("Id: {}\nIP: {}\nMaterial: {}\nLatin name: {}".format(cdv.clientDetails.Id, cdv.clientDetails.IP, cdv.clientDetails.Material, cdv.clientDetails.Latin))
+
+    def updateDashboard(self):
+        print("initSettings")
         jobs = DBManager.getCurrentJobs()
         for j in jobs:
             for c in self.cds:
@@ -419,6 +434,16 @@ class MainWindow(QMainWindow):
                 if c.Id == r.Id:
                     c.ResultAverage = r.ResultAverage
                     c.ResultStddev = r.ResultStddev
+        data = DBManager.getAllClients()
+        for d in data:
+            for c in self.cds:
+                if c.Id == d.Id:
+                    c.IP = d.IP
+                    c.Material = d.Material
+                    c.Position = d.Position
+                    c.Latin = d.Latin
+                    c.AllowUserMode = d.AllowUserMode
+                    c.IsActive = d.IsActive
         for cdv in self.cdvs:
             cdv.lblCurrentJob.setText(cdv.clientDetails.CurrentJobCode)
             cdv.lblResultAverage.setText("{}".format(cdv.clientDetails.ResultAverage))
@@ -431,6 +456,7 @@ class MainWindow(QMainWindow):
                 cdv.lblResultStddev.setStyleSheet("")
         for cdv in self.cdvs:
             cdv.chkUserMode.setChecked(cdv.clientDetails.AllowUserMode)
+            cdv.chkIsActivated.setChecked(cdv.clientDetails.IsActive)
             cdv.clientDetails.checkOnlineStatus()
             if cdv.clientDetails.IsOnline:
                 cdv.lblIsOnline.setPixmap(TORIcons.LED_GREEN)

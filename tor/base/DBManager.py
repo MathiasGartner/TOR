@@ -119,7 +119,7 @@ def setCurrentStateForUserMode(clientId, state):
     cursor.execute(query, { "state": state, "clientId" : clientId })
 
 def getAllClients():
-    query = "SELECT Id, IP, Material, Position, Latin, AllowUserMode FROM client WHERE Position IS NOT NULL ORDER BY Position"
+    query = "SELECT Id, IP, Material, Position, Latin, AllowUserMode, IsActive FROM client WHERE Position IS NOT NULL ORDER BY Position"
     cursor.execute(query)
     data = cursor.fetchall()
     return data
@@ -137,3 +137,7 @@ def getAllClientStatistics():
 def setUserModeEnabled(clientId, enabled):
     query = "UPDATE client SET AllowUserMode = %(userMode)s WHERE Id = %(clientId)s"
     cursor.execute(query, {"userMode": enabled, "clientId": clientId})
+
+def setClientIsActive(clientId, active):
+    query = "UPDATE client SET IsActive = %(active)s WHERE Id = %(clientId)s"
+    cursor.execute(query, {"active": active, "clientId": clientId})
