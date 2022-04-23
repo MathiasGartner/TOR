@@ -1,4 +1,7 @@
+import concurrent.futures
 import logging
+import shlex
+import subprocess
 import time
 import os
 import sys
@@ -34,17 +37,32 @@ app.setStyleSheet("""
 window = None
 
 class WaitCursor(object):
+    isActive = False
+
+    def __init__(self):
+        self.DoNothingBecauseAlreadyActive = False
+
     def __enter__(self):
+        if WaitCursor.isActive:
+            #print("waitCursor is active - do nothing")
+            self.DoNothingBecauseAlreadyActive = True
+            return
+        WaitCursor.isActive = True
         QApplication.setOverrideCursor(Qt.WaitCursor)
         if window is not None:
             window.setEnabled(False)
+            window.IsBusy = True
         app.processEvents()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.DoNothingBecauseAlreadyActive:
+            return
         QApplication.restoreOverrideCursor()
         if window is not None:
             window.setEnabled(True)
+            window.IsBusy = False
         app.processEvents()
+        WaitCursor.isActive = False
 
 ###################
 ### TOR imports ###
@@ -54,12 +72,35 @@ from tor.base import DBManager
 import tor.TORSettingsLocal as tsl
 import tor.TORSettings as ts
 
+#################
+### Constants ###
+#################
+
+THREAD_POOL_SIZE = 27
+DEFAULT_TIMEOUT = 3
+DEFAULT_TIMEOUT_SERVER = 3
+DEFAULT_TIMEOUT_SSH = 7
+DEFAULT_TIMEOUT_PING = 1
+
 ###############
 ### logging ###
 ###############
 
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=ts.SERVER_LOG_LEVEL)
 log = logging.getLogger(__name__)
+
+def executeCommand(cmd, timeout=DEFAULT_TIMEOUT):
+    cmdList = shlex.split(cmd)
+    #print(cmd, cmdList)
+    p = subprocess.Popen(cmd)
+    try:
+        p.wait(timeout)
+    except subprocess.TimeoutExpired:
+        p.kill()
+        print("KILLED: {}".format(cmd))
+    val = p.returncode
+    #print("val: {}".format(val))
+    return val
 
 class TORCommands:
     r'ssh -i {0} pi@{1} "sudo rm -r tor; sudo rm -r scripts"'
@@ -72,10 +113,12 @@ class TORCommands:
     INTERACTIVE_START = "sudo systemctl daemon-reload; sudo systemctl restart TORInteractive"
     INTERACTIVE_STOP = "sudo systemctl stop TORInteractive"
 
-    CLIENT_PING = "ping -i 0.2 -c 1 {}"
+    #CLIENT_PING = "ping -i 0.2 -c 1 {}"
+    CLIENT_PING = "ping -i 1 {}"
 
     CLIENT_SERVICE_START = "sudo systemctl daemon-reload; sudo systemctl restart TORClient"
     CLIENT_SERVICE_STOP = "sudo systemctl stop TORClient"
+    CLIENT_SERVICE_STATUS = "systemctl is-active --quiet TORClient"
 
     CLIENT_TURN_ON_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 40 140 120 -b 20;"
     CLIENT_TURN_OFF_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 0 0 0;"
@@ -96,8 +139,9 @@ class ClientDetails:
         self.Latin = None
         self.AllowUserMode = False
         self.IsActive = False
-        self.ServiceStatus = None
+        self.ServiceStatus = "unknown"
         self.CurrentJobCode = None
+        self.CurrentJobParameters = None
         self.ResultAverage = -1
         self.ResultStddev = -1
         self.IsOnline = False
@@ -107,23 +151,51 @@ class ClientDetails:
         return self.ResultAverage < (3.5-maxStddevResult) or self.ResultAverage > (3.5+maxStddevResult) or self.ResultStddev > 1.77
 
     def getClientServiceStatus(self):
-        self.ServiceStatus = "active" if self.Id % 2 == 0 else "inactive"
+        self.ServiceStatus = "unknown"
+        if self.IsOnline:
+            val = self.executeSSH(TORCommands.CLIENT_SERVICE_STATUS, useWaitCursor=False)
+            if val == 0:
+                self.ServiceStatus = "active"
+            else:
+                self.ServiceStatus = "inactive"
 
     def checkOnlineStatus(self):
-        self.IsOnline = True
-        return
+        #self.IsOnline = True
+        #return
+        if self.Id != 13 and self.Id != 27 and self.Id != 25: # and self.Id != 10:
+            #self.IsOnline = True
+            self.IsOnline = False
+            return
+        else:
+            self.IsOnline = True
+            return
         cmd = TORCommands.CLIENT_PING.format(self.IP)
-        val = os.system(cmd)
+        #val = os.system(cmd)
+        val = executeCommand(cmd, timeout=DEFAULT_TIMEOUT_PING)
         if val == 0:
             self.IsOnline = True
         else:
             self.IsOnline = False
 
-    def executeSSH(self, cmd):
+    def __executeSSH(self, cmd, timeout=DEFAULT_TIMEOUT_SSH):
         cmdSSH = TORCommands.CLIENT_SSH_CONNECTION.format(tsl.PATH_TO_SSH_KEY, self.IP)
         cmdFull = cmdSSH + " \"" + cmd + "\""
         print("EXECUTE: {}".format(cmdFull))
-        window.addStatusText("<font color=\"Blue\">{}</font>".format(cmdFull))
+        if window is not None:
+            window.addStatusText("<font color=\"Blue\">{}</font>".format(cmdFull))
+        #val = os.system(cmdFull)
+        val = executeCommand(cmdFull, timeout=timeout)
+        #print("FINISHE: {}".format(cmdFull))
+        return val
+
+    def executeSSH(self, cmd, timeout=DEFAULT_TIMEOUT_SSH, useWaitCursor=True):
+        val = -1
+        if useWaitCursor:
+            with WaitCursor():
+                val = self.__executeSSH(cmd, timeout=timeout)
+        else:
+            val = self.__executeSSH(cmd, timeout=timeout)
+        return val
 
 class ClientDetailView(QWidget):
     def __init__(self):
@@ -145,8 +217,8 @@ class ClientDetailView(QWidget):
         layClientStatus.addWidget(self.lblCurrentJob, 1, 1)
         layClientStatus.addWidget(QLabel("avg result:"), 2, 0)
         layClientStatus.addWidget(self.lblResultAverage, 2, 1)
-        layClientStatus.addWidget(QLabel("stddev:"), 3, 0)
-        layClientStatus.addWidget(self.lblResultStddev, 3, 1)
+        #layClientStatus.addWidget(QLabel("stddev:"), 3, 0)
+        #layClientStatus.addWidget(self.lblResultStddev, 3, 1)
 
         grpClientStatus = QGroupBox("Status")
         grpClientStatus.setLayout(layClientStatus)
@@ -188,6 +260,7 @@ class ClientDetailView(QWidget):
         # TORCLient Service
         self.lblStatusClientService = QLabel()
         self.lblStatusClientService.setPixmap(TORIcons.LED_RED)
+        self.lblStatusClientService.setToolTip("unknown")
         self.btnStartClientService = QPushButton()
         self.btnStartClientService.setText("Start")
         #self.btnStartClientService.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
@@ -239,7 +312,6 @@ class ClientDetailView(QWidget):
         DBManager.setClientIsActive(self.clientDetails.Id, checked)
 
     def refreshClientServiceStatus(self):
-        self.clientDetails.getClientServiceStatus()
         self.lblStatusClientService.setToolTip(self.clientDetails.ServiceStatus)
         if self.clientDetails.ServiceStatus == "active":
             self.lblStatusClientService.setPixmap(TORIcons.LED_GREEN)
@@ -249,15 +321,20 @@ class ClientDetailView(QWidget):
 
     def btnStartClientService_clicked(self):
         self.clientDetails.executeSSH(TORCommands.CLIENT_SERVICE_START)
+        self.clientDetails.getClientServiceStatus()
         self.refreshClientServiceStatus()
 
     def btnStopClientService_clicked(self):
         self.clientDetails.executeSSH(TORCommands.CLIENT_SERVICE_STOP)
+        self.clientDetails.getClientServiceStatus()
         self.refreshClientServiceStatus()
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+
+        self.IsBusy = False
+        self.IsUpdating = False
 
         self.setWindowIcon(TORIcons.APP_ICON)
         self.setWindowTitle("TOR")
@@ -386,6 +463,7 @@ class MainWindow(QMainWindow):
         self.tabDashboard = QTabWidget()
         self.tabDashboard.addTab(wdgDashboard, "Dashboard")
         self.tabDashboard.addTab(wdgTORServer, "TORServer")
+        self.dashboardTabIndex = 0
 
         self.txtStatus = QPlainTextEdit()
         self.txtStatus.setReadOnly(True)
@@ -399,38 +477,58 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(wdgMain)
 
         self.initDashboard()
-        timerFetchData = QTimer(self)
-        timerFetchData.timeout.connect(self.updateDashboard)
-        timerFetchData.start(10 * 1000)
         self.updateDashboard()
+        timerFetchData = QTimer(self)
+        timerFetchData.timeout.connect(self.updateDashboardFromTimer)
+        timerFetchData.start(30 * 1000)
 
     ###############
     ### methods ###
     ###############
 
-    def executeCommandOnTORServer(self, cmd):
-        cmdSSH = TORCommands.SERVER_SSH_CONNECTION.format(tsl.PATH_TO_SSH_KEY, tsl.SERVER_IP)
-        cmdFull = cmdSSH + " \"" + cmd + "\""
-        print("EXECUTE: {}".format(cmdFull))
-        window.addStatusText("<font color=\"Red\">{}</font>".format(cmdFull))
+    def executeCommandOnTORServer(self, cmd, timeout=DEFAULT_TIMEOUT_SERVER):
+        with WaitCursor():
+            cmdSSH = TORCommands.SERVER_SSH_CONNECTION.format(tsl.PATH_TO_SSH_KEY, tsl.SERVER_IP)
+            cmdFull = cmdSSH + " \"" + cmd + "\""
+            print("SERVEXE: {}".format(cmdFull))
+            if window is not None:
+                window.addStatusText("<font color=\"Red\">{}</font>".format(cmdFull))
+            val = self.__executeSSH(cmd, timeout=timeout)
+        return val
 
-    def executeCommandOnAllClients(self, cmd, onlyActive=False):
-        for c in self.cds:
-            if c.IsOnline:
-                if not onlyActive or c.IsActive:
-                    c.executeSSH(cmd)
+    def __executeCommandOnClient(self, client, cmd, timeout=DEFAULT_TIMEOUT_SSH, onlyActive=False):
+        if client.IsOnline:
+            if not onlyActive or client.IsActive:
+                client.executeSSH(cmd, timeout=timeout)
+
+    def executeCommandOnAllClients(self, cmd, timeout=DEFAULT_TIMEOUT_SSH, onlyActive=False):
+        executor = concurrent.futures.ThreadPoolExecutor(THREAD_POOL_SIZE)
+        futures = [executor.submit(self.__executeCommandOnClient, c, cmd, timeout, onlyActive) for c in self.cds]
+        concurrent.futures.wait(futures)
+
+    def checkOnlineAndServiceStatusForClient(self, client):
+        client.checkOnlineStatus()
+        client.getClientServiceStatus()
 
     def initDashboard(self):
         for cdv in self.cdvs:
             cdv.lblIsOnline.setToolTip("Id: {}\nIP: {}\nMaterial: {}\nLatin name: {}".format(cdv.clientDetails.Id, cdv.clientDetails.IP, cdv.clientDetails.Material, cdv.clientDetails.Latin))
 
+    def updateDashboardFromTimer(self):
+        if not self.IsBusy and self.tabDashboard.currentIndex() == self.dashboardTabIndex:
+            self.updateDashboard()
+
     def updateDashboard(self):
+        if self.IsUpdating:
+            return
+        self.IsUpdating = True
         print("updateDashboard")
         jobs = DBManager.getCurrentJobs()
         for j in jobs:
             for c in self.cds:
                 if c.Id == j.Id:
                     c.CurrentJobCode = j.JobCode
+                    c.CurrentJobParameters = j.JobParameters
         results = DBManager.getAllClientStatistics()
         for r in results:
             for c in self.cds:
@@ -448,8 +546,8 @@ class MainWindow(QMainWindow):
                     c.AllowUserMode = d.AllowUserMode
                     c.IsActive = d.IsActive
         for cdv in self.cdvs:
-            cdv.lblCurrentJob.setText(cdv.clientDetails.CurrentJobCode)
-            cdv.lblResultAverage.setText("{}".format(cdv.clientDetails.ResultAverage))
+            cdv.lblCurrentJob.setText("{} {}".format(cdv.clientDetails.CurrentJobCode, cdv.clientDetails.CurrentJobParameters))
+            cdv.lblResultAverage.setText("{:.2f}±{:.2f}".format(cdv.clientDetails.ResultAverage, cdv.clientDetails.ResultStddev))
             cdv.lblResultStddev.setText("+-{}".format(cdv.clientDetails.ResultStddev))
             if cdv.clientDetails.IsBadStatistics():
                 cdv.lblResultAverage.setStyleSheet("QLabel { color: \"red\"; }")
@@ -457,15 +555,21 @@ class MainWindow(QMainWindow):
             else:
                 cdv.lblResultAverage.setStyleSheet("")
                 cdv.lblResultStddev.setStyleSheet("")
+
+        executor = concurrent.futures.ThreadPoolExecutor(THREAD_POOL_SIZE)
+        futures = [executor.submit(self.checkOnlineAndServiceStatusForClient, cdv.clientDetails) for cdv in self.cdvs]
+        concurrent.futures.wait(futures)
+
         for cdv in self.cdvs:
             cdv.chkUserMode.setChecked(cdv.clientDetails.AllowUserMode)
             cdv.chkIsActivated.setChecked(cdv.clientDetails.IsActive)
-            cdv.clientDetails.checkOnlineStatus()
+            cdv.refreshClientServiceStatus()
             if cdv.clientDetails.IsOnline:
                 cdv.lblIsOnline.setPixmap(TORIcons.LED_GREEN)
-                cdv.refreshClientServiceStatus()
             else:
                 cdv.lblIsOnline.setPixmap(TORIcons.LED_RED)
+        print("updateDashboard finished")
+        self.IsUpdating = False
 
     def addSpacerLineToStatusText(self):
         self.txtStatus.appendPlainText("----------------------")
@@ -480,12 +584,14 @@ class MainWindow(QMainWindow):
 
     def btnStartAllClientService_clicked(self):
         print("start")
-        self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_START, onlyActive=True)
+        with WaitCursor():
+            self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_START, onlyActive=True)
         self.updateDashboard()
 
     def btnStopAllClientService_clicked(self):
         print("stop")
-        self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_STOP)
+        with WaitCursor():
+            self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_STOP)
         self.updateDashboard()
 
     def btnSaveSettings_clicked(self):

@@ -219,9 +219,9 @@ elif mode == 19: # move forever between two positions
             mm.moveToPos(pos, segmented=True)
             mm.waitForMovementFinished(0.5)
         movementCount += 1
-        if movementCount % 500 == 0:
+        if movementCount % 5 == 0:
             mm.doHoming()
-        if movementCount % 100 == 0:
+        if movementCount % 20 == 0:
             print("movementCount: {}".format(movementCount))
 
 if mm is not None:

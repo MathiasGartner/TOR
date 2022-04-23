@@ -56,10 +56,10 @@ def getNextJobForClientId(clientId):
 
 def getCurrentJobs():
     query = """ WITH ranked_jobs AS (
-                    SELECT j.ClientId, j.JobCode, ROW_NUMBER() OVER (PARTITION BY ClientId ORDER BY id DESC) AS rj
+                    SELECT j.ClientId, j.JobCode, j.JobParameters, ROW_NUMBER() OVER (PARTITION BY ClientId ORDER BY id DESC) AS rj
                     FROM jobqueue AS j
                 )
-                SELECT c.Id, j.JobCode FROM ranked_jobs j LEFT JOIN client c ON c.ID = j.ClientId WHERE rj = 1 AND c.Position IS NOT NULL"""
+                SELECT c.Id, j.JobCode, j.JobParameters FROM ranked_jobs j LEFT JOIN client c ON c.ID = j.ClientId WHERE rj = 1 AND c.Position IS NOT NULL"""
     cursor.execute(query)
     data = cursor.fetchall()
     return data

@@ -163,8 +163,8 @@ class CalibrationPoint(QWidget):
         layMain.addWidget(self.txtCoordY, 1, 1)
         layMain.addWidget(QLabel("Z"), 2, 0)
         layMain.addWidget(self.txtCoordZ, 2, 1)
-        layMain.addWidget(self.btnTestPoint, 3, 0)
-        layMain.addWidget(self.btnMoveToCenter, 3, 1)
+        layMain.addWidget(self.btnMoveToCenter, 3, 0)
+        layMain.addWidget(self.btnTestPoint, 3, 1)
 
         self.grpMainGroup = QGroupBox()
         self.grpMainGroup.setTitle("Point #")
