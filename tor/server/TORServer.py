@@ -51,6 +51,12 @@ def handleRequest(conn):
             elif "E" in request: #error on client
                 log.warning("Error {} @ Client {}".format(request["E"], clientId))
                 log.warning(request["MESSAGE"])
+                DBManager.logClientAction(clientId, "ERROR", request["E"], request["MESSAGE"])
+                NetworkUtils.sendOK(conn)
+            elif "MSG" in request: # message for logging
+                log.info("Message {} @ Client {}".format(request["MSG"], clientId))
+                log.warning(request["MESSAGE"])
+                DBManager.logClientAction(clientId, "INFO", request["MSG"], request["MESSAGE"])
                 NetworkUtils.sendOK(conn)
             elif "J" in request: #client asks for job
                 job = DBManager.getNextJobForClientId(clientId)

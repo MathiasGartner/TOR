@@ -106,6 +106,7 @@ def run():
             runsSinceLastHoming = 0
         elif countNotFound >= cs.HOME_AFTER_N_FAILS:
             log.info("count not found: {} -> do homing...".format(countNotFound))
+            cm.sendDieResultNotFoundNTimes(cs.HOME_AFTER_N_FAILS)
             mm.doHoming()
             mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
             mr.searchForDie()
@@ -114,6 +115,7 @@ def run():
             runsSinceLastHoming = 0
         elif countSameResult >= cs.HOME_AFTER_N_SAME_RESULTS:
             log.info("count same result: {} -> do homing...".format(countSameResult))
+            cm.sendSameDieResultNTimes(cs.HOME_AFTER_N_SAME_RESULTS)
             dieRollResult = mr.pickupDieWhileHoming()
             if not dieRollResult.found:
                 mr.searchForDie()
@@ -278,6 +280,7 @@ def doJobs():
                     lm.loadUserMode()
                 inUserMode = True
                 log.info("userModeReady: {}".format(currentState))
+                cm.sendUserModeReady()
                 if currentState == "":
                     currentState = "PICKUP_PICKUP"
                 cm.setUserModeReady(currentState)

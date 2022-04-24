@@ -29,6 +29,7 @@ class WaitCursor(object):
 ### TOR imports ###
 ###################
 
+from tor.base.utils import Utils
 from tor.client import ClientSettings as cs
 from tor.client.MovementManager import MovementManager
 if cs.ON_RASPI:
@@ -87,6 +88,17 @@ while torClientServiceStatus == 0:
             msgInfo.hide()
     else:
         exit()
+
+#################
+### Constants ###
+#################
+
+MANUAL_MOVEMENT_X_MIN = -15
+MANUAL_MOVEMENT_X_MAX = cs.LX + 15
+MANUAL_MOVEMENT_Y_MIN = -15
+MANUAL_MOVEMENT_Y_MAX = cs.LY + 15
+MANUAL_MOVEMENT_Z_MIN = 0
+MANUAL_MOVEMENT_Z_MAX = cs.LX + 15
 
 ###############
 ### logging ###
@@ -179,6 +191,8 @@ class MainWindow(QMainWindow):
 
         self.setWindowIcon(QIcon("../../resources/logo.png"))
         self.setWindowTitle("Calibration")
+
+        self.currentSelectedTabIndex = 0
 
         # Homing
         self.lblHoming = QLabel("Start the homing routine:")
@@ -396,12 +410,14 @@ class MainWindow(QMainWindow):
         wdgMove.setLayout(layMove)
 
         self.tabFunctions = QTabWidget()
+        self.tabFunctions.currentChanged.connect(self.tabFunctions_currentChanged)
         self.tabFunctions.addTab(wdgHoming, "Homing")
         self.tabFunctions.addTab(wdgBed, "Bed")
         self.tabFunctions.addTab(wdgMagnet, "Magnet")
         self.tabFunctions.addTab(wdgCamera, "Camera")
         self.tabFunctions.addTab(wdgImage, "Image")
         self.tabFunctions.addTab(wdgMove, "Manual Movement")
+        self.bedTabIndex = 1
         self.movementTabIndex = 5
 
         self.txtStatus = QPlainTextEdit()
@@ -549,6 +565,10 @@ class MainWindow(QMainWindow):
         self.addStatusText("Test point {}, move to position ({},{},{})".format(id, x, y, z), spacerLineBefore=True)
         if cs.ON_RASPI:
             pos = Position(x, y, z)
+            centerX = cs.LX / 2
+            if pos.x < centerX and mm.currentPosition > centerX or pos.x > centerX and mm.currentPosition < centerX:
+                mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
+                mm.waitForMovementFinished()
             mr.moveToDropoffPosition(pos)
             mm.waitForMovementFinished()
             time.sleep(2)
@@ -714,6 +734,9 @@ class MainWindow(QMainWindow):
             deltaPos = Position(0, 0, steps)
         posTo = posFrom + deltaPos
         if posTo is not None:
+            posTo.x = Utils.clamp(posTo.x, MANUAL_MOVEMENT_X_MIN, MANUAL_MOVEMENT_X_MAX)
+            posTo.y = Utils.clamp(posTo.y, MANUAL_MOVEMENT_Y_MIN, MANUAL_MOVEMENT_Y_MAX)
+            posTo.z = Utils.clamp(posTo.z, MANUAL_MOVEMENT_Z_MIN, MANUAL_MOVEMENT_Z_MAX)
             mm.moveToPos(posTo, True)
             mm.waitForMovementFinished()
 
@@ -728,6 +751,14 @@ class MainWindow(QMainWindow):
     ############
     ### main ###
     ############
+
+    def tabFunctions_currentChanged(self, index):
+        if self.currentSelectedTabcurrentSelectedTabIndex == self.bedTabIndex:
+            if pickupPos.y < cs.RAMP_CRITICAL_Y:
+                self.mm.moveCloseToRamp(cs.BEFORE_PICKUP_POSITION, segmented=True, moveto=False)
+            else:
+                self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
+        self.currentSelectedTabcurrentSelectedTabIndex = index
 
     def keyPressEvent(self, event):
         if self.tabFunctions.currentIndex() == self.movementTabIndex:

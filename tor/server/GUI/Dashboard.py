@@ -1,4 +1,5 @@
 import concurrent.futures
+from datetime import datetime
 import logging
 import shlex
 import subprocess
@@ -9,7 +10,7 @@ import sys
 from functools import partial
 
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtWidgets import QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox, QCheckBox
+from PyQt5.QtWidgets import QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox, QCheckBox, QSpacerItem
 from PyQt5.QtGui import QPixmap, QIcon, QPainter, QTextCursor
 
 app = QApplication(sys.argv)
@@ -26,13 +27,26 @@ app.setStyleSheet("""
 
         QGroupBox#ClientDetails 
         { 
-            font-size: 13px;
+            font-size: 13px;            
+            border: 1px solid gray;
+            border-color: #FF17365D;
+            margin-top: 20px;
+        }
+
+        QGroupBox::title#ClientDetails 
+        {
+            subcontrol-origin: margin;
+            subcontrol-position: top center;
+            padding: 2px 50px;
+            background-color: #FF17365D;
+            color: rgb(255, 255, 255);
         }
 
         QGroupBox#ClientGroup 
         { 
             font-weight: bold; font-size: 16px; 
-        } 
+        }
+
     """)
 window = None
 
@@ -224,11 +238,11 @@ class ClientDetailView(QWidget):
         # LEDs
         self.btnTurnOnLEDs = QPushButton()
         self.btnTurnOnLEDs.setText("ON")
-        self.btnTurnOnLEDs.setFixedSize(22, 22)
+        self.btnTurnOnLEDs.setFixedSize(30, 18)
         self.btnTurnOnLEDs.clicked.connect(self.btnTurnOnLEDs_clicked)
         self.btnTurnOffLEDs = QPushButton()
         self.btnTurnOffLEDs.setText("OFF")
-        self.btnTurnOffLEDs.setFixedSize(22, 22)
+        self.btnTurnOffLEDs.setFixedSize(30, 18)
         self.btnTurnOffLEDs.clicked.connect(self.btnTurnOffLEDs_clicked)
 
         layLEDs = QHBoxLayout()
@@ -282,9 +296,9 @@ class ClientDetailView(QWidget):
         layMain = QVBoxLayout()
         layMain.setContentsMargins(0, 0, 0, 0)
         layMain.addWidget(grpClientStatus)
-        layMain.addWidget(grpLEDs)
-        layMain.addWidget(grpClientOptions)
         layMain.addWidget(grpClientService)
+        layMain.addWidget(grpClientOptions)
+        layMain.addWidget(grpLEDs)
 
         self.grpMainGroup = QGroupBox()
         self.grpMainGroup.setObjectName("ClientDetails")
@@ -367,7 +381,7 @@ class MainWindow(QMainWindow):
                     cd.AllowUserMode = c.AllowUserMode
                     cd.IsActive = c.IsActive
                     cdv.clientDetails = cd
-                    cdv.grpMainGroup.setTitle("#{}: {}...".format(cd.Position, cd.Latin[0:8]))
+                    cdv.grpMainGroup.setTitle("#{}: {}...".format(cd.Position, cd.Latin[0:9]))
                     layClientDetailsRegions[i].addWidget(cdv, 3*i + j, k)
                     self.cdvs.append(cdv)
                     self.cds.append(cd)
@@ -376,8 +390,18 @@ class MainWindow(QMainWindow):
         wdgClientDetails.setLayout(layClientDetails)
 
 
+        self.btnStartAllTORPrograms = QPushButton()
+        self.btnStartAllTORPrograms.setText("START installation")
+        self.btnStartAllTORPrograms.clicked.connect(self.btnStartAllTORPrograms_clicked)
+        self.btnStartAllTORPrograms.setStyleSheet("QPushButton { font-weight: bold }; ")
+
+        self.btnStopAllTORPrograms = QPushButton()
+        self.btnStopAllTORPrograms.setText("STOP installation")
+        self.btnStopAllTORPrograms.clicked.connect(self.btnStopAllTORPrograms_clicked)
+        self.btnStopAllTORPrograms.setStyleSheet("QPushButton { font-weight: bold }; ")
+
         self.btnStartAllClientService = QPushButton()
-        self.btnStartAllClientService.setText("Start all TORClients")
+        self.btnStartAllClientService.setText("Start all active TORClients")
         self.btnStartAllClientService.clicked.connect(self.btnStartAllClientService_clicked)
 
         self.btnStopAllClientService = QPushButton()
@@ -413,13 +437,51 @@ class MainWindow(QMainWindow):
         self.btnEndAllUserModes.clicked.connect(self.btnEndAllUserModes_clicked)
 
         self.btnTurnOnLEDs = QPushButton()
-        self.btnTurnOnLEDs.setText("Turn on LEDs")
+        self.btnTurnOnLEDs.setText("Turn ON all LEDs")
         self.btnTurnOnLEDs.clicked.connect(self.btnTurnOnLEDs_clicked)
 
         self.btnTurnOffLEDs = QPushButton()
-        self.btnTurnOffLEDs.setText("Turn off LEDs")
+        self.btnTurnOffLEDs.setText("Turn OFF all LEDs")
         self.btnTurnOffLEDs.clicked.connect(self.btnTurnOffLEDs_clicked)
 
+        self.btnUpdateDashboard = QPushButton()
+        self.btnUpdateDashboard.setText("Update dashboard")
+        self.btnUpdateDashboard.clicked.connect(self.btnUpdateDashboard_clicked)
+
+        self.lblLastUpdateTime = QLabel()
+
+        spacerSize = 30
+        layDashboardButtons = QVBoxLayout()
+        layDashboardButtons.addSpacing(spacerSize)
+        layDashboardButtons.addWidget(QLabel("<h3>Installation</h3>"))
+        layDashboardButtons.addWidget(self.btnStartAllTORPrograms)
+        layDashboardButtons.addWidget(self.btnStopAllTORPrograms)
+        layDashboardButtons.addSpacing(spacerSize)
+        layDashboardButtons.addWidget(QLabel("Clients"))
+        layDashboardButtons.addWidget(self.btnStartAllClientService)
+        layDashboardButtons.addWidget(self.btnStopAllClientService)
+        layDashboardButtons.addSpacing(spacerSize)
+        layDashboardButtons.addWidget(QLabel("LEDs"))
+        layDashboardButtons.addWidget(self.btnTurnOnLEDs)
+        layDashboardButtons.addWidget(self.btnTurnOffLEDs)
+        layDashboardButtons.addSpacing(spacerSize)
+        layDashboardButtons.addWidget(QLabel("Server"))
+        layDashboardButtons.addWidget(self.btnStartTORServer)
+        layDashboardButtons.addWidget(self.btnStopTORServer)
+        layDashboardButtons.addSpacing(spacerSize)
+        layDashboardButtons.addWidget(QLabel("Visitor App"))
+        layDashboardButtons.addWidget(self.btnStartTORInteractive)
+        layDashboardButtons.addWidget(self.btnStopTORInteractive)
+        layDashboardButtons.addWidget(self.btnEndAllUserModes)
+        layDashboardButtons.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
+        layDashboardButtons.addWidget(self.btnUpdateDashboard)
+        layDashboardButtons.addWidget(self.lblLastUpdateTime)
+
+
+        wdgDashboardButtons = QWidget()
+        wdgDashboardButtons.setLayout(layDashboardButtons)
+
+        """
         layDashboardButtonsTop = QHBoxLayout()
         layDashboardButtonsTop.addWidget(self.btnStartAllClientService)
         layDashboardButtonsTop.addWidget(self.btnStopAllClientService)
@@ -442,12 +504,14 @@ class MainWindow(QMainWindow):
         layDashboardButtonsBottom.addWidget(self.btnEndAllUserModes)
         wdgDashboardButtonsBottom = QWidget()
         wdgDashboardButtonsBottom.setLayout(layDashboardButtonsBottom)
+        """
 
-        layDashboard = QVBoxLayout()
-        layDashboard.addWidget(wdgDashboardButtonsTop)
-        layDashboard.addWidget(wdgDashboardButtons2)
+        layDashboard = QHBoxLayout()
+        #layDashboard.addWidget(wdgDashboardButtonsTop)
+        #layDashboard.addWidget(wdgDashboardButtons2)
         layDashboard.addWidget(wdgClientDetails)
-        layDashboard.addWidget(wdgDashboardButtonsBottom)
+        #layDashboard.addWidget(wdgDashboardButtonsBottom)
+        layDashboard.addWidget(wdgDashboardButtons)
 
         wdgDashboard = QWidget()
         wdgDashboard.setLayout(layDashboard)
@@ -500,9 +564,9 @@ class MainWindow(QMainWindow):
                 client.executeSSH(cmd, timeout=timeout)
 
     def executeCommandOnAllClients(self, cmd, timeout=DEFAULT_TIMEOUT_SSH, onlyActive=False):
-        executor = concurrent.futures.ThreadPoolExecutor(THREAD_POOL_SIZE)
-        futures = [executor.submit(self.__executeCommandOnClient, c, cmd, timeout, onlyActive) for c in self.cds]
-        concurrent.futures.wait(futures)
+        threadPool = concurrent.futures.ThreadPoolExecutor(THREAD_POOL_SIZE)
+        threadFutures = [threadPool.submit(self.__executeCommandOnClient, c, cmd, timeout, onlyActive) for c in self.cds]
+        concurrent.futures.wait(threadFutures)
 
     def checkOnlineAndServiceStatusForClient(self, client):
         client.checkOnlineStatus()
@@ -554,9 +618,9 @@ class MainWindow(QMainWindow):
                 cdv.lblResultAverage.setStyleSheet("")
                 cdv.lblResultStddev.setStyleSheet("")
 
-        executor = concurrent.futures.ThreadPoolExecutor(THREAD_POOL_SIZE)
-        futures = [executor.submit(self.checkOnlineAndServiceStatusForClient, cdv.clientDetails) for cdv in self.cdvs]
-        concurrent.futures.wait(futures)
+        threadPool = concurrent.futures.ThreadPoolExecutor(THREAD_POOL_SIZE)
+        threadFutures = [threadPool.submit(self.checkOnlineAndServiceStatusForClient, cdv.clientDetails) for cdv in self.cdvs]
+        concurrent.futures.wait(threadFutures)
 
         for cdv in self.cdvs:
             cdv.chkUserMode.setChecked(cdv.clientDetails.AllowUserMode)
@@ -566,6 +630,7 @@ class MainWindow(QMainWindow):
                 cdv.lblIsOnline.setPixmap(TORIcons.LED_GREEN)
             else:
                 cdv.lblIsOnline.setPixmap(TORIcons.LED_RED)
+        self.lblLastUpdateTime.setText("last update: {}".format(datetime.now().strftime("%H:%M:%S")))
         print("updateDashboard finished")
         self.IsUpdating = False
 
@@ -580,6 +645,18 @@ class MainWindow(QMainWindow):
             self.addSpacerLineToStatusText()
         self.txtStatus.moveCursor(QTextCursor.End)
         app.processEvents()
+
+    def btnStartAllTORPrograms_clicked(self):
+        with WaitCursor():
+            self.executeCommandOnTORServer(TORCommands.SERVER_SERVICE_START)
+            self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_START, onlyActive=True)
+            self.executeCommandOnTORServer(TORCommands.INTERACTIVE_START)
+
+    def btnStopAllTORPrograms_clicked(self):
+        with WaitCursor():
+            self.executeCommandOnTORServer(TORCommands.INTERACTIVE_STOP)
+            self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_STOP)
+            self.executeCommandOnTORServer(TORCommands.SERVER_SERVICE_STOP)
 
     def btnStartAllClientService_clicked(self):
         print("start")
@@ -625,6 +702,9 @@ class MainWindow(QMainWindow):
     def btnTurnOffLEDs_clicked(self):
         self.executeCommandOnAllClients(TORCommands.CLIENT_TURN_OFF_LEDS)
         print("turn off LEDs")
+
+    def btnUpdateDashboard_clicked(self):
+        self.updateDashboard()
 
 
 ###################

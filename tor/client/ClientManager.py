@@ -63,7 +63,7 @@ class ClientManager:
     def sendDieNotFound(self):
         msg = {
             "C": self.clientId,
-            "E": 1,
+            "E": "NOT_LOC",
             "MESSAGE": "Could not locate die."
         }
         answer = self.sendAndGetAnswer(msg)
@@ -71,8 +71,32 @@ class ClientManager:
     def sendDieResultNotRecognized(self):
         msg = {
             "C": self.clientId,
-            "E": 2,
+            "E": "NOT_REC",
             "MESSAGE": "Could not recognize die result."
+        }
+        answer = self.sendAndGetAnswer(msg)
+
+    def sendDieResultNotFoundNTimes(self, n):
+        msg = {
+            "C": self.clientId,
+            "E": "NOT_FOUND_N",
+            "MESSAGE": "Could not find die {} times.".format(n)
+        }
+        answer = self.sendAndGetAnswer(msg)
+
+    def sendSameDieResultNTimes(self, n):
+        msg = {
+            "C": self.clientId,
+            "E": "SAME_RESULT_N",
+            "MESSAGE": "Got the same results {} times in a row.".format(n)
+        }
+        answer = self.sendAndGetAnswer(msg)
+
+    def sendUserModeReady(self):
+        msg = {
+            "C": self.clientId,
+            "MSG": "USERMODE_READY",
+            "MESSAGE": "Started user mode."
         }
         answer = self.sendAndGetAnswer(msg)
 

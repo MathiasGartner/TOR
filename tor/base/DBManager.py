@@ -16,6 +16,12 @@ db = mysql.connect(
 
 cursor = db.cursor(named_tuple=True)
 
+def logClientAction(clientId, messageType, messageCode, message):
+    query = "INSERT INTO clientlog (ClientId, MessageType, MessageCode, Message) VALUES (%s, %s, %s, %s)"
+    data = (clientId, messageType, messageCode, message)
+    cursor.execute(query, data)
+    db.commit()
+
 def getClientSettings(clientId):
     query = "SELECT Name, Value FROM clientsettings WHERE ClientId = %(clientId)s"
     cursor.execute(query, { "clientId" : clientId })
