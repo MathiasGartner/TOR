@@ -17,3 +17,8 @@ where Time >= '2021-09-08' group by clientid order by count;
 
 select * from meshpoints where clientid = 20;
 
+select * from jobqueue order by id desc ;
+
+UPDATE client SET AllowUserMode = 1 WHERE Id = 20;
+UPDATE client SET IsActive = 0 WHERE Id = 20;
+select * from client where id = 20;
