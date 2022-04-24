@@ -76,7 +76,7 @@ while torClientServiceStatus == 0:
             app.processEvents()
             #TODO: stop TORCLient in a more controlled way, eg. create performance to move to parking pos ("Q") and make sure that the service is not restarted automatically
             if cs.ON_RASPI:
-                os.system('sudo systemctl stop TORClient')
+                os.system('sudo systemctl daemon-reload; sudo systemctl stop TORClient')
             attemptsToWaitForTORClientQuit = 0
             while torClientServiceStatus == 0 and attemptsToWaitForTORClientQuit < 5:
                 app.processEvents()
@@ -609,6 +609,7 @@ class MainWindow(QMainWindow):
                 cs.MESH_MAGNET[i, 2] = self.mcps[i].txtCoordZ.value()
 
             cm.saveMeshpoints("M", cs.MESH_MAGNET)
+            cm.saveDropoffPointSettings()
             self.addStatusText("settings saved", spacerLineBefore=True, spacerLineAfter=True)
 
     ##############
