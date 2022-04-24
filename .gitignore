@@ -1,6 +1,7 @@
 #custom
 /tor/TORSettingsLocal.py
 tor/TORSettingsPrivate.py
+db/*.idea
 /scratches/update_tor.cmd
 /scratches/update_tor_marlin.cmd
 /venv_38/
