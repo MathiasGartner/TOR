@@ -10,7 +10,7 @@ from functools import partial
 
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox, QCheckBox
-from PyQt5.QtGui import QPixmap, QIcon, QPainter
+from PyQt5.QtGui import QPixmap, QIcon, QPainter, QTextCursor
 
 app = QApplication(sys.argv)
 app.setStyleSheet("""
@@ -92,7 +92,7 @@ log = logging.getLogger(__name__)
 def executeCommand(cmd, timeout=DEFAULT_TIMEOUT):
     cmdList = shlex.split(cmd)
     #print(cmd, cmdList)
-    p = subprocess.Popen(cmd)
+    p = subprocess.Popen(cmdList)
     try:
         p.wait(timeout)
     except subprocess.TimeoutExpired:
@@ -103,7 +103,7 @@ def executeCommand(cmd, timeout=DEFAULT_TIMEOUT):
     return val
 
 class TORCommands:
-    r'ssh -i {0} pi@{1} "sudo rm -r tor; sudo rm -r scripts"'
+    # r'ssh -i {0} pi@{1} "sudo rm -r tor; sudo rm -r scripts"'
     SERVER_SSH_CONNECTION = "ssh -i {0} pi@{1}"
     CLIENT_SSH_CONNECTION = "ssh -i {0} pi@{1}"
 
@@ -114,7 +114,7 @@ class TORCommands:
     INTERACTIVE_STOP = "sudo systemctl stop TORInteractive"
 
     #CLIENT_PING = "ping -i 0.2 -c 1 {}"
-    CLIENT_PING = "ping -i 1 {}"
+    CLIENT_PING = "ping -c 1 {}"
 
     CLIENT_SERVICE_START = "sudo systemctl daemon-reload; sudo systemctl restart TORClient"
     CLIENT_SERVICE_STOP = "sudo systemctl stop TORClient"
@@ -162,15 +162,14 @@ class ClientDetails:
     def checkOnlineStatus(self):
         #self.IsOnline = True
         #return
-        if self.Id != 13 and self.Id != 27 and self.Id != 25: # and self.Id != 10:
-            #self.IsOnline = True
-            self.IsOnline = False
-            return
-        else:
-            self.IsOnline = True
-            return
+        #if self.Id != 13 and self.Id != 27 and self.Id != 25: # and self.Id != 10:
+        #    #self.IsOnline = True
+        #    self.IsOnline = False
+        #    return
+        #else:
+        #    self.IsOnline = True
+        #    return
         cmd = TORCommands.CLIENT_PING.format(self.IP)
-        #val = os.system(cmd)
         val = executeCommand(cmd, timeout=DEFAULT_TIMEOUT_PING)
         if val == 0:
             self.IsOnline = True
@@ -183,7 +182,6 @@ class ClientDetails:
         print("EXECUTE: {}".format(cmdFull))
         if window is not None:
             window.addStatusText("<font color=\"Blue\">{}</font>".format(cmdFull))
-        #val = os.system(cmdFull)
         val = executeCommand(cmdFull, timeout=timeout)
         #print("FINISHE: {}".format(cmdFull))
         return val
@@ -580,6 +578,7 @@ class MainWindow(QMainWindow):
         self.txtStatus.appendHtml(text)
         if spacerLineAfter:
             self.addSpacerLineToStatusText()
+        self.txtStatus.moveCursor(QTextCursor.End)
         app.processEvents()
 
     def btnStartAllClientService_clicked(self):
