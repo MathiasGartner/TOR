@@ -84,11 +84,11 @@ class ClientManager:
         }
         answer = self.sendAndGetAnswer(msg)
 
-    def sendSameDieResultNTimes(self, n):
+    def sendSameDieResultNTimes(self, n, result):
         msg = {
             "C": self.clientId,
             "E": "SAME_RESULT_N",
-            "MESSAGE": "Got the same results {} times in a row.".format(n)
+            "MESSAGE": "Got the same results {} times in a row. Always find a {}".format(n, result)
         }
         answer = self.sendAndGetAnswer(msg)
 

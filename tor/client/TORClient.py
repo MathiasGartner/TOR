@@ -84,9 +84,10 @@ def run():
         mr.pickupDie_pickup(dieRollResult, cm.sendDieRollResult)
 
         if dieRollResult.found:
+            isNearOldPickupPosition = abs(lastPickupX - dieRollResult.position.x) < cs.SAME_RESULT_NEAR_THRESHOLD_X
             lastPickupX = dieRollResult.position.x
             #cm.sendDieRollResult(dieRollResult)
-            if lastResult == dieRollResult.result:
+            if lastResult == dieRollResult.result and isNearOldPickupPosition:
                 countSameResult += 1
             else:
                 countSameResult = 0
@@ -115,7 +116,7 @@ def run():
             runsSinceLastHoming = 0
         elif countSameResult >= cs.HOME_AFTER_N_SAME_RESULTS:
             log.info("count same result: {} -> do homing...".format(countSameResult))
-            cm.sendSameDieResultNTimes(cs.HOME_AFTER_N_SAME_RESULTS)
+            cm.sendSameDieResultNTimes(cs.HOME_AFTER_N_SAME_RESULTS, dieRollResult.result)
             dieRollResult = mr.pickupDieWhileHoming()
             if not dieRollResult.found:
                 mr.searchForDie()
