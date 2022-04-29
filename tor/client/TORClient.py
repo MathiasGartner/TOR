@@ -102,6 +102,7 @@ def run():
         #check if homing is needed
         runsSinceLastHoming += 1
         if runsSinceLastHoming >= cs.HOME_EVERY_N_RUNS:
+            cm.sendHomeAfterNSuccessfulRuns(cs.HOME_EVERY_N_RUNS)
             mm.doHoming()
             mm.moveToPos(cs.CENTER_TOP)
             runsSinceLastHoming = 0

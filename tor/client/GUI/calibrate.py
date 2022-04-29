@@ -409,6 +409,8 @@ class MainWindow(QMainWindow):
         layMove.setSizeConstraint(QLayout.SetFixedSize)
         wdgMove.setLayout(layMove)
 
+        self.bedTabIndex = 1
+        self.movementTabIndex = 5
         self.tabFunctions = QTabWidget()
         self.tabFunctions.currentChanged.connect(self.tabFunctions_currentChanged)
         self.tabFunctions.addTab(wdgHoming, "Homing")
@@ -417,8 +419,6 @@ class MainWindow(QMainWindow):
         self.tabFunctions.addTab(wdgCamera, "Camera")
         self.tabFunctions.addTab(wdgImage, "Image")
         self.tabFunctions.addTab(wdgMove, "Manual Movement")
-        self.bedTabIndex = 1
-        self.movementTabIndex = 5
 
         self.txtStatus = QPlainTextEdit()
         self.txtStatus.setReadOnly(True)
@@ -566,7 +566,7 @@ class MainWindow(QMainWindow):
         if cs.ON_RASPI:
             pos = Position(x, y, z)
             centerX = cs.LX / 2
-            if pos.x < centerX and mm.currentPosition > centerX or pos.x > centerX and mm.currentPosition < centerX:
+            if pos.x < centerX and mm.currentPosition.x > centerX or pos.x > centerX and mm.currentPosition.x < centerX:
                 mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
                 mm.waitForMovementFinished()
             mr.moveToDropoffPosition(pos)
@@ -753,8 +753,8 @@ class MainWindow(QMainWindow):
     ############
 
     def tabFunctions_currentChanged(self, index):
-        if self.currentSelectedTabcurrentSelectedTabIndex == self.bedTabIndex:
-            if pickupPos.y < cs.RAMP_CRITICAL_Y:
+        if self.currentSelectedTabIndex == self.bedTabIndex:
+            if mm.currentPosition.y < cs.RAMP_CRITICAL_Y:
                 self.mm.moveCloseToRamp(cs.BEFORE_PICKUP_POSITION, segmented=True, moveto=False)
             else:
                 self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)

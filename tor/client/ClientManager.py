@@ -92,6 +92,14 @@ class ClientManager:
         }
         answer = self.sendAndGetAnswer(msg)
 
+    def sendHomeAfterNSuccessfulRuns(self, n):
+        msg = {
+            "C": self.clientId,
+            "MSG": "HOME_N_SUCCESS",
+            "MESSAGE": "YEAH! I am now homing after {} successful runs in a row.".format(n)
+        }
+        answer = self.sendAndGetAnswer(msg)
+
     def sendUserModeReady(self):
         msg = {
             "C": self.clientId,
