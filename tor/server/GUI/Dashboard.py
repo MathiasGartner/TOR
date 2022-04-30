@@ -10,7 +10,7 @@ import sys
 
 from functools import partial
 
-from PyQt5.QtCore import Qt, QTimer, QRect
+from PyQt5.QtCore import Qt, QTimer, QRect, QThread
 from PyQt5.QtWidgets import QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox, QCheckBox, QSpacerItem, QFrame, QLineEdit
 from PyQt5.QtGui import QPixmap, QIcon, QPainter, QTextCursor
 
@@ -199,7 +199,7 @@ class ClientDetails:
         cmdSSH = TORCommands.CLIENT_SSH_CONNECTION.format(tsl.PATH_TO_SSH_KEY, self.IP)
         cmdFull = cmdSSH + " \"" + cmd + "\""
         print("EXECUTE: {}".format(cmdFull))
-        if window is not None:
+        if window is not None and QThread.currentThread() == self.thread():
             window.addStatusText("<font color=\"Blue\">{}</font>".format(cmdFull))
         val = executeCommand(cmdFull, timeout=timeout)
         #print("FINISHE: {}".format(cmdFull))
@@ -759,6 +759,8 @@ class MainWindow(QMainWindow):
         self.txtStatus.appendPlainText("----------------------")
 
     def addStatusText(self, text, spacerLineBefore=False, spacerLineAfter=False):
+        if QThread.currentThread() != self.thread():
+            return
         if spacerLineBefore:
             self.addSpacerLineToStatusText()
         self.txtStatus.appendHtml(text)
@@ -825,7 +827,8 @@ class MainWindow(QMainWindow):
         print("turn off LEDs")
 
     def btnUpdateDashboard_clicked(self):
-        self.updateDashboard()
+        with WaitCursor():
+            self.updateDashboard()
 
     ############
     ### Jobs ###
