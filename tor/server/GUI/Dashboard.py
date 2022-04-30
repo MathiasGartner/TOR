@@ -1,4 +1,5 @@
 import concurrent.futures
+import copy
 from datetime import datetime
 import logging
 import shlex
@@ -9,8 +10,8 @@ import sys
 
 from functools import partial
 
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtWidgets import QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox, QCheckBox, QSpacerItem
+from PyQt5.QtCore import Qt, QTimer, QRect
+from PyQt5.QtWidgets import QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox, QCheckBox, QSpacerItem, QFrame, QLineEdit
 from PyQt5.QtGui import QPixmap, QIcon, QPainter, QTextCursor
 
 app = QApplication(sys.argv)
@@ -83,6 +84,8 @@ class WaitCursor(object):
 ###################
 
 from tor.base import DBManager
+from tor.server.Job import Job
+from tor.server.Job import DefaultJobs
 import tor.TORSettingsLocal as tsl
 import tor.TORSettings as ts
 
@@ -95,6 +98,8 @@ DEFAULT_TIMEOUT = 3
 DEFAULT_TIMEOUT_SERVER = 3
 DEFAULT_TIMEOUT_SSH = 7
 DEFAULT_TIMEOUT_PING = 1
+
+NEW_PROGRAM_NAME = "<new>"
 
 ###############
 ### logging ###
@@ -516,6 +521,118 @@ class MainWindow(QMainWindow):
         wdgDashboard = QWidget()
         wdgDashboard.setLayout(layDashboard)
 
+
+        programNames = DBManager.getAllJobProgramNames()
+        self.jobProgramNames = [pn.Name for pn in programNames]
+        self.cmbTour = QComboBox()
+        self.cmbTour.insertItem(-1, NEW_PROGRAM_NAME)
+        for i in range(len(self.jobProgramNames)):
+            self.cmbTour.insertItem(i, self.jobProgramNames[i])
+        self.cmbTour.currentIndexChanged.connect(self.cmbTour_currentIndexChanged)
+        self.btnStartTour = QPushButton("Start")
+        self.btnStartTour.clicked.connect(self.btnStartTour_clicked)
+        self.btnEditTour = QPushButton("Edit")
+        self.btnEditTour.clicked.connect(self.btnEditTour_clicked)
+
+        layTourSelection = QHBoxLayout()
+        layTourSelection.addWidget(QLabel("Program: "))
+        layTourSelection.addWidget(self.cmbTour)
+        layTourSelection.addSpacing(100)
+        layTourSelection.addWidget(self.btnStartTour)
+        layTourSelection.addWidget(self.btnEditTour)
+        layTourSelection.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
+
+        wdgTourSelection = QWidget()
+        wdgTourSelection.setLayout(layTourSelection)
+
+        self.jobListWidgets = []
+        layJobList = QGridLayout()
+        jobs = DBManager.getCurrentJobs()
+        layJobList.addWidget(QLabel("<h3>Box</h3>"), 0, 0)
+        layJobList.addWidget(QLabel("<h3>Quit</h3>"), 0, 1)
+        layJobList.addWidget(QLabel("<h3>Wait</h3>"), 0, 2)
+        layJobList.addWidget(QLabel("<h3>Run</h3>"), 0, 3)
+        layJobList.addWidget(QLabel("<h3>Run & Wait</h3>"), 0, 4)
+        layJobList.addWidget(QLabel("<h3>Parameters</h3>"), 0, 5)
+        chkQuitAll = QCheckBox()
+        chkQuitAll.clicked.connect(self.chkQuitAll_clicked)
+        chkWaitAll = QCheckBox()
+        chkWaitAll.clicked.connect(self.chkWaitAll_clicked)
+        chkRunAll = QCheckBox()
+        chkRunAll.clicked.connect(self.chkRunAll_clicked)
+        chkRunAndWaitAll = QCheckBox()
+        chkAllGroup = QButtonGroup(self)
+        chkAllGroup.addButton(chkQuitAll)
+        chkAllGroup.addButton(chkWaitAll)
+        chkAllGroup.addButton(chkRunAll)
+        chkAllGroup.addButton(chkRunAndWaitAll)
+        chkRunAndWaitAll.clicked.connect(self.chkRunAndWaitAll_clicked)
+        txtParametersAll = QLineEdit()
+        txtParametersAll.textChanged.connect(self.txtParametersAll_textChanged)
+        layJobList.addWidget(chkQuitAll, 1, 1)
+        layJobList.addWidget(chkWaitAll, 1, 2)
+        layJobList.addWidget(chkRunAll, 1, 3)
+        layJobList.addWidget(chkRunAndWaitAll, 1, 4)
+        layJobList.addWidget(txtParametersAll, 1, 5)
+        row = 2
+        clientCount = 0
+        for c in self.cds:
+            chkQuit = QCheckBox()
+            chkWait = QCheckBox()
+            chkRun = QCheckBox()
+            chkRunAndWait = QCheckBox()
+            txtParameters = QLineEdit()
+            chkGroup = QButtonGroup(self)
+            chkGroup.addButton(chkQuit)
+            chkGroup.addButton(chkWait)
+            chkGroup.addButton(chkRun)
+            chkGroup.addButton(chkRunAndWait)
+            layJobList.addWidget(QLabel("Pos {}: {}".format(c.Position, c.Latin)), row, 0)
+            layJobList.addWidget(chkQuit, row, 1)
+            layJobList.addWidget(chkWait, row, 2)
+            layJobList.addWidget(chkRun, row, 3)
+            layJobList.addWidget(chkRunAndWait, row, 4)
+            layJobList.addWidget(txtParameters, row, 5)
+            self.jobListWidgets.append([c.Id, chkQuit, chkWait, chkRun, chkRunAndWait, txtParameters])
+            row += 1
+            clientCount += 1
+            if clientCount % 9 == 0 and clientCount < 27:
+                line = QFrame()
+                line.setGeometry(QRect())
+                line.setFrameShape(QFrame.HLine)
+                line.setFrameShadow(QFrame.Sunken)
+                layJobList.addWidget(line, row, 0, 1, 6)
+                row += 1
+
+        self.fillJobList(jobs)
+
+        self.wdgJobList = QWidget()
+        self.wdgJobList.setEnabled(False)
+        self.wdgJobList.setLayout(layJobList)
+
+        lblJobDescriptionText = QLabel("The parameters for Job 'RW' are of the form 'r w t'<br>run r times, then wait w times for t seconds")
+        lblJobDescriptionText.setAlignment(Qt.AlignTop)
+
+        layJobListAndDescriptions = QHBoxLayout()
+        layJobListAndDescriptions.addWidget(self.wdgJobList)
+        layJobListAndDescriptions.addSpacing(100)
+        layJobListAndDescriptions.addWidget(lblJobDescriptionText)
+        layJobListAndDescriptions.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
+
+        wdgJobListAndDescriptions = QWidget()
+        wdgJobListAndDescriptions.setLayout(layJobListAndDescriptions)
+
+        layJobOverview = QVBoxLayout()
+        layJobOverview.addWidget(QLabel("Job Overview"))
+        layJobOverview.addWidget(wdgTourSelection)
+        layJobOverview.addWidget(wdgJobListAndDescriptions)
+
+        wdgJobOverivew = QWidget()
+        wdgJobOverivew.setLayout(layJobOverview)
+
+
+
+
         layTORServer = QVBoxLayout()
         layTORServer.addWidget(QLabel("TOR server"))
 
@@ -525,6 +642,7 @@ class MainWindow(QMainWindow):
         self.tabDashboard = QTabWidget()
         self.tabDashboard.addTab(wdgDashboard, "Dashboard")
         self.tabDashboard.addTab(wdgTORServer, "TORServer")
+        self.tabDashboard.addTab(wdgJobOverivew, "Jobs")
         self.dashboardTabIndex = 0
 
         self.txtStatus = QPlainTextEdit()
@@ -591,12 +709,14 @@ class MainWindow(QMainWindow):
                 if c.Id == j.Id:
                     c.CurrentJobCode = j.JobCode
                     c.CurrentJobParameters = j.JobParameters
+                    break
         results = DBManager.getAllClientStatistics()
         for r in results:
             for c in self.cds:
                 if c.Id == r.Id:
                     c.ResultAverage = r.ResultAverage
                     c.ResultStddev = r.ResultStddev
+                    break
         data = DBManager.getAllClients()
         for d in data:
             for c in self.cds:
@@ -607,6 +727,7 @@ class MainWindow(QMainWindow):
                     c.Latin = d.Latin
                     c.AllowUserMode = d.AllowUserMode
                     c.IsActive = d.IsActive
+                    break
         for cdv in self.cdvs:
             cdv.lblCurrentJob.setText("{} {}".format(cdv.clientDetails.CurrentJobCode, cdv.clientDetails.CurrentJobParameters))
             cdv.lblResultAverage.setText("{:.2f}±{:.2f}".format(cdv.clientDetails.ResultAverage, cdv.clientDetails.ResultStddev))
@@ -706,6 +827,73 @@ class MainWindow(QMainWindow):
     def btnUpdateDashboard_clicked(self):
         self.updateDashboard()
 
+    ############
+    ### Jobs ###
+    ############
+
+    def fillJobList(self, jobs):
+        for j in jobs:
+            for w in self.jobListWidgets:
+                if j.Id == w[0]:
+                    if j.JobCode == DefaultJobs.QUIT.JobCode:
+                        w[1].setChecked(True)
+                    elif j.JobCode == DefaultJobs.WAIT.JobCode:
+                        w[2].setChecked(True)
+                    elif j.JobCode == DefaultJobs.RUN.JobCode:
+                        w[3].setChecked(True)
+                    elif j.JobCode == DefaultJobs.RUN_AND_WAIT.JobCode:
+                        w[4].setChecked(True)
+                    if j.JobParameters != "None":
+                        w[5].setText(j.JobParameters)
+                    break
+
+    def cmbTour_currentIndexChanged(self, index):
+        programName = self.cmbTour.currentText()
+        if programName != NEW_PROGRAM_NAME:
+            programJobs = DBManager.getJobsByProgramName(programName)
+            self.fillJobList(programJobs)
+            self.wdgJobList.setEnabled(False)
+
+    def btnStartTour_clicked(self):
+        jobs = []
+        for w in self.jobListWidgets:
+            j = Job()
+            if w[1].isChecked():
+                j = copy.deepcopy(DefaultJobs.QUIT)
+            elif w[2].isChecked():
+                j = copy.deepcopy(DefaultJobs.WAIT)
+            elif w[3].isChecked():
+                j = copy.deepcopy(DefaultJobs.RUN)
+            elif w[4].isChecked():
+                j = copy.deepcopy(DefaultJobs.RUN_AND_WAIT)
+            j.JobParameters = w[5].text()
+            j.ClientId = w[0]
+            jobs.append(j)
+        DBManager.saveJobs(jobs)
+
+    def btnEditTour_clicked(self):
+        self.cmbTour.setCurrentText(NEW_PROGRAM_NAME)
+        self.wdgJobList.setEnabled(True)
+
+    def chkQuitAll_clicked(self, checked):
+        for w in self.jobListWidgets:
+            w[1].setChecked(checked)
+
+    def chkWaitAll_clicked(self, checked):
+        for w in self.jobListWidgets:
+            w[2].setChecked(checked)
+
+    def chkRunAll_clicked(self, checked):
+        for w in self.jobListWidgets:
+            w[3].setChecked(checked)
+
+    def chkRunAndWaitAll_clicked(self, checked):
+        for w in self.jobListWidgets:
+            w[4].setChecked(checked)
+
+    def txtParametersAll_textChanged(self, text):
+        for w in self.jobListWidgets:
+            w[5].setText(text)
 
 ###################
 ### application ###
