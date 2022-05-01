@@ -62,10 +62,10 @@ def getNextJobForClientId(clientId):
 
 def getCurrentJobs():
     query = """ WITH ranked_jobs AS (
-                    SELECT j.ClientId, j.JobCode, j.JobParameters, ROW_NUMBER() OVER (PARTITION BY ClientId ORDER BY id DESC) AS rj
+                    SELECT j.ClientId, j.JobCode, j.JobParameters, j.ExecuteAt, ROW_NUMBER() OVER (PARTITION BY ClientId ORDER BY id DESC) AS rj
                     FROM jobqueue AS j
                 )
-                SELECT c.Id, j.JobCode, j.JobParameters FROM ranked_jobs j LEFT JOIN client c ON c.ID = j.ClientId WHERE rj = 1 AND c.Position IS NOT NULL"""
+                SELECT c.Id, j.JobCode, j.JobParameters, j.ExecuteAt FROM ranked_jobs j LEFT JOIN client c ON c.ID = j.ClientId WHERE rj = 1 AND c.Position IS NOT NULL"""
     cursor.execute(query)
     data = cursor.fetchall()
     return data
@@ -147,3 +147,21 @@ def setUserModeEnabled(clientId, enabled):
 def setClientIsActive(clientId, active):
     query = "UPDATE client SET IsActive = %(active)s WHERE Id = %(clientId)s"
     cursor.execute(query, {"active": active, "clientId": clientId})
+
+def getAllJobProgramNames():
+    query = "SELECT DISTINCT Name FROM jobprogram"
+    cursor.execute(query)
+    data = cursor.fetchall()
+    return data
+
+def getAllJobPrograms():
+    query = "SELECT Name, ClientId, JobCode, JobParameters FROM jobprogram"
+    cursor.execute(query)
+    data = cursor.fetchall()
+    return data
+
+def getJobsByProgramName(name):
+    query = "SELECT ClientId AS Id, JobCode, JobParameters FROM jobprogram WHERE Name = %(name)s"
+    cursor.execute(query, {"name": name})
+    data = cursor.fetchall()
+    return data
