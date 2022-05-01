@@ -13,7 +13,7 @@ if sys.platform == "linux" and platform.platform() == "Linux-4.19.118+-armv6l-wi
 else:
     ON_RASPI = False
 
-TOR_MARLIN_VERSION = "1.3"
+TOR_MARLIN_VERSION = "1.2"
 
 #logging
 LOG_LEVEL = logging.INFO
@@ -59,10 +59,10 @@ USE_LEFT_DROPOFF_REGION = True
 USE_RIGHT_DROPOFF_REGION = True
 
 #cord factors
-CORD_FACTOR_X = 0.99
-CORD_FACTOR_Y = 0.99
-CORD_FACTOR_Z = 0.99
-CORD_FACTOR_E = 0.99
+CORD_FACTOR_X = 1.015
+CORD_FACTOR_Y = 1.015
+CORD_FACTOR_Z = 1.015
+CORD_FACTOR_E = 1.015
 
 #special positions
 BOX_SIZE = Position(LX, LY, LZ)
