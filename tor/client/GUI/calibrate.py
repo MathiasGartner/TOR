@@ -229,6 +229,10 @@ class MainWindow(QMainWindow):
         self.btnRestoreBedCalibration.clicked.connect(self.btnRestoreBedCalibration_clicked)
         self.btnSaveBedCalibration = QPushButton("Save settings")
         self.btnSaveBedCalibration.clicked.connect(self.btnSaveBedCalibration_clicked)
+        self.btnBedCalibrationPickup = QPushButton("Pick up")
+        self.btnBedCalibrationPickup.clicked.connect(self.btnBedCalibrationPickup_clicked)
+        self.btnBedCalibrationSearch = QPushButton("Search routine")
+        self.btnBedCalibrationSearch.clicked.connect(self.btnBedCalibrationSearch_clicked)
 
         layBed = QGridLayout()
         layBed.addWidget(QLabel("<h3>Calibrate the pickup points.</h3>\n<h3>Make sure that the pickup works when the point is approached from the center.</h3>"), 0, 0, 1, 3)
@@ -236,6 +240,8 @@ class MainWindow(QMainWindow):
         layBed.addWidget(self.btnBedCalibrationDoHoming, 2, 0)
         layBed.addWidget(self.btnRestoreBedCalibration, 2, 1)
         layBed.addWidget(self.btnSaveBedCalibration, 2, 2)
+        layBed.addWidget(self.btnBedCalibrationPickup, 3, 0)
+        layBed.addWidget(self.btnBedCalibrationSearch, 3, 1)
 
         wdgBed = QWidget()
         layBed.setSizeConstraint(QLayout.SetFixedSize)
@@ -510,7 +516,7 @@ class MainWindow(QMainWindow):
         if cs.ON_RASPI:
             pos = Position(x, y, z)
             if isCloseToRamp:
-                mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
+                mm.moveCloseToRamp(cs.BEFORE_PICKUP_POSITION, True, moveto=False)
                 mm.waitForMovementFinished()
                 mm.moveCloseToRamp(pos, True)
                 mm.waitForMovementFinished()
@@ -556,6 +562,16 @@ class MainWindow(QMainWindow):
                 cs.MESH_BED[i, 2] = self.bcps[i].txtCoordZ.value()
             cm.saveMeshpoints("B", cs.MESH_BED)
             self.addStatusText("settings saved", spacerLineBefore=True, spacerLineAfter=True)
+
+    def btnBedCalibrationPickup_clicked(self):
+        with WaitCursor():
+            mr.pickupDie()
+
+    def btnBedCalibrationSearch_clicked(self):
+        with WaitCursor():
+            mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
+            mr.searchForDie()
+            mm.moveToPos(cs.CENTER_TOP, True)
 
     ##############
     ### magnet ###
