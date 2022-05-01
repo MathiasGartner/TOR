@@ -199,7 +199,7 @@ class ClientDetails:
         cmdSSH = TORCommands.CLIENT_SSH_CONNECTION.format(tsl.PATH_TO_SSH_KEY, self.IP)
         cmdFull = cmdSSH + " \"" + cmd + "\""
         print("EXECUTE: {}".format(cmdFull))
-        if window is not None and QThread.currentThread() == self.thread():
+        if window is not None:
             window.addStatusText("<font color=\"Blue\">{}</font>".format(cmdFull))
         val = executeCommand(cmdFull, timeout=timeout)
         #print("FINISHE: {}".format(cmdFull))
@@ -610,7 +610,12 @@ class MainWindow(QMainWindow):
         self.wdgJobList.setEnabled(False)
         self.wdgJobList.setLayout(layJobList)
 
-        lblJobDescriptionText = QLabel("The parameters for Job 'RW' are of the form 'r w t'<br>run r times, then wait w times for t seconds")
+        lblJobDescriptionText = QLabel(
+            """
+                The parameters for Job 'W' are of the form 't' where 't' is optional<br>check every t seconds if there is another job to do
+                <br><br><br> 
+                The parameters for Job 'RW' are of the form 'r w t'<br>run r times, then wait w times for t seconds
+            """)
         lblJobDescriptionText.setAlignment(Qt.AlignTop)
 
         layJobListAndDescriptions = QHBoxLayout()
