@@ -409,6 +409,7 @@ class MainWindow(QMainWindow):
         layMove.addWidget(QLabel("Keyboard step size:"), 8, 0)
         self.spnKeyboardStepsize = QSpinBox()
         self.spnKeyboardStepsize.setRange(1, 10)
+        self.spnKeyboardStepsize.setValue(5)
         layMove.addWidget(self.spnKeyboardStepsize, 8, 1)
 
         wdgMove = QWidget()
@@ -799,7 +800,7 @@ class MainWindow(QMainWindow):
 window = MainWindow()
 window.show()
 
-window.setWindowTitle("Calibrate \"{}\"".format(cm.clientIdentity["Material"]))
+window.setWindowTitle("Calibrate \"{}/{}\" at Position {}".format(cm.clientIdentity["Material"], cm.clientIdentity["Latin"], cm.clientIdentity["Position"]))
 
 if cs.ON_RASPI:
     msgHoming = QMessageBox()

@@ -98,7 +98,8 @@ def handleRequest(conn):
             NetworkUtils.sendData(conn, {"Id": cId.Id,
                                          "IP": cId.IP,
                                          "Material": cId.Material,
-                                         "Position": cId.Position
+                                         "Position": cId.Position,
+                                         "Latin": cId.Latin
                                          })
         else:
             log.warning("could not identify client.")

@@ -3,10 +3,10 @@ Description=TOR Server
 After=network.target
 
 [Service]
-ExecStart=sudo /home/gartner/Sources/TOR/venv/bin/python3 -u -m tor.server.TORServer
-WorkingDirectory=/home/pi/
+ExecStart=sudo /home/pi/TOR/torenvRP4/bin/python3 -u -m tor.server.TORServer
+WorkingDirectory=/home/pi/TOR/
 Restart=always
-RestartSec=3
+RestartSec=5
 User=pi
 
 [Install]

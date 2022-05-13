@@ -101,8 +101,15 @@ def run():
     if not userModeRequested:
         #check if homing is needed
         runsSinceLastHoming += 1
-        if runsSinceLastHoming >= cs.HOME_EVERY_N_RUNS:
-            cm.sendHomeAfterNSuccessfulRuns(cs.HOME_EVERY_N_RUNS)
+        homeEveryNRuns = cs.HOME_EVERY_N_RUNS
+        if "R" in nextJob and nextJob["R"] is not None:
+            runParams = nextJob["R"].split()
+            for rp in runParams:
+                if rp[0] == "H":
+                    homeEveryNRuns = int(rp[1:]) or homeEveryNRuns
+                    break
+        if runsSinceLastHoming >= homeEveryNRuns:
+            cm.sendHomeAfterNSuccessfulRuns(homeEveryNRuns)
             mm.doHoming()
             mm.moveToPos(cs.CENTER_TOP)
             runsSinceLastHoming = 0

@@ -38,9 +38,9 @@ log = logging.getLogger(__name__)
 ###########################
 
 cm = ClientManager()
-welcomeMessage = "I am client with ID {} and IP {}. My ramp is made out of {}, mounted on position {}"
+welcomeMessage = "I am client with ID {} and IP {}. My ramp is made out of {}/{}, mounted on position {}"
 print("#######################")
-print(welcomeMessage.format(cm.clientId, cm.clientIdentity["IP"], cm.clientIdentity["Material"], cm.clientIdentity["Position"]))
+print(welcomeMessage.format(cm.clientId, cm.clientIdentity["IP"], cm.clientIdentity["Material"], cm.clientIdentity["Latin"], cm.clientIdentity["Position"]))
 print("#######################")
 
 ### load custom settings from file and server

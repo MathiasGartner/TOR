@@ -672,13 +672,14 @@ class MainWindow(QMainWindow):
     ###############
 
     def executeCommandOnTORServer(self, cmd, timeout=DEFAULT_TIMEOUT_SERVER):
+        val = -1
         with WaitCursor():
             cmdSSH = TORCommands.SERVER_SSH_CONNECTION.format(tsl.PATH_TO_SSH_KEY, tsl.SERVER_IP)
             cmdFull = cmdSSH + " \"" + cmd + "\""
             print("SERVEXE: {}".format(cmdFull))
             if window is not None:
                 window.addStatusText("<font color=\"Red\">{}</font>".format(cmdFull))
-            val = self.__executeSSH(cmd, timeout=timeout)
+            val = executeCommand(cmdFull, timeout=timeout)
         return val
 
     def __executeCommandOnClient(self, client, cmd, timeout=DEFAULT_TIMEOUT_SSH, onlyActive=False):

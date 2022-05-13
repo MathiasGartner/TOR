@@ -14,7 +14,7 @@ class ClientManager:
         if cs.ON_RASPI:
             self.clientIdentity = self.askForClientIdentity(self.clientMacAddress)
         else:
-            self.clientIdentity = { "Id": -1, "IP": -1, "Material": "vacuum", "Position": -1 }
+            self.clientIdentity = { "Id": -1, "IP": -1, "Material": "vacuum", "Position": -1, "Latin": "vacuum" }
         self.clientId = self.clientIdentity["Id"]
         p = int(self.clientIdentity["Position"])
         if (p - 1) % 9 < 3:
