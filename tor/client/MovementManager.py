@@ -67,7 +67,13 @@ class MovementManager:
         for msg in msgs:
             match = re.match(pattern, msg)
             if match:
-                pos = Cords([float(match.group(i)) for i in range(1, 5)]).toPosition()
+                tmpCords = Cords([float(match.group(i)) for i in range(1, 5)])
+                tmpCords.lengths[0] *= cs.CORD_FACTOR_X
+                tmpCords.lengths[1] *= cs.CORD_FACTOR_Y
+                tmpCords.lengths[2] *= cs.CORD_FACTOR_Z
+                tmpCords.lengths[3] *= cs.CORD_FACTOR_E
+                pos = tmpCords.toPosition()
+                #print("new position from SKR board: {}".format(pos))
         return pos
 
     def __updateCurrentPosition(self):
@@ -126,7 +132,7 @@ class MovementManager:
         MovementManager.currentPosition = cs.HOME_POSITION
 
     def __moveToCords(self, cords, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
-        cmd = "G1 " + self.getCordLengthGCode(cords) + (" S" if segmented else "") + (" A" if not useSlowDownStart else "") + (" B" if not useSlowDownEnd else "")
+        cmd = "G1 " + self.getCordLengthGCode(cords) + (" S{:f}".format(cs.CORD_FACTOR_X) if segmented else "") + (" A" if not useSlowDownStart else "") + (" B" if not useSlowDownEnd else "")
         self.sendGCode(cmd)
 
     def moveToPos(self, pos, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
