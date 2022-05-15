@@ -94,7 +94,7 @@ def run():
             lastResult = dieRollResult.result
             countNotFound = 0
         else:
-            lastPickupX = 0.0
+            lastPickupX = 0.0 #TODO: if not found lastPickupX is always 0 and therefore the fist point will be ALWAYS used for dropoff, which is not good
             cm.sendDieResultNotRecognized()
             countNotFound += 1
 
@@ -265,6 +265,8 @@ def doJobs():
                 mr.doRollDie(startTime)
         elif "W" in nextJob: # W...wait
             currentState = "WAIT"
+            mm.moveToParkingPosition(True)
+            mm.waitForMovementFinished()
             sleepTime = int(nextJob["W"] or cs.STANDARD_CLIENT_SLEEP_TIME)
             if sleepTime <= 0:
                 sleepTime = cs.STANDARD_CLIENT_SLEEP_TIME
