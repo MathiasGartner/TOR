@@ -570,6 +570,10 @@ class MainWindow(QMainWindow):
 
     def btnBedCalibrationSearch_clicked(self):
         with WaitCursor():
+            for i in range(len(cs.MESH_BED)):
+                cs.MESH_BED[i, 0] = self.bcps[i].txtCoordX.value()
+                cs.MESH_BED[i, 1] = self.bcps[i].txtCoordY.value()
+                cs.MESH_BED[i, 2] = self.bcps[i].txtCoordZ.value()
             mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
             mr.searchForDie()
             mm.moveToPos(cs.CENTER_TOP, True)
