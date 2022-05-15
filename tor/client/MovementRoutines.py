@@ -162,9 +162,11 @@ class MovementRoutines:
     def takePicture(self, cam=None):
         if cam is None:
             cam = Camera()
+        log.info("turn on top LED")
         self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
         image = cam.takePicture()
         self.dr.writeImage(image, "test.jpg", directory=cs.WEB_DIRECTORY)
+        log.info("turn off top LED")
         self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
         cam.close()
         return image
@@ -183,6 +185,7 @@ class MovementRoutines:
         self.mm.doHoming(mode=2)
         log.info("take picture while homing...")
         image = self.takePicture(cam)
+        log.info("image {}".format(image))
         log.info("do homing mode 3")
         self.mm.doHoming(mode=3)
         dieRollResult, processedImages = self.dr.getDieRollResult(image, returnOriginalImg=True)
