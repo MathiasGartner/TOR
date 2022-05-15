@@ -199,6 +199,8 @@ def doJobs():
     done = False
     while not done:
         #log.info("nextJob: {}".format(nextJob))
+        if not "W" in nextJob:
+            inParkingPosition = False
         if not "RW" in nextJob:
             finishedRWRuns = 0
             finishedRWWaits = 0
@@ -265,8 +267,10 @@ def doJobs():
                 mr.doRollDie(startTime)
         elif "W" in nextJob: # W...wait
             currentState = "WAIT"
-            mm.moveToParkingPosition(True)
-            mm.waitForMovementFinished()
+            if not inParkingPosition:
+                mm.moveToParkingPosition(True)
+                mm.waitForMovementFinished()
+                inParkingPosition = True
             sleepTime = int(nextJob["W"] or cs.STANDARD_CLIENT_SLEEP_TIME)
             if sleepTime <= 0:
                 sleepTime = cs.STANDARD_CLIENT_SLEEP_TIME
