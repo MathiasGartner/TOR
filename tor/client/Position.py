@@ -1,5 +1,7 @@
 import math
 
+import tor.client.ClientSettings as cs
+
 class Position:
     def __init__(self, x, y, z):
         self.x = x
@@ -47,14 +49,26 @@ class Position:
     def norm(self):
         return math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
 
+    def toModifiedCordLength(self, c):
+        tmp = cs.PULLEY_RADIUS_OVER_CORD_THICKNESS_EFFECTIVE_SQR - c / cs.CORD_THICKNESS_EFFECTIVE_PI
+        if tmp < 0:
+            tmp = 0
+        uw = cs.PULLEY_RADIUS_OVER_CORD_THICKNESS_EFFECTIVE - math.sqrt(tmp)
+        cModified = cs.PULLEY_RADIUS_2PI * uw
+        return cModified
+
     def toCordLengths(self):
         import tor.client.ClientSettings as cs
         from tor.client.Cords import Cords
         diffs = cs.BOX_SIZE - self
-        c1 = math.sqrt(diffs.x ** 2 + diffs.y ** 2 + self.z ** 2) * cs.CORD_FACTOR_X
-        c2 = math.sqrt(diffs.x ** 2 + self.y ** 2 + self.z ** 2) * cs.CORD_FACTOR_Y
-        c3 = math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2) * cs.CORD_FACTOR_Z
-        c4 = math.sqrt(self.x ** 2 + diffs.y ** 2 + self.z ** 2) * cs.CORD_FACTOR_E
+        c1 = math.sqrt(diffs.x ** 2 + diffs.y ** 2 + self.z ** 2)
+        c1 = self.toModifiedCordLength(c1)
+        c2 = math.sqrt(diffs.x ** 2 + self.y ** 2 + self.z ** 2)
+        c2 = self.toModifiedCordLength(c2)
+        c3 = math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
+        c3 = self.toModifiedCordLength(c3)
+        c4 = math.sqrt(self.x ** 2 + diffs.y ** 2 + self.z ** 2)
+        c4 = self.toModifiedCordLength(c4)
         return Cords([c1, c2, c3, c4])
 
     def isValid(self):
