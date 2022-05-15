@@ -196,6 +196,7 @@ def doJobs():
     finishedRWRuns = 0
     finishedRWWaits = 0
     isFirstRWJob = True
+    inParkingPosition = False
     done = False
     while not done:
         #log.info("nextJob: {}".format(nextJob))
