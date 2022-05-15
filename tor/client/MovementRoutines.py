@@ -178,10 +178,15 @@ class MovementRoutines:
     '''take a picture and locate the die while homing is performed'''
     def findDieWhileHoming(self):
         cam = Camera(doWarmup=False)
+        log.info("prepare camera: {}".format(cam))
+        log.info("do homing mode 2")
         self.mm.doHoming(mode=2)
+        log.info("take picture while homing...")
         image = self.takePicture(cam)
+        log.info("do homing mode 3")
         self.mm.doHoming(mode=3)
         dieRollResult, processedImages = self.dr.getDieRollResult(image, returnOriginalImg=True)
+        log.info("result: {}".format(dieRollResult))
         return dieRollResult, processedImages
 
     def pickupDieWhileHoming(self):
