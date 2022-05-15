@@ -110,8 +110,7 @@ def run():
                     break
         if runsSinceLastHoming >= homeEveryNRuns:
             cm.sendHomeAfterNSuccessfulRuns(homeEveryNRuns)
-            mm.doHoming()
-            mm.moveToPos(cs.CENTER_TOP)
+            mr.pickupDieWhileHoming()
             runsSinceLastHoming = 0
         elif countNotFound >= cs.HOME_AFTER_N_FAILS:
             log.info("count not found: {} -> do homing...".format(countNotFound))
