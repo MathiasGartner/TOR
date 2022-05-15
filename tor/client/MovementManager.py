@@ -67,7 +67,10 @@ class MovementManager:
         for msg in msgs:
             match = re.match(pattern, msg)
             if match:
-                pos = Cords([float(match.group(i)) for i in range(1, 5)]).toPosition()
+                tmpCords = Cords([float(match.group(i)) for i in range(1, 5)])
+                #INFO: modified cord lengths are not used here...
+                pos = tmpCords.toPosition()
+                print("new position from SKR board: {}".format(pos))
         return pos
 
     def __updateCurrentPosition(self):

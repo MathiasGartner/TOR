@@ -16,14 +16,14 @@ class Cords:
         return self.__str__()
 
     def toPosition(self):
-        print("WARNING: CORD_FACTORS will not be used!")
-        print("Cords: {}".format(self))
+        print("WARNING: cord modification will not be used!")
+        print("   Cords: {}".format(self))
         from tor.client.Position import Position #to avoid circular import - find better import strategy!
         x = cs.LX - round((cs.LX ** 2 + self.lengths[0] ** 2 - self.lengths[1] ** 2) / (2.0 * cs.LX))
         y = cs.LY - round((cs.LY ** 2 + self.lengths[0] ** 2 - self.lengths[3] ** 2) / (2.0 * cs.LY))
         z = math.sqrt(max(self.lengths[0] ** 2 - x ** 2 - y ** 2, 0))
         pos = Position(x, y, z)
-        print("Position: {}".format(pos))
+        print("   Position: {}".format(pos))
         return pos
 
     def isValid(self):
