@@ -185,7 +185,7 @@ class MovementRoutines:
         self.mm.doHoming(mode=2)
         log.info("take picture while homing...")
         image = self.takePicture(cam)
-        log.info("image {}".format(image))
+        #log.info("image {}".format(image))
         log.info("do homing mode 3")
         self.mm.doHoming(mode=3)
         dieRollResult, processedImages = self.dr.getDieRollResult(image, returnOriginalImg=True)
@@ -195,8 +195,7 @@ class MovementRoutines:
     def pickupDieWhileHoming(self):
         dieRollResult, processedImages = self.findDieWhileHoming()
         self.mm.waitForMovementFinished()
-        self.mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
-        self.mm.moveToPos(cs.CENTER_TOP)
+        self.mm.moveToPosAfterHoming(cs.CENTER_TOP, True)
         if dieRollResult.found:
             self.pickupDieFromPosition(dieRollResult.position)
         return dieRollResult

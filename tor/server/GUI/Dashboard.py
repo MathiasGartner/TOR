@@ -646,7 +646,7 @@ class MainWindow(QMainWindow):
 
         self.tabDashboard = QTabWidget()
         self.tabDashboard.addTab(wdgDashboard, "Dashboard")
-        self.tabDashboard.addTab(wdgTORServer, "TORServer")
+        #self.tabDashboard.addTab(wdgTORServer, "TORServer")
         self.tabDashboard.addTab(wdgJobOverivew, "Jobs")
         self.dashboardTabIndex = 0
 

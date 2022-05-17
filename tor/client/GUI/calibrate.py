@@ -420,7 +420,7 @@ class MainWindow(QMainWindow):
         self.movementTabIndex = 5
         self.tabFunctions = QTabWidget()
         self.tabFunctions.currentChanged.connect(self.tabFunctions_currentChanged)
-        self.tabFunctions.addTab(wdgHoming, "Homing")
+        #self.tabFunctions.addTab(wdgHoming, "Homing")
         self.tabFunctions.addTab(wdgBed, "Bed")
         self.tabFunctions.addTab(wdgMagnet, "Magnet")
         self.tabFunctions.addTab(wdgCamera, "Camera")
@@ -496,10 +496,8 @@ class MainWindow(QMainWindow):
         if cs.ON_RASPI:
             mm.doHoming()
             if moveToCenterAfterHoming:
-                mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
-                mm.moveToPos(cs.CENTER_TOP)
+                mm.moveToPosAfterHoming(cs.CENTER_TOP, True)
                 mm.waitForMovementFinished()
-                mm.setFeedratePercentage(cs.FR_DEFAULT)
         else:
             time.sleep(3)
         self.addStatusText("homing finished", spacerLineAfter=True)

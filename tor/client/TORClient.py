@@ -116,7 +116,7 @@ def run():
             log.info("count not found: {} -> do homing...".format(countNotFound))
             cm.sendDieResultNotFoundNTimes(cs.HOME_AFTER_N_FAILS)
             mm.doHoming()
-            mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
+            mm.moveToPosAfterHoming(cs.BEFORE_PICKUP_POSITION, True)
             mr.searchForDie()
             mm.moveToPos(cs.CENTER_TOP, True)
             countNotFound = 0
@@ -241,8 +241,7 @@ def doJobs():
                 isFirstRWJob = False
         elif "H" in nextJob: # H...homing
             mm.doHoming()
-            mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
-            mm.moveToPos(cs.CENTER_TOP)
+            mm.moveToPosAfterHoming(cs.CENTER_TOP, True)
             mm.waitForMovementFinished()
         elif "HH" in nextJob:  # H...homing with die pickup
             mr.pickupDieWhileHoming()

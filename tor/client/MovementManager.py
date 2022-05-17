@@ -145,6 +145,14 @@ class MovementManager:
         pos = Position(x, y, z)
         self.moveToPos(pos, segmented, useSlowDownStart, )
 
+    # first move to AFTER_HOMING_POSITION in a NOT segmented move
+    def moveToPosAfterHoming(self, pos, segmented=False):
+        self.setFeedratePercentage(cs.FR_SLOW_MOVE)
+        self.moveToPos(cs.AFTER_HOMING_POSITION, segmented=False)
+        self.waitForMovementFinished()
+        self.setFeedratePercentage(cs.FR_DEFAULT)
+        self.moveToPos(pos, segmented=segmented)
+
     # moveto parameter specifies if the movement is towards the ramp, moveto=False means movement is away from ramp
     def moveCloseToRamp(self, pos, segmented=False, moveto=True):
         if moveto:
