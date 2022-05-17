@@ -127,6 +127,10 @@ def run():
             dieRollResult = mr.pickupDieWhileHoming()
             if not dieRollResult.found:
                 mr.searchForDie()
+            else:
+                dieRollResult = mr.pickupDie_takeImage()
+                if dieRollResult.found:
+                    mr.searchForDie()
             mm.moveToPos(cs.CENTER_TOP, True)
             countSameResult = 0
             runsSinceLastHoming = 0
