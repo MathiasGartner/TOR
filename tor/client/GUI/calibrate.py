@@ -572,7 +572,7 @@ class MainWindow(QMainWindow):
                 cs.MESH_BED[i, 0] = self.bcps[i].txtCoordX.value()
                 cs.MESH_BED[i, 1] = self.bcps[i].txtCoordY.value()
                 cs.MESH_BED[i, 2] = self.bcps[i].txtCoordZ.value()
-            mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
+            mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
             mr.searchForDie()
             mm.moveToPos(cs.CENTER_TOP, True)
 

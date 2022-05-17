@@ -347,7 +347,7 @@ class MovementRoutines:
             posTo = posFrom + Position(0, -int(steps), 0)
         elif action == "ROLL":
             log.info("roll die")
-            self.mm.moveToPos(cs.AFTER_PICKUP_POSITION)
+            self.mm.moveToPos(cs.AFTER_PICKUP_POSITION, True)
             dropoffPosPercent = int(steps)
             dropoffPos = self.getDropoffPosByPercent(1.0 - (dropoffPosPercent / 100.0), invert=False)
             #dropoffPos = cs.MESH_MAGNET[2]
@@ -390,7 +390,7 @@ class MovementRoutines:
 
         step += 1
         Utils.sleepUntilTimestampIndex(step, timestamps)
-        self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
+        self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
 
         step += 1
         Utils.sleepUntilTimestampIndex(step, timestamps)
@@ -398,7 +398,7 @@ class MovementRoutines:
 
         step += 1
         Utils.sleepUntilTimestampIndex(step, timestamps)
-        self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
+        self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
 
     def doDieRollAndPickupPerformance(self, startTime):
         log.info("preparing for performance...")
@@ -409,7 +409,7 @@ class MovementRoutines:
         #TODO: check if USE_MAGNET_BETWEEN_P0P1=True, otherwise use left side
         dropoffPos = cs.MESH_MAGNET[2]
         dropoffAdvancePos = Position(dropoffPos[0], dropoffPos[1] + cs.DROPOFF_ADVANCE_OFFSET_Y, dropoffPos[2] + cs.DROPOFF_ADVANCE_OFFSET_Z)
-        self.mm.moveToPos(dropoffAdvancePos)
+        self.mm.moveToPos(dropoffAdvancePos, True)
         fr_factor = 2
         fr_default_old = cs.FR_DEFAULT
         cs.FR_DEFAULT = cs.FR_DEFAULT * fr_factor
@@ -452,7 +452,7 @@ class MovementRoutines:
 
         step += 1
         Utils.sleepUntilTimestampIndex(step, timestamps)
-        self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION)
+        self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
 
         step += 1
         Utils.sleepUntilTimestampIndex(step, timestamps)

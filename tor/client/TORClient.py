@@ -94,7 +94,9 @@ def run():
             lastResult = dieRollResult.result
             countNotFound = 0
         else:
-            lastPickupX = 0.0 #TODO: if not found lastPickupX is always 0 and therefore the fist point will be ALWAYS used for dropoff, which is not good
+            # TODO: if not found lastPickupX is always 0 and therefore the fist point will be ALWAYS used for dropoff, which is not good
+            # easy solution -> do not set lastPickupX to zero
+            # lastPickupX = 0.0
             cm.sendDieResultNotRecognized()
             countNotFound += 1
 
@@ -149,7 +151,7 @@ def exitUserMode():
     cm.exitUserMode()
     lm.unloadUserMode()
     mm.setFeedratePercentage(cs.FR_DEFAULT)
-    mm.moveToPos(cs.CENTER_TOP)
+    mm.moveToPos(cs.CENTER_TOP, True)
     mm.waitForMovementFinished()
     time.sleep(cs.STANDARD_CLIENT_SLEEP_TIME)
     lm.setAllLeds()
@@ -250,7 +252,7 @@ def doJobs():
         elif "HH" in nextJob:  # H...homing with die pickup
             mr.pickupDieWhileHoming()
             mm.waitForMovementFinished()
-            mm.moveToPos(cs.CENTER_TOP)
+            mm.moveToPosAfterHoming(cs.CENTER_TOP, True)
             mm.waitForMovementFinished()
         elif "P" in nextJob: # P...Performance
             if "T" in nextJob:
