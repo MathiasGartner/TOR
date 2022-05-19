@@ -121,6 +121,13 @@ class MovementManager:
         cmd = "M42 P40 S{} I".format(brightness)
         self.sendGCode(cmd)
 
+    '''
+    Homing modes
+    0: full homing with repeated advances (corresponds to first mode 2 then mode 3)
+    1: first go to center, then mode 0. do this only when position is nearly known!
+    2: first tighten all cords, then move to anchor (default X) while pulling on other cords
+    3: do repeated advances. need to be near anchor point 
+    '''
     def doHoming(self, mode=0):
         cmd = cs.G_HOMING.format(mode)
         self.sendGCode(cmd)

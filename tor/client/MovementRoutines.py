@@ -177,12 +177,17 @@ class MovementRoutines:
         dieRollResult, processedImages = self.dr.getDieRollResult(image, returnOriginalImg=True)
         return dieRollResult, processedImages
 
-    '''take a picture and locate the die while homing is performed'''
+    '''
+    take a picture and locate the die while homing is performed
+    INFO: homing and camera can not be done in concurrent threads because both operations
+    need to access the SKR board (G28 for homing and M42 for top LED)
+    '''
     def findDieWhileHoming(self):
-        cam = Camera(doWarmup=True)
-        log.info("prepare camera: {}".format(cam))
         log.info("do homing mode 2")
         self.mm.doHoming(mode=2)
+        time.sleep(cs.WAIT_BEFORE_TAKE_PICTURE_WHILE_HOMING)
+        cam = Camera(doWarmup=True)
+        log.info("prepare camera: {}".format(cam))
         log.info("take picture while homing...")
         image = self.takePicture(cam)
         #log.info("image {}".format(image))
