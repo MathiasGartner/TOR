@@ -130,6 +130,8 @@ def run():
             if not dieRollResult.found:
                 mr.searchForDie()
             else:
+                mm.moveToPos(cs.CENTER_TOP, True)
+                mm.waitForMovementFinished()
                 dieRollResult = mr.pickupDie_takeImage()
                 if dieRollResult.found:
                     mr.searchForDie()
@@ -284,6 +286,7 @@ def doJobs():
             done = True
         elif "S" in nextJob: # S...load settings
             cm.loadSettings()
+            cm.loadMeshpoints()
         elif "U" in nextJob: # U...user mode
             userModeRequested = False
             if not inUserMode:
