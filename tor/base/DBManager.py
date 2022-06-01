@@ -14,6 +14,8 @@ db = mysql.connect(
     autocommit = True
 )
 
+TIME_OFFSET_FOR_DISPLAY = "interval 2 hour"
+
 cursor = db.cursor(named_tuple=True)
 
 def logClientAction(clientId, messageType, messageCode, message):
@@ -163,5 +165,35 @@ def getAllJobPrograms():
 def getJobsByProgramName(name):
     query = "SELECT ClientId AS Id, JobCode, JobParameters FROM jobprogram WHERE Name = %(name)s"
     cursor.execute(query, {"name": name})
+    data = cursor.fetchall()
+    return data
+
+def getClientLog():
+    query = "SELECT c.Position, c.Latin, l.MessageType AS Type, l.MessageCode, l.Message, DATE_ADD(Time, " + TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog l LEFT JOIN client c ON c.Id = l.ClientId ORDER BY l.Id DESC LIMIT 100"
+    cursor.execute(query)
+    data = cursor.fetchall()
+    return data
+
+def getClientLogByClientId(clientId):
+    query = "SELECT MessageType AS Type, MessageCode, Message, DATE_ADD(Time, " + TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog WHERE ClientId = %(clientId)s ORDER BY Id DESC LIMIT 100"
+    cursor.execute(query, {"clientId": clientId})
+    data = cursor.fetchall()
+    return data
+
+def getResults():
+    query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, DATE_ADD(Time, " + TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId ORDER BY d.Id DESC LIMIT 100"
+    cursor.execute(query)
+    data = cursor.fetchall()
+    return data
+
+def getResultsByClientId(clientId):
+    query = "SELECT Result, UserGenerated, X, Y, DATE_ADD(Time, " + TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM diceresult WHERE ClientId = %(clientId)s ORDER BY Id DESC LIMIT 100"
+    cursor.execute(query, {"clientId": clientId})
+    data = cursor.fetchall()
+    return data
+
+def getAllClientResultContribution():
+    query = "SELECT c.Id, IFNULL(contributions.Contribution, 0) AS Contribution, IFNULL(contributions.AverageResult, 0) AS AverageResult FROM client c LEFT JOIN (SELECT ClientId, COUNT(*)/500*100 AS Contribution, AVG(Result) AS AverageResult FROM (SELECT ClientId, Result FROM diceresult ORDER BY ID DESC LIMIT 500) as results GROUP BY ClientId) AS contributions ON c.Id = contributions.ClientId"
+    cursor.execute(query)
     data = cursor.fetchall()
     return data

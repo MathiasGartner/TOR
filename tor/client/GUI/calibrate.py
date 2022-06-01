@@ -777,7 +777,7 @@ class MainWindow(QMainWindow):
                 self.mm.moveCloseToRamp(cs.BEFORE_PICKUP_POSITION, segmented=True, moveto=False)
             else:
                 self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
-        self.currentSelectedTabcurrentSelectedTabIndex = index
+        self.currentSelectedTabIndex = index
 
     def keyPressEvent(self, event):
         if self.tabFunctions.currentIndex() == self.movementTabIndex:

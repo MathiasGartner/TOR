@@ -10,9 +10,9 @@ import sys
 
 from functools import partial
 
-from PyQt5.QtCore import Qt, QTimer, QRect, QThread
-from PyQt5.QtWidgets import QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox, QCheckBox, QSpacerItem, QFrame, QLineEdit
-from PyQt5.QtGui import QPixmap, QIcon, QPainter, QTextCursor
+from PyQt5.QtCore import Qt, QTimer, QRect, QThread, QAbstractTableModel, QAbstractListModel, QVariant
+from PyQt5.QtWidgets import QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox, QCheckBox, QSpacerItem, QFrame, QLineEdit, QTableView, QTableWidgetItem
+from PyQt5.QtGui import QPixmap, QIcon, QPainter, QTextCursor, QColor
 
 app = QApplication(sys.argv)
 app.setStyleSheet("""
@@ -353,6 +353,7 @@ class MainWindow(QMainWindow):
         self.IsBusy = False
         self.IsUpdating = False
 
+        self.currentSelectedTabIndex = 0
         self.setWindowIcon(TORIcons.APP_ICON)
         self.setWindowTitle("TOR")
 
@@ -635,7 +636,40 @@ class MainWindow(QMainWindow):
         wdgJobOverivew = QWidget()
         wdgJobOverivew.setLayout(layJobOverview)
 
+        # Client Details
 
+        self.cmbClient = QComboBox()
+        self.cmbClient.setFixedWidth(180)
+        self.cmbClient.insertItem(-1, "All", -1)
+        for c in self.cds:
+            self.cmbClient.insertItem(c.Position, "#{}: {}".format(c.Position, c.Latin), c.Position)
+        self.cmbClient.currentIndexChanged.connect(self.cmbClient_currentIndexChanged)
+
+        layClientSelection = QHBoxLayout()
+        layClientSelection.addWidget(QLabel("Box: "))
+        layClientSelection.addWidget(self.cmbClient)
+        layClientSelection.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Fixed))
+
+        wdgClientSelection = QWidget()
+        wdgClientSelection.setLayout(layClientSelection)
+
+        self.tblLogMessages = QTableView()
+        self.tblLogMessages.horizontalHeader().setStretchLastSection(True)
+        self.tblLogMessages.setWordWrap(False)
+        self.tblLogMessages.setTextElideMode(Qt.ElideRight)
+
+        self.tblResults = QTableView()
+        self.tblResults.horizontalHeader().setStretchLastSection(True)
+        self.tblResults.setWordWrap(False)
+        self.tblResults.setTextElideMode(Qt.ElideRight)
+
+        layDetails = QVBoxLayout()
+        layDetails.addWidget(wdgClientSelection)
+        layDetails.addWidget(self.tblLogMessages)
+        layDetails.addWidget(self.tblResults)
+
+        wdgDetails = QWidget()
+        wdgDetails.setLayout(layDetails)
 
 
         layTORServer = QVBoxLayout()
@@ -644,11 +678,15 @@ class MainWindow(QMainWindow):
         wdgTORServer = QWidget()
         wdgTORServer.setLayout(layTORServer)
 
+        self.clientDetailsTabIndex = 2
+
         self.tabDashboard = QTabWidget()
         self.tabDashboard.addTab(wdgDashboard, "Dashboard")
         #self.tabDashboard.addTab(wdgTORServer, "TORServer")
         self.tabDashboard.addTab(wdgJobOverivew, "Jobs")
+        self.tabDashboard.addTab(wdgDetails, "Detail View")
         self.dashboardTabIndex = 0
+        self.tabDashboard.currentChanged.connect(self.tabDashboard_currentChanged)
 
         self.txtStatus = QPlainTextEdit()
         self.txtStatus.setReadOnly(True)
@@ -670,6 +708,11 @@ class MainWindow(QMainWindow):
     ###############
     ### methods ###
     ###############
+
+    def tabDashboard_currentChanged(self, index):
+        if index == self.clientDetailsTabIndex:
+            self.loadAllClientDetails()
+        self.currentSelectedTabIndex = index
 
     def executeCommandOnTORServer(self, cmd, timeout=DEFAULT_TIMEOUT_SERVER):
         val = -1
@@ -903,6 +946,107 @@ class MainWindow(QMainWindow):
     def txtParametersAll_textChanged(self, text):
         for w in self.jobListWidgets:
             w[5].setText(text)
+
+    ###############
+    ### Details ###
+    ###############
+
+    def getClientDetailsByPosition(self, position):
+        return self.cds[position - 1]
+
+    def showDataInTable(self, data, table, tableModel):
+        model = tableModel(data)
+        table.setModel(model)
+
+    def setTableWidths(self, table, widths):
+        for i, w in enumerate(widths):
+            table.setColumnWidth(i, w)
+
+    def loadAllClientDetails(self):
+        logMessages = DBManager.getClientLog()
+        self.showDataInTable(logMessages, self.tblLogMessages, LogMessageTableModel)
+        self.setTableWidths(self.tblLogMessages, [50, 150, 50, 150, 200, 200])
+
+        diceResults = DBManager.getResults()
+        self.showDataInTable(diceResults, self.tblResults, DiceResultTableModel)
+        self.setTableWidths(self.tblResults, [50, 150, 50, 50, 50, 50, 200])
+
+    def loadClientDetails(self, client):
+        logMessages = DBManager.getClientLogByClientId(client.Id)
+        self.showDataInTable(logMessages, self.tblLogMessages, LogMessageTableModel)
+        self.setTableWidths(self.tblLogMessages, [50, 150, 200, 200])
+
+        diceResults = DBManager.getResultsByClientId(client.Id)
+        self.showDataInTable(diceResults, self.tblResults, DiceResultTableModel)
+        self.setTableWidths(self.tblResults, [50, 50, 50, 50, 200])
+
+    def cmbClient_currentIndexChanged(self, index):
+        position = self.cmbClient.itemData(index)
+        if position == -1:
+            self.addStatusText("show details for all clients")
+            self.loadAllClientDetails()
+        else:
+            c = self.getClientDetailsByPosition(position)
+            self.addStatusText("select client at position {}".format(c.Position))
+            self.loadClientDetails(c)
+
+class DbTableModel(QAbstractTableModel):
+    def __init__(self, data, parent=None):
+        super(DbTableModel, self).__init__(parent)
+        self.data = data
+        if len(data) > 0:
+            self.headers = data[0]._fields
+        else:
+            self.headers = []
+
+    def rowCount(self, index):
+        return len(self.data)
+
+    def columnCount(self, index):
+        return len(self.data[0])
+
+    def data(self, QModelIndex, role=None):
+        row = QModelIndex.row()
+        column = QModelIndex.column()
+        if role == Qt.DisplayRole:
+            text = str(self.data[row][column])
+            return text
+
+    def headerData(self, section, orientation, role):
+        # section is the index of the column/row.
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
+                return str(self.headers[section])
+            if orientation == Qt.Vertical:
+                return str(section)
+
+class LogMessageTableModel(DbTableModel):
+    def __init__(self, data, parent=None):
+        super(LogMessageTableModel, self).__init__(data, parent)
+
+    def data(self, QModelIndex, role=None):
+        row = QModelIndex.row()
+        column = QModelIndex.column()
+        if role == Qt.DisplayRole:
+            text = str(self.data[row][column])
+            return text
+        if role == Qt.BackgroundColorRole:
+            if self.data[row].Type == "ERROR":
+                return QVariant(QColor(255, 210, 210))
+
+class DiceResultTableModel(DbTableModel):
+    def __init__(self, data, parent=None):
+        super(DiceResultTableModel, self).__init__(data, parent)
+
+    def data(self, QModelIndex, role=None):
+        row = QModelIndex.row()
+        column = QModelIndex.column()
+        if role == Qt.DisplayRole:
+            text = str(self.data[row][column])
+            return text
+        if role == Qt.BackgroundColorRole:
+            if self.data[row].UserGenerated == 1:
+                return QVariant(QColor(210, 255, 210))
 
 ###################
 ### application ###
