@@ -94,9 +94,7 @@ def run():
             lastResult = dieRollResult.result
             countNotFound = 0
         else:
-            # TODO: if not found lastPickupX is always 0 and therefore the fist point will be ALWAYS used for dropoff, which is not good
-            # easy solution -> do not set lastPickupX to zero
-            # lastPickupX = 0.0
+            lastPickupX = Utils.clamp(cs.LX - lastPickupX, 0, cs.LX)
             cm.sendDieResultNotRecognized()
             countNotFound += 1
 

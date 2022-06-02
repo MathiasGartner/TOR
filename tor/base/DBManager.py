@@ -192,8 +192,43 @@ def getResultsByClientId(clientId):
     data = cursor.fetchall()
     return data
 
-def getAllClientResultContribution():
-    query = "SELECT c.Id, IFNULL(contributions.Contribution, 0) AS Contribution, IFNULL(contributions.AverageResult, 0) AS AverageResult FROM client c LEFT JOIN (SELECT ClientId, COUNT(*)/500*100 AS Contribution, AVG(Result) AS AverageResult FROM (SELECT ClientId, Result FROM diceresult ORDER BY ID DESC LIMIT 500) as results GROUP BY ClientId) AS contributions ON c.Id = contributions.ClientId"
+def getAllClientResultContribution(lastNResults=100):
+    query = "SELECT c.Id, IFNULL(contributions.Contribution, 0) AS Contribution, IFNULL(contributions.AverageResult, 0) AS AverageResult FROM client c LEFT JOIN (SELECT ClientId, COUNT(*) * 100 / %(lastNResults)s AS Contribution, AVG(Result) AS AverageResult FROM (SELECT ClientId, Result FROM diceresult ORDER BY ID DESC LIMIT %(lastNResults)s) as results GROUP BY ClientId) AS contributions ON c.Id = contributions.ClientId WHERE c.IsActive = 1"
+    cursor.execute(query, {"lastNResults": lastNResults})
+    data = cursor.fetchall()
+    return data
+
+def getResultStatisticForLastNHours(nHours):
+    query = "SELECT COUNT(*) AS Count, AVG(Result) AS AverageResult FROM diceresult WHERE Time > DATE_ADD(NOW(), interval -%(nHours)s hour) GROUP BY ClientId"
+    cursor.execute(query, {"nHours": nHours})
+    data = cursor.fetchall()
+    return data
+
+def getResultStatisticForToday():
+    query = "SELECT COUNT(*) AS Count, AVG(Result) AS AverageResult FROM diceresult WHERE DATE(Time) = CURDATE() GROUP BY ClientId"
     cursor.execute(query)
+    data = cursor.fetchall()
+    return data
+
+def getResultStatisticForEvent(event):
+    query = "SELECT COUNT(*) AS Count, AVG(Result) AS AverageResult FROM diceresult WHERE Source = %(event)s GROUP BY ClientId"
+    cursor.execute(query, {"event": event})
+    data = cursor.fetchall()
+    return data
+
+def getResultStatistics(event):
+    query = """
+        SELECT Id,
+            twoHour.Count AS Count2Hours, twoHour.AverageResult AS Average2Hours,
+            fourHour.Count AS Count4Hours, fourHour.AverageResult AS Average4Hours,
+            today.Count AS CountToday, today.AverageResult AS AverageToday,
+            event.Count AS CountEvent, event.AverageResult AS AverageEvent
+        FROM client c
+            LEFT JOIN (SELECT ClientId, COUNT(*) AS Count, AVG(Result) AS AverageResult FROM diceresult WHERE Time > DATE_ADD(NOW(), interval -2 hour) GROUP BY ClientId) twoHour ON twoHour.ClientId = c.Id
+            LEFT JOIN (SELECT ClientId, COUNT(*) AS Count, AVG(Result) AS AverageResult FROM diceresult WHERE Time > DATE_ADD(NOW(), interval -4 hour) GROUP BY ClientId) fourHour ON fourHour.ClientId = c.Id
+            LEFT JOIN (SELECT ClientId, COUNT(*) AS Count, AVG(Result) AS AverageResult FROM diceresult WHERE Date(Time) = CURDATE() GROUP BY ClientId) today ON today.ClientId = c.Id
+            LEFT JOIN (SELECT ClientId, COUNT(*) AS Count, AVG(Result) AS AverageResult FROM diceresult WHERE Source = %(event)s GROUP BY ClientId) event ON event.ClientId = c.Id
+        """
+    cursor.execute(query, {"event": event})
     data = cursor.fetchall()
     return data

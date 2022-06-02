@@ -10,7 +10,8 @@ import sys
 
 from functools import partial
 
-from PyQt5.QtCore import Qt, QTimer, QRect, QThread, QAbstractTableModel, QAbstractListModel, QVariant
+from PyQt5.QtCore import Qt, QTimer, QRect, QThread, QAbstractTableModel, QAbstractListModel, QVariant, \
+    QSortFilterProxyModel
 from PyQt5.QtWidgets import QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox, QCheckBox, QSpacerItem, QFrame, QLineEdit, QTableView, QTableWidgetItem
 from PyQt5.QtGui import QPixmap, QIcon, QPainter, QTextCursor, QColor
 
@@ -100,6 +101,8 @@ DEFAULT_TIMEOUT_SSH = 7
 DEFAULT_TIMEOUT_PING = 1
 
 NEW_PROGRAM_NAME = "<new>"
+
+TAKE_N_RESULTS_FOR_RECENT_CONTRIBUTIONS = 200
 
 ###############
 ### logging ###
@@ -645,28 +648,89 @@ class MainWindow(QMainWindow):
             self.cmbClient.insertItem(c.Position, "#{}: {}".format(c.Position, c.Latin), c.Position)
         self.cmbClient.currentIndexChanged.connect(self.cmbClient_currentIndexChanged)
 
+        self.btnRereshClientDetails = QPushButton("Refresh")
+        self.btnRereshClientDetails.clicked.connect(self.btnRereshClientDetails_clicked)
+
         layClientSelection = QHBoxLayout()
         layClientSelection.addWidget(QLabel("Box: "))
         layClientSelection.addWidget(self.cmbClient)
+        layClientSelection.addSpacing(100)
+        layClientSelection.addWidget(self.btnRereshClientDetails)
         layClientSelection.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Fixed))
 
         wdgClientSelection = QWidget()
         wdgClientSelection.setLayout(layClientSelection)
-
-        self.tblLogMessages = QTableView()
-        self.tblLogMessages.horizontalHeader().setStretchLastSection(True)
-        self.tblLogMessages.setWordWrap(False)
-        self.tblLogMessages.setTextElideMode(Qt.ElideRight)
 
         self.tblResults = QTableView()
         self.tblResults.horizontalHeader().setStretchLastSection(True)
         self.tblResults.setWordWrap(False)
         self.tblResults.setTextElideMode(Qt.ElideRight)
 
+        self.clientDetailInfoList = [
+            ["Name", QLabel("-")],
+            ["Position", QLabel("-")],
+            ["ID", QLabel("-")],
+            ["IP", QLabel("-")],
+            ["MAC", QLabel("-")],
+            ["Allow User Mode", QLabel("-")],
+            ["User Mode Active", QLabel("-")],
+            ["Is Active", QLabel("-")],
+            ["Current State", QLabel("-")],
+            ["Current Job", QLabel("-")],
+            ["Recent results", QLabel("-")],
+            ["Average contribution", QLabel("-")],
+            ["Average result (3.5)", QLabel("-")],
+            ["Results last hour", QLabel("-")],
+            ["Results last 2 hours", QLabel("-")],
+            ["Results today", QLabel("-")],
+            ["Results Total", QLabel("-")]
+        ]
+        layClientDetailInfos = QGridLayout()
+        for num, (text, widget) in enumerate(self.clientDetailInfoList):
+            layClientDetailInfos.addWidget(QLabel(text), num, 0)
+            layClientDetailInfos.addWidget(widget, num, 1)
+
+        grpClientDetailInfos = QGroupBox()
+        grpClientDetailInfos.setTitle("Details")
+        grpClientDetailInfos.setLayout(layClientDetailInfos)
+
+        layClientDetailsTop = QHBoxLayout()
+        layClientDetailsTop.addWidget(self.tblResults)
+        layClientDetailsTop.addSpacing(100)
+        layClientDetailsTop.addWidget(grpClientDetailInfos)
+        layClientDetailsTop.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Fixed))
+
+        wdgClientDetailsTop = QWidget()
+        wdgClientDetailsTop.setLayout(layClientDetailsTop)
+
+
+        self.tblLogMessages = QTableView()
+        self.tblLogMessages.horizontalHeader().setStretchLastSection(True)
+        self.tblLogMessages.setWordWrap(False)
+        self.tblLogMessages.setTextElideMode(Qt.ElideRight)
+
+        self.tblResultStatistics = QTableView()
+        #self.tblResultStatistics.horizontalHeader().setStretchLastSection(True)
+        self.tblResultStatistics.setWordWrap(False)
+        self.tblResultStatistics.setTextElideMode(Qt.ElideRight)
+        self.tblResultStatistics.setSortingEnabled(True)
+
+        layClientDetailsBottom = QHBoxLayout()
+        layClientDetailsBottom.addWidget(self.tblLogMessages)
+        layClientDetailsBottom.addSpacing(20)
+        layClientDetailsBottom.addWidget(self.tblResultStatistics)
+        #layClientDetailsBottom.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Fixed))
+
+        wdgClientDetailsBottom = QWidget()
+        wdgClientDetailsBottom.setLayout(layClientDetailsBottom)
+
         layDetails = QVBoxLayout()
         layDetails.addWidget(wdgClientSelection)
-        layDetails.addWidget(self.tblLogMessages)
-        layDetails.addWidget(self.tblResults)
+        layDetails.addWidget(QLabel("Results"))
+        layDetails.addWidget(wdgClientDetailsTop)
+        layDetails.addWidget(QLabel("Log messages"))
+        layDetails.addWidget(wdgClientDetailsBottom)
+
 
         wdgDetails = QWidget()
         wdgDetails.setLayout(layDetails)
@@ -956,11 +1020,22 @@ class MainWindow(QMainWindow):
 
     def showDataInTable(self, data, table, tableModel):
         model = tableModel(data)
-        table.setModel(model)
+        proxyModel = QSortFilterProxyModel()
+        proxyModel.setSourceModel(model)
+        table.setModel(proxyModel)
 
     def setTableWidths(self, table, widths):
         for i, w in enumerate(widths):
             table.setColumnWidth(i, w)
+
+    def setClientDetailInfoListText(self, num, text):
+        self.clientDetailInfoList[num][1].setText(str(text))
+
+    def loadResultStatistics(self):
+        resultStatistics = DBManager.getResultStatistics(ts.DICE_RESULT_EVENT_SOURCE)
+        self.showDataInTable(resultStatistics, self.tblResultStatistics, ResultStatisticsTableModel)
+        w = 50
+        self.setTableWidths(self.tblResultStatistics, [100, w, w, w, w, w, w, w, w])
 
     def loadAllClientDetails(self):
         logMessages = DBManager.getClientLog()
@@ -971,6 +1046,11 @@ class MainWindow(QMainWindow):
         self.showDataInTable(diceResults, self.tblResults, DiceResultTableModel)
         self.setTableWidths(self.tblResults, [50, 150, 50, 50, 50, 50, 200])
 
+        self.loadResultStatistics()
+
+        for i in range(len(self.clientDetailInfoList)):
+            self.setClientDetailInfoListText(i, "---")
+
     def loadClientDetails(self, client):
         logMessages = DBManager.getClientLogByClientId(client.Id)
         self.showDataInTable(logMessages, self.tblLogMessages, LogMessageTableModel)
@@ -980,7 +1060,25 @@ class MainWindow(QMainWindow):
         self.showDataInTable(diceResults, self.tblResults, DiceResultTableModel)
         self.setTableWidths(self.tblResults, [50, 50, 50, 50, 200])
 
-    def cmbClient_currentIndexChanged(self, index):
+        self.loadResultStatistics()
+
+        self.setClientDetailInfoListText(0, client.Latin)
+        self.setClientDetailInfoListText(1, client.Position)
+        self.setClientDetailInfoListText(2, client.Id)
+        self.setClientDetailInfoListText(3, client.IP)
+        self.setClientDetailInfoListText(4, "")
+        self.setClientDetailInfoListText(5, "YES" if client.AllowUserMode else "NO")
+        self.setClientDetailInfoListText(6, "YES" if client.IsActive else "NO")
+        self.setClientDetailInfoListText(7, client.Position)
+
+        clientContributions = DBManager.getAllClientResultContribution(TAKE_N_RESULTS_FOR_RECENT_CONTRIBUTIONS)
+        for cc in clientContributions:
+            if cc.Id == client.Id:
+                self.setClientDetailInfoListText(11, "{:.2f}".format(cc.Contribution))
+                self.setClientDetailInfoListText(12, "{:.2f}".format(cc.AverageResult))
+                break
+
+    def reloadClientDetailsBySelectedIndex(self, index):
         position = self.cmbClient.itemData(index)
         if position == -1:
             self.addStatusText("show details for all clients")
@@ -989,6 +1087,13 @@ class MainWindow(QMainWindow):
             c = self.getClientDetailsByPosition(position)
             self.addStatusText("select client at position {}".format(c.Position))
             self.loadClientDetails(c)
+
+    def cmbClient_currentIndexChanged(self, index):
+        self.reloadClientDetailsBySelectedIndex(index)
+
+    def btnRereshClientDetails_clicked(self):
+        index = self.cmbClient.currentIndex()
+        self.reloadClientDetailsBySelectedIndex(index)
 
 class DbTableModel(QAbstractTableModel):
     def __init__(self, data, parent=None):
@@ -1018,7 +1123,7 @@ class DbTableModel(QAbstractTableModel):
             if orientation == Qt.Horizontal:
                 return str(self.headers[section])
             if orientation == Qt.Vertical:
-                return str(section)
+                return str(section+1)
 
 class LogMessageTableModel(DbTableModel):
     def __init__(self, data, parent=None):
@@ -1047,6 +1152,18 @@ class DiceResultTableModel(DbTableModel):
         if role == Qt.BackgroundColorRole:
             if self.data[row].UserGenerated == 1:
                 return QVariant(QColor(210, 255, 210))
+
+class ResultStatisticsTableModel(DbTableModel):
+    def __init__(self, data, parent=None):
+        super(ResultStatisticsTableModel, self).__init__(data, parent)
+        self.headers = ["ID", "# 2 h", "avg 2 h", "# 4 h", "avg 4 h", "# today", "avg today", "#", "avg"]
+
+    def data(self, QModelIndex, role=None):
+        row = QModelIndex.row()
+        column = QModelIndex.column()
+        if role == Qt.DisplayRole:
+            text = str(self.data[row][column])
+            return text
 
 ###################
 ### application ###

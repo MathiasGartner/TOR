@@ -50,6 +50,7 @@ class MovementManager:
         if cords.isValid():
             cmd = "X{:f} Y{:f} Z{:f} E{:f}".format(cords.lengths[0], cords.lengths[1], cords.lengths[2], cords.lengths[3])
         else:
+            log.warning("Cords are outside boundaries: {}".format(cords.lengths))
             raise Exception("Cords are outside boundaries: ", cords.lengths)
         return cmd
 
