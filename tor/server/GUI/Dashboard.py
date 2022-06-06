@@ -255,11 +255,14 @@ class ClientDetailView(QWidget):
 
         layLEDs = QHBoxLayout()
         layLEDs.setContentsMargins(0, 0, 0, 0)
+        #layLEDs.addWidget(QLabel("LEDs"))
         layLEDs.addWidget(self.btnTurnOnLEDs)
         layLEDs.addWidget(self.btnTurnOffLEDs)
 
         grpLEDs = QGroupBox("LEDs")
         grpLEDs.setLayout(layLEDs)
+        #wdgLEDs = QWidget()
+        #wdgLEDs.setLayout(layLEDs)
 
         # Options
         self.chkUserMode = QCheckBox()
@@ -307,6 +310,7 @@ class ClientDetailView(QWidget):
         layMain.addWidget(grpClientService)
         layMain.addWidget(grpClientOptions)
         layMain.addWidget(grpLEDs)
+        #layMain.addWidget(wdgLEDs)
 
         self.grpMainGroup = QGroupBox()
         self.grpMainGroup.setObjectName("ClientDetails")
@@ -391,7 +395,7 @@ class MainWindow(QMainWindow):
                     cd.IsActive = c.IsActive
                     cdv.clientDetails = cd
                     cdv.grpMainGroup.setTitle("#{}: {}...".format(cd.Position, cd.Latin[0:9]))
-                    layClientDetailsRegions[i].addWidget(cdv, 3*i + j, k)
+                    layClientDetailsRegions[i].addWidget(cdv, k, 3*i + j)
                     self.cdvs.append(cdv)
                     self.cds.append(cd)
             layClientDetails.addWidget(grpClientDetailsRegions[i])
@@ -632,7 +636,7 @@ class MainWindow(QMainWindow):
         wdgJobListAndDescriptions.setLayout(layJobListAndDescriptions)
 
         layJobOverview = QVBoxLayout()
-        layJobOverview.addWidget(QLabel("Job Overview"))
+        #layJobOverview.addWidget(QLabel("Job Overview"))
         layJobOverview.addWidget(wdgTourSelection)
         layJobOverview.addWidget(wdgJobListAndDescriptions)
 
@@ -767,7 +771,7 @@ class MainWindow(QMainWindow):
         self.updateDashboard()
         timerFetchData = QTimer(self)
         timerFetchData.timeout.connect(self.updateDashboardFromTimer)
-        timerFetchData.start(30 * 1000)
+        timerFetchData.start(120 * 1000)
 
     ###############
     ### methods ###
@@ -893,6 +897,7 @@ class MainWindow(QMainWindow):
             self.executeCommandOnTORServer(TORCommands.INTERACTIVE_STOP)
             self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_STOP)
             self.executeCommandOnTORServer(TORCommands.SERVER_SERVICE_STOP)
+            self.executeCommandOnAllClients(TORCommands.CLIENT_TURN_OFF_LEDS)
 
     def btnStartAllClientService_clicked(self):
         print("start")
