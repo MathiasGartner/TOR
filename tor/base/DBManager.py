@@ -218,16 +218,18 @@ def getResultStatisticForEvent(event):
 
 def getResultStatistics(event):
     query = """
-        SELECT Id,
-            twoHour.Count AS Count2Hours, twoHour.AverageResult AS Average2Hours,
-            fourHour.Count AS Count4Hours, fourHour.AverageResult AS Average4Hours,
-            today.Count AS CountToday, today.AverageResult AS AverageToday,
-            event.Count AS CountEvent, event.AverageResult AS AverageEvent
+        SELECT Position, Latin AS Name,
+            IFNULL(twoHour.Count, 0) AS Count2Hours, IFNULL(twoHour.AverageResult, 0) AS Average2Hours,
+            IFNULL(fourHour.Count, 0) AS Count4Hours, IFNULL(fourHour.AverageResult, 0) AS Average4Hours,
+            IFNULL(today.Count, 0) AS CountToday, IFNULL(today.AverageResult, 0) AS AverageToday,
+            IFNULL(event.Count, 0) AS CountEvent, IFNULL(event.AverageResult, 0) AS AverageEvent
         FROM client c
             LEFT JOIN (SELECT ClientId, COUNT(*) AS Count, AVG(Result) AS AverageResult FROM diceresult WHERE Time > DATE_ADD(NOW(), interval -2 hour) GROUP BY ClientId) twoHour ON twoHour.ClientId = c.Id
             LEFT JOIN (SELECT ClientId, COUNT(*) AS Count, AVG(Result) AS AverageResult FROM diceresult WHERE Time > DATE_ADD(NOW(), interval -4 hour) GROUP BY ClientId) fourHour ON fourHour.ClientId = c.Id
             LEFT JOIN (SELECT ClientId, COUNT(*) AS Count, AVG(Result) AS AverageResult FROM diceresult WHERE Date(Time) = CURDATE() GROUP BY ClientId) today ON today.ClientId = c.Id
             LEFT JOIN (SELECT ClientId, COUNT(*) AS Count, AVG(Result) AS AverageResult FROM diceresult WHERE Source = %(event)s GROUP BY ClientId) event ON event.ClientId = c.Id
+        WHERE Position IS NOT NULL
+        ORDER BY Position
         """
     cursor.execute(query, {"event": event})
     data = cursor.fetchall()

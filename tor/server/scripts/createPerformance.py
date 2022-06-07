@@ -80,7 +80,8 @@ if args.id is not None:
     ids = int(args.id)
 
 jobsToCreate = [jR]
-jobsToCreate = [jW]
+#jobsToCreate = [jW]
+jobsToCreate = [jHH]
 #jobsToCreate = [jRW]
 #jobsToCreate = [jH]
 #jobsToCreate = [j2, jR]
@@ -95,7 +96,7 @@ positions = range(1, 28)
 #positions = [1, 3]
 #positions = [16]
 #positions = [4, 5, 6]
-positions = [10]
+positions = [1, 2, 3, 4, 5, 6]
 #positions = range(5, 28)
 
 from itertools import chain

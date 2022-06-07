@@ -1040,7 +1040,7 @@ class MainWindow(QMainWindow):
         resultStatistics = DBManager.getResultStatistics(ts.DICE_RESULT_EVENT_SOURCE)
         self.showDataInTable(resultStatistics, self.tblResultStatistics, ResultStatisticsTableModel)
         w = 50
-        self.setTableWidths(self.tblResultStatistics, [100, w, w, w, w, w, w, w, w])
+        self.setTableWidths(self.tblResultStatistics, [w, 100, w, w, w, w, w, w, w, w])
 
     def loadAllClientDetails(self):
         logMessages = DBManager.getClientLog()
@@ -1161,13 +1161,16 @@ class DiceResultTableModel(DbTableModel):
 class ResultStatisticsTableModel(DbTableModel):
     def __init__(self, data, parent=None):
         super(ResultStatisticsTableModel, self).__init__(data, parent)
-        self.headers = ["ID", "# 2 h", "avg 2 h", "# 4 h", "avg 4 h", "# today", "avg today", "#", "avg"]
+        self.headers = ["Position", "Name", "# 2 h", "avg 2 h", "# 4 h", "avg 4 h", "# today", "avg today", "#", "avg"]
 
     def data(self, QModelIndex, role=None):
         row = QModelIndex.row()
         column = QModelIndex.column()
         if role == Qt.DisplayRole:
-            text = str(self.data[row][column])
+            if (column == 1):
+                text = str(self.data[row][column])
+            else:
+                text = self.data[row][column]
             return text
 
 ###################

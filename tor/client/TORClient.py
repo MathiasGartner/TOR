@@ -204,7 +204,7 @@ def doJobs():
     inParkingPosition = False
     done = False
     while not done:
-        #log.info("nextJob: {}".format(nextJob))
+        log.info("nextJob: {}".format(nextJob))
         if not "W" in nextJob:
             inParkingPosition = False
         if not "RW" in nextJob:
