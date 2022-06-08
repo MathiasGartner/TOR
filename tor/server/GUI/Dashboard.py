@@ -146,7 +146,7 @@ class TORCommands:
     CLIENT_TURN_OFF_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 0 0 0;"
 
 class TORIcons:
-    APP_ICON = QIcon(os.path.join(os.path.dirname(__file__), r'../../resources/logo.png'))
+    APP_ICON = QIcon(os.path.join(os.path.dirname(__file__), r'../../resources/icon.svg'))
 
     LED_RED = QPixmap(os.path.join(os.path.dirname(__file__), r'../../resources/led-red.png')).scaled(15, 15)
     LED_GREEN = QPixmap(os.path.join(os.path.dirname(__file__), r'../../resources/led-green.png')).scaled(15, 15)
@@ -361,8 +361,8 @@ class MainWindow(QMainWindow):
         self.IsUpdating = False
 
         self.currentSelectedTabIndex = 0
-        self.setWindowIcon(TORIcons.APP_ICON)
         self.setWindowTitle("TOR")
+        self.setWindowIcon(TORIcons.APP_ICON)
 
         self.cdvs = []
         self.cds = []
