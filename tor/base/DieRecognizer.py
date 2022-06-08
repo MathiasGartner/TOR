@@ -207,7 +207,9 @@ class DieRecognizer:
             blobs = self.removeFakeBlobs(orig_blobs)
             blobs, fake_blobs, found, result, diePositionRelative = self.chooseCorrectBlobs(blobs, im, already_removed=True)
 
-        log.info("Blobs: {}".format(blobs))
+        log.info("Blob count: {}".format(len(blobs)))
+        for b in blobs:
+            log.info("    {}".format(b.pt))
         return blobs, fake_blobs, found, result, diePositionRelative
 
     def removeFakeBlobs(self, blobs):

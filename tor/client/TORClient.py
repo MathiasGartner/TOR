@@ -207,6 +207,10 @@ def doJobs():
         log.info("nextJob: {}".format(nextJob))
         if not "W" in nextJob:
             inParkingPosition = False
+            if not inUserMode:
+                # this is no user mode state but used for a quick fix for clearing the wait status
+                # needed in the Dashboard when turning of the whole installation
+                cm.setUserModeReady("")
         if not "RW" in nextJob:
             finishedRWRuns = 0
             finishedRWWaits = 0
@@ -276,6 +280,9 @@ def doJobs():
                 mm.moveToParkingPosition(True)
                 mm.waitForMovementFinished()
                 inParkingPosition = True
+                # this is no user mode state but used for a quick fix for setting the wait status
+                # needed in the Dashboard when turning of the whole installation
+                cm.setUserModeReady("WAITING")
             sleepTime = int(nextJob["W"] or cs.STANDARD_CLIENT_SLEEP_TIME)
             if sleepTime <= 0:
                 sleepTime = cs.STANDARD_CLIENT_SLEEP_TIME

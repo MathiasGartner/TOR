@@ -98,7 +98,7 @@ THREAD_POOL_SIZE = 27
 DEFAULT_TIMEOUT = 3
 DEFAULT_TIMEOUT_SERVER = 3
 DEFAULT_TIMEOUT_SSH = 7
-DEFAULT_TIMEOUT_PING = 1
+DEFAULT_TIMEOUT_PING = 1.5
 
 NEW_PROGRAM_NAME = "<new>"
 
@@ -142,7 +142,7 @@ class TORCommands:
     CLIENT_SERVICE_STOP = "sudo systemctl stop TORClient"
     CLIENT_SERVICE_STATUS = "systemctl is-active --quiet TORClient"
 
-    CLIENT_TURN_ON_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 40 140 120 -b 20;"
+    CLIENT_TURN_ON_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 40 140 120 -b 95;"
     CLIENT_TURN_OFF_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 0 0 0;"
 
 class TORIcons:
@@ -888,15 +888,40 @@ class MainWindow(QMainWindow):
 
     def btnStartAllTORPrograms_clicked(self):
         with WaitCursor():
+            DBManager.clearAllCurrentStates()
             self.executeCommandOnTORServer(TORCommands.SERVER_SERVICE_START)
             self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_START, onlyActive=True)
             self.executeCommandOnTORServer(TORCommands.INTERACTIVE_START)
 
     def btnStopAllTORPrograms_clicked(self):
         with WaitCursor():
+            jobs = []
+            for c in self.cds:
+                j = copy.deepcopy(DefaultJobs.WAIT)
+                j.ClientId = c.Id
+                jobs.append(j)
+            DBManager.saveJobs(jobs)
+
+            allWaiting = False
+            while allWaiting == False:
+                time.sleep(5)
+                busyClients = DBManager.getBusyClients()
+                if len(busyClients) == 0:
+                    allWaiting = True
+                else:
+                    msg = "waiting for {} boxes to finish...".format(len(busyClients))
+                    log.info(msg)
+                    self.addStatusText(msg)
+
+            msg = "all boxes ready waiting..."
+            log.info(msg)
+            self.addStatusText(msg)
+            time.sleep(3)
             self.executeCommandOnTORServer(TORCommands.INTERACTIVE_STOP)
             self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_STOP)
             self.executeCommandOnTORServer(TORCommands.SERVER_SERVICE_STOP)
+            DBManager.clearAllCurrentStates()
+            time.sleep(3)
             self.executeCommandOnAllClients(TORCommands.CLIENT_TURN_OFF_LEDS)
 
     def btnStartAllClientService_clicked(self):

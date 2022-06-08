@@ -680,7 +680,7 @@ class MainWindow(QMainWindow):
                 dr.writeImage(image, "camera.jpg", directory=cs.WEB_DIRECTORY)
                 dr.writeImage(processedImages[1], "recognized.jpg", directory=cs.WEB_DIRECTORY)
                 self.addStatusText("see full images at http://" + cm.clientIdentity["IP"] + "/camera.html")
-                lm.clear()
+                #lm.clear()
                 mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
                 pixCameraOriginal = QPixmap(os.path.join(cs.WEB_DIRECTORY, "camera.jpg"))
                 pixCameraProcessed = QPixmap(os.path.join(cs.WEB_DIRECTORY, "recognized.jpg"))

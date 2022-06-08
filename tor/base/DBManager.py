@@ -90,6 +90,12 @@ def saveJobs(jobs):
     data = [(j.ClientId, j.JobCode, j.JobParameters, j.ExecuteAt) for j in jobs]
     cursor.executemany(query, data)
 
+def getBusyClients():
+    query = "SELECT Id, Position, Latin FROM client WHERE IsActive = 1 AND CurrentState != 'WAITING'"
+    cursor.execute(query)
+    data = cursor.fetchall()
+    return data
+
 def getIdByPosition(position):
     query = "SELECT Id FROM client WHERE Position = %(pos)s"
     cursor.execute(query, { "pos" : position })
@@ -125,6 +131,10 @@ def exitUserMode(clientId):
 def setCurrentStateForUserMode(clientId, state):
     query = "UPDATE client SET CurrentState = %(state)s WHERE Id = %(clientId)s"
     cursor.execute(query, { "state": state, "clientId" : clientId })
+
+def clearAllCurrentStates():
+    query = "UPDATE client SET CurrentState = ''"
+    cursor.execute(query)
 
 def getAllClients():
     query = "SELECT Id, IP, Material, Position, Latin, AllowUserMode, IsActive FROM client WHERE Position IS NOT NULL ORDER BY Position"
@@ -234,3 +244,4 @@ def getResultStatistics(event):
     cursor.execute(query, {"event": event})
     data = cursor.fetchall()
     return data
+
