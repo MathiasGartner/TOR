@@ -114,6 +114,16 @@ class MovementManager:
         cmd = "M43 T I S41 L41 R1 W{}".format(cs.PULSE_MAGNET_TIME_MS)
         self.sendGCode(cmd)
 
+    def enableSteppers(self):
+        cmd = "M17"
+        self.sendGCode(cmd)
+        log.info("all stepper enabled")
+
+    def disableSteppers(self):
+        cmd = "M18"
+        self.sendGCode(cmd)
+        log.info("all stepper disabled")
+
     def setTopLed(self, brightness):
         if brightness < 0:
             brightness = 0
@@ -189,6 +199,9 @@ class MovementManager:
 
     def moveToParkingPosition(self, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
         self.moveToPos(cs.PARKING_POSITION, segmented, useSlowDownStart, )
+
+    def moveToDeepParkingPosition(self, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
+        self.moveToPos(cs.DEEP_PARKING_POSITION, segmented, useSlowDownStart, )
 
     def moveToAllCorners(self, segmented=False, useSlowDownStart=True, useSlowDownEnd=True):
         self.moveToPos(cs.CORNER_X, segmented, useSlowDownStart, )

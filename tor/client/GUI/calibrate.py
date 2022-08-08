@@ -3,6 +3,7 @@ import time
 import os
 import sys
 
+from datetime import datetime
 from functools import partial
 
 from PyQt5.QtCore import Qt
@@ -678,6 +679,7 @@ class MainWindow(QMainWindow):
                 dieRollResult, processedImages = dr.getDieRollResult(image, returnOriginalImg=True, markDie=True)
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                 dr.writeImage(image, "camera.jpg", directory=cs.WEB_DIRECTORY)
+                dr.writeImage(processedImages[0], "im_original_{}.jpg".format(datetime.now().strftime("%Y%m%d%H%M%S")), directory=cs.WEB_DIRECTORY)
                 dr.writeImage(processedImages[1], "recognized.jpg", directory=cs.WEB_DIRECTORY)
                 self.addStatusText("see full images at http://" + cm.clientIdentity["IP"] + "/camera.html")
                 #lm.clear()

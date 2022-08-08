@@ -7,17 +7,21 @@ import tor.TORSettingsLocal as tsl
 
 #ips = range(101, 131) #[107]
 
+ips = []
 #ips = [107, 112]
-ips = ["192.168.1.120", "192.168.1.125"]
-ips = ["192.168.1.101"]
-#ips = ["192.168.1.111", "192.168.1.128"]
-ips = ["192.168.1.101", "192.168.1.111", "192.168.1.128"]
-positions = []
+#ips = ["192.168.1.110", "192.168.1.127"]
+#ips = ["192.168.1.108"]
+#ips = ["192.168.1.117" ]
+ips = ["192.168.1.120"]
+#positions = []
 #positions = [1, 2, 3, 4,5, 6, 7, 8, 9]
-#positions = range(1, 28)
+positions = range(1, 28)
 #positions = [10, 11, 12, 13, 14, 15]
 #positions = [1, 2, 3]
-#positions = [4]
+#positions = [16]
+#positions = [25, 19, 9, 20, 4, 13, 27, 1]
+#positions = [17]
+positions = []
 
 #from itertools import chain
 #positions = chain(range(1, 21), range(23, 28))
@@ -45,7 +49,7 @@ cmd_copy_service = r"scp -i {0} -r " + tsl.PATH_TO_TOR_SCRIPTS + r"/TOR/scripts 
 #cmd_copy_service_system = r'ssh -i {0} pi@{1} "sudo cp /home/pi/scripts/TORClient.service /etc/systemd/system/TORClient.service"'
 #cmd_chmod_marlin = r'ssh -i {0} pi@{1} "sudo chmod +x /home/pi/scripts/flashTORMarlin.sh"'
 #cmd_chmod_temp = r'ssh -i {0} pi@{1} "sudo chmod +x /home/pi/scripts/temperature.sh"'
-cmd_install = r'ssh -i {0} pi@{1} "sudo cp /home/pi/scripts/TORClient.service /etc/systemd/system/TORClient.service; sudo chmod +x /home/pi/scripts/flashTORMarlin.sh; sudo chmod +x /home/pi/scripts/temperature.sh"'
+cmd_install = r'ssh -i {0} pi@{1} "sudo cp /home/pi/scripts/TORClient.service /etc/systemd/system/TORClient.service; sudo chmod +x /home/pi/scripts/flashTORMarlin.sh; sudo chmod +x /home/pi/scripts/temperature.sh; sudo chmod +x /home/pi/scripts/installPyQt5.sh"'
 
 with open(filename, 'w') as f:
     for ip in ips:

@@ -202,6 +202,7 @@ def doJobs():
     finishedRWWaits = 0
     isFirstRWJob = True
     inParkingPosition = False
+    steppersDisabled = False
     done = False
     while not done:
         log.info("nextJob: {}".format(nextJob))
@@ -215,6 +216,14 @@ def doJobs():
             finishedRWRuns = 0
             finishedRWWaits = 0
             isFirstRWJob = True
+        if not "W" in nextJob and not "RW" in nextJob:
+            if steppersDisabled:
+                mm.enableSteppers()
+                mm.moveToParkingPosition(True)
+                mm.waitForMovementFinished()
+                steppersDisabled = False
+
+        # do nextJob
         if "R" in nextJob:
             if "T" in nextJob and nextJob["T"] is not None and nextJob["T"] != "None":
                 startTime = datetime.strptime(nextJob["T"], '%Y-%m-%d %H:%M:%S')
@@ -236,16 +245,29 @@ def doJobs():
                 waitNTimes = pow(math.sin(int(cm.clientIdentity["Position"])) + 1.2, 4) / 25.0 * waitNTimes
             if finishedRWRuns < runNTimes:
                 log.info("perform run {}/{} ...".format(finishedRWRuns+1, runNTimes))
+                if steppersDisabled:
+                    mm.enableSteppers()
+                    mm.moveToParkingPosition(True)
+                    mm.waitForMovementFinished()
+                    steppersDisabled = False
                 run()
                 finishedRWRuns += 1
             elif finishedRWWaits < waitNTimes:
                 currentState = "WAIT"
                 if finishedRWWaits == 0:
+                    mm.moveToDeepParkingPosition(True)
+                    mm.waitForMovementFinished(cs.WAIT_BEFORE_DISABLE_STEPPER_TIME)
+                    mm.disableSteppers()
+                    steppersDisabled = True
                     log.info("wait time is {} seconds".format(waitNSeconds))
                 log.info("perform wait {}/{} ...".format(finishedRWWaits+1, waitNTimes))
                 time.sleep(waitNSeconds)
                 finishedRWWaits += 1
             else:
+                mm.enableSteppers()
+                mm.moveToParkingPosition(True)
+                mm.waitForMovementFinished()
+                steppersDisabled = False
                 finishedRWRuns = 0
                 finishedRWWaits = 0
                 isFirstRWJob = False
@@ -279,7 +301,11 @@ def doJobs():
             if not inParkingPosition:
                 mm.moveToParkingPosition(True)
                 mm.waitForMovementFinished()
+                mm.moveToDeepParkingPosition(True)
+                mm.waitForMovementFinished(cs.WAIT_BEFORE_DISABLE_STEPPER_TIME)
+                mm.disableSteppers()
                 inParkingPosition = True
+                steppersDisabled = True
                 # this is no user mode state but used for a quick fix for setting the wait status
                 # needed in the Dashboard when turning of the whole installation
                 cm.setUserModeReady("WAITING")
@@ -324,6 +350,9 @@ def doJobs():
                 mr.performUserAction(action, param)
                 if action != "NONE":
                     exitUserModeAtTime = datetime.now() + timedelta(seconds=cs.EXIT_USER_MODE_AFTER_N_SECONDS)
+    if steppersDisabled:
+        mm.enableSteppers()
+        steppersDisabled = False
     mm.moveToParkingPosition(True)
     log.info("finished")
     exitTOR = True
