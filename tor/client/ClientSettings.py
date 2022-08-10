@@ -188,6 +188,7 @@ SHOW_DIE_RESULT_WITH_LEDS = False
 
 #web pages directory
 WEB_DIRECTORY = "/home/pi/tor/client/html"
+IMAGE_DIRECTORY = "/home/pi/pictures"
 
 #die paramters
 DIE_SIZE_X=120
