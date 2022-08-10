@@ -4,6 +4,8 @@ import random
 import sys
 import time
 
+from datetime import datetime
+
 import numpy as np
 
 from tor.base.DieRecognizer import DieRecognizer
@@ -223,6 +225,28 @@ elif mode == 19: # move forever between two positions
             mm.doHoming()
         if movementCount % 20 == 0:
             print("movementCount: {}".format(movementCount))
+
+elif mode == 20: #move through whole box and take images
+    useTopLED = int(sys.argv[2])
+    mm.doHoming()
+    xmin, xmax = 50, 200
+    ymin, ymax = 100, 150
+    zmin, zmax = 50, 90
+    cam = Camera()
+    dr = DieRecognizer()
+    for x in range(xmin, xmax, 10):
+        for y in range(ymin, ymax, 10):
+            for z in range(zmin, zmax, 5):
+                pos = Position(x, y, z)
+                mm.moveToPos(pos, segmented=True)
+                mm.waitForMovementFinished(1)
+                if useTopLED:
+                    mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
+                image = cam.takePicture()
+                if useTopLED:
+                    mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
+                image = dr.transformImage(image)
+                dr.writeImage(image, "image_{}.jpg".format(datetime.now().strftime("%Y%m%d%H%M%S")), directory=cs.IMAGE_DIRECTORY)
 
 if mm is not None:
     mm.waitForMovementFinished(2)
