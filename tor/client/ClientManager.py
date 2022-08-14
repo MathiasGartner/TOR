@@ -116,6 +116,15 @@ class ClientManager:
         answer = self.sendAndGetAnswer(msg)
         return answer
 
+    def askMagnetPositionIsOK(self, image):
+        msg = {
+            "C": self.clientId,
+            "MAGNET_POSITION_IMAGE": image
+        }
+        answer = self.sendAndGetAnswer(msg)
+        isOK = answer["POSITION_OK"]
+        return True if isOK == 1 else 0
+
     def loadMeshpoints(self):
         cs.MESH_BED = cs.MESH_BED_DEFAULT
         cs.MESH_RAMP = cs.MESH_RAMP_DEFAULT

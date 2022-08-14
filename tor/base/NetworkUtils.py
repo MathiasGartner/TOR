@@ -5,6 +5,7 @@ import json
 import numpy as np
 
 import tor.client.ClientSettings as cs
+import tor.TORSettings as ts
 
 def getMACLinux(interface='wlan0'):
     try:
@@ -40,8 +41,14 @@ class NumpyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 def recvData(conn):
-    msgReceived = conn.recv(4096)
-    msg = msgReceived.decode()
+    msgReceived = conn.recv(ts.MAX_MSG_LENGTH)
+    fullMessage = msgReceived
+    while (len(msgReceived) == ts.MAX_MSG_LENGTH):
+        msgReceived = conn.recv(ts.MAX_MSG_LENGTH)
+        fullMessage += msgReceived
+    #print("finished receiving")
+    #print("len recv TOTAL:", len(fullMessage))
+    msg = fullMessage.decode()
     msgData = None
     try:
         msgData = json.loads(msg)
@@ -53,7 +60,8 @@ def recvData(conn):
 
 def sendData(conn, data):
     msgToSend = json.dumps(data, cls=NumpyEncoder)
-    conn.send(msgToSend.encode())
+    sent = conn.send(msgToSend.encode())
+    #print("sent: {}".format(sent))
 
 def sendOK(conn):
     msgOK = json.dumps({"STATUS" : "OK"})

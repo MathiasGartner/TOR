@@ -25,6 +25,11 @@ print("mode: ", mode)
 try:
     if mode == 17:
         from tor.client.Camera import Camera
+    if mode == 23:
+        from tor.client.ClientManager import ClientManager
+        from tor.client.MovementRoutines import MovementRoutines
+        cm = ClientManager()
+        mr = MovementRoutines(cm)
     if mode != 17 and mode != 18 and mode != 15 and mode != 11 and mode != 12 and mode != 10:
         print("init board...")
         mm = MovementManager()
@@ -286,6 +291,54 @@ elif mode == 21: #move to <n> random positions and take images
     if useTopLED:
         mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
     lm.clear()
+
+elif mode == 22: #move to <n> random positions near cs.VERIFY_MAGNET_POSITION and take images
+    useTopLED = int(sys.argv[2])
+    nPositions = int(sys.argv[3])
+    mm.doHoming()
+    dx = 10
+    dy = 10
+    dz = 10
+    lm = LedManager()
+    cam = Camera()
+    dr = DieRecognizer()
+    lm.setAllLeds()
+    if useTopLED:
+        mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
+    for i in range(nPositions):
+        pos = cs.VERIFY_MAGNET_POSITION + Position(random.randint(-dx, dx), random.randint(-dy, dy), random.randint(-dz, dz))
+        mm.moveToPos(pos, segmented=True)
+        mm.waitForMovementFinished(1)
+        image = cam.takePicture()
+        image = dr.transformImage(image)
+        dr.writeImage(image, "image_{}.jpg".format(datetime.now().strftime("%Y%m%d%H%M%S")), directory=cs.IMAGE_DIRECTORY, doCreateDirectory=True)
+        print("{}/{}".format(i+1, nPositions))
+    if useTopLED:
+        mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
+    lm.clear()
+
+elif mode == 23:
+    moveToCorrectPos = True if int(sys.argv[2]) == 1 else False
+    mm.doHoming()
+    if moveToCorrectPos:
+        mm.moveToPos(cs.VERIFY_MAGNET_POSITION, True)
+    else:
+        mm.moveToPos(Position(220, 220, 150))
+    mm.waitForMovementFinished(0.5)
+    mr.verifyMagnetPosition()
+
+elif mode == 24:
+    import tor.TORSettings as ts
+    from tor.base import NetworkUtils
+    import socket
+    conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    conn.connect((ts.SERVER_IP, ts.SERVER_PORT))
+
+    im = [x for x in range(1234)]
+    NetworkUtils.sendData(conn, im)
+    answer = NetworkUtils.recvData(conn)
+    conn.close()
+    print("done")
 
 if mm is not None:
     mm.waitForMovementFinished(2)

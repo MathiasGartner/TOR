@@ -7,6 +7,7 @@ import socket
 
 from tor.base import DBManager
 from tor.base import NetworkUtils
+from tor.base.PositionVerification import PositionVerification
 import tor.TORSettings as ts
 
 def getClientSettings(clientId):
@@ -93,6 +94,13 @@ def handleRequest(conn):
                 elif request["PUT"] == "SETTINGS":
                     NetworkUtils.sendOK(conn)
                     saveClientSettings(clientId, request["SETTINGS"])
+            elif "MAGNET_POSITION_IMAGE" in request:
+                # TOOD: make this thread safe
+                isOK = pv.verifyPosition(request["MAGNET_POSITION_IMAGE"])
+                #isOK = False
+                NetworkUtils.sendData(conn, {
+                    "POSITION_OK": 1 if isOK else 0,
+                })
         elif "MAC" in request:
             cId = DBManager.getClientIdentity(request["MAC"])
             NetworkUtils.sendData(conn, {"Id": cId.Id,
@@ -109,6 +117,8 @@ def handleRequest(conn):
 
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=ts.SERVER_LOG_LEVEL)
 log = logging.getLogger(__name__)
+
+pv = PositionVerification()
 
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serverSocket.bind((ts.SERVER_IP, ts.SERVER_PORT))

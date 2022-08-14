@@ -159,15 +159,16 @@ class MovementRoutines:
             self.mm.moveToPos(cs.AFTER_PICKUP_POSITION, True)
         self.mm.waitForMovementFinished()
 
-    def takePicture(self, cam=None):
+    def takePicture(self, cam=None, useTopLED=True):
         if cam is None:
             cam = Camera()
-        log.info("turn on top LED")
-        self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
+        if useTopLED:
+            log.info("turn on top LED")
+            self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
         image = cam.takePicture()
-        self.dr.writeImage(image, "test.jpg", directory=cs.WEB_DIRECTORY)
-        log.info("turn off top LED")
-        self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
+        if useTopLED:
+            log.info("turn off top LED")
+            self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
         cam.close()
         return image
 
@@ -318,6 +319,21 @@ class MovementRoutines:
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
         self.mm.moveToPos(cs.CENTER_TOP, True)
         self.mm.waitForMovementFinished()
+
+    def verifyMagnetPosition(self):
+        #self.mm.moveToPos(cs.VERIFY_MAGNET_POSITION, True)
+        #self.mm.waitForMovementFinished(0.5)
+        im = self.takePicture(cam=None, useTopLED=False)
+        im = self.dr.transformImageForMagnetPositionVerification(im)
+        isOK = self.cm.askMagnetPositionIsOK(im)
+        if isOK:
+            log.info("Position verified")
+            self.mm.moveToPos(cs.CENTER_TOP, True)
+            self.mm.waitForMovementFinished()
+        else:
+            log.warning("Position could not be verified!")
+        print(isOK)
+        return isOK
 
     def getValidUserPosition(self, pos):
         validPos = Position(clamp(pos.x, 0, cs.LX), clamp(pos.y, 160, cs.LY), clamp(pos.z, 50, 220))

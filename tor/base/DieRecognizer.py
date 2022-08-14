@@ -90,16 +90,24 @@ class DieRecognizer:
             fileName = os.path.join(directory, fileName)
         np.save(fileName, im)
 
+    def toGrayscale(self, image):
+        im = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        return im
+
+    def resizeImage(self, image, size):
+        im = cv2.resize(image, (size, size), cv2.INTER_AREA)
+        return im
+
     def markCropLines(self, im, tl, br, isGray=False):
         if not isGray:
-            im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+            im = self.toGrayscale(im)
         im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
         im = cv2.rectangle(im, tuple(tl), tuple(br), (0, 0, 255), thickness=1)
         return im
 
     def markLines(self, im, lines, isGray=False):
         if not isGray:
-            im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+            im = self.toGrayscale(im)
         im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
         for l in lines:
             im = cv2.line(im, tuple(l[0]), tuple(l[1]), (0, 0, 255), thickness=1)
@@ -122,6 +130,13 @@ class DieRecognizer:
             return self.warpImage(image)
         else:
             return self.cropImage(image)
+
+    def transformImageForMagnetPositionVerification(self, image):
+        im = self.transformImage(image)
+        im = self.toGrayscale(im)
+        im = self.cropImage(im, tl=cs.VERIFY_MAGNET_IMAGE_TL, br=cs.VERIFY_MAGNET_IMAGE_BR)
+        im = self.resizeImage(im, cs.VERIFY_MAGNET_IMAGE_SIZE_SMALL)
+        return im
 
     def markDieOnImage(self, im, keypoints, isGray=False):
         if isGray:
@@ -276,7 +291,7 @@ class DieRecognizer:
             im = self.transformImage(im)
         im_original = im
         if not alreadyGray:
-            im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+            im = self.toGrayscale(im)
 
         #Blur the image
         blurSize = 13
