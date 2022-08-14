@@ -186,9 +186,10 @@ STORE_IMAGES = False
 ALWAYS_MARK_DIE_ON_IMAGE = False
 SHOW_DIE_RESULT_WITH_LEDS = False
 
-#web pages directory
+# directories
 WEB_DIRECTORY = "/home/pi/tor/client/html"
 IMAGE_DIRECTORY = "/home/pi/pictures"
+IMAGE_DIRECTORY_POSITION = IMAGE_DIRECTORY + "/positions"
 
 #die paramters
 DIE_SIZE_X=120

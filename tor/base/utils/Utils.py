@@ -1,6 +1,7 @@
 import logging
 log = logging.getLogger(__name__)
 
+from datetime import datetime
 import os
 import time
 
@@ -22,3 +23,6 @@ def sleepUntilTimestamp(timestamp):
 def createDirectory(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
+
+def getFilenameTimestamp():
+    return datetime.now().strftime("%Y%m%d%H%M%S")

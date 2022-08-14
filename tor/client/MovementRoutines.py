@@ -320,11 +320,15 @@ class MovementRoutines:
         self.mm.moveToPos(cs.CENTER_TOP, True)
         self.mm.waitForMovementFinished()
 
-    def verifyMagnetPosition(self):
-        #self.mm.moveToPos(cs.VERIFY_MAGNET_POSITION, True)
-        #self.mm.waitForMovementFinished(0.5)
+    def moveToPosAndTakeMagnetVerificationImage(self, pos):
+        self.mm.moveToPos(pos, True)
+        self.mm.waitForMovementFinished(0.5)
         im = self.takePicture(cam=None, useTopLED=False)
         im = self.dr.transformImageForMagnetPositionVerification(im)
+        return im
+
+    def verifyMagnetPosition(self, pos=cs.VERIFY_MAGNET_POSITION):
+        im = self.moveToPosAndTakeMagnetVerificationImage(pos)
         isOK = self.cm.askMagnetPositionIsOK(im)
         if isOK:
             log.info("Position verified")
