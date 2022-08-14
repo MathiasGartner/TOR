@@ -9,6 +9,7 @@ import os
 
 from tor.base.DieRollResult import DieRollResult
 from tor.base.utils.Point2D import Point2D
+from tor.base.utils.Utils import *
 import tor.client.ClientSettings as cs
 
 class DieRecognizer:
@@ -71,17 +72,21 @@ class DieRecognizer:
             raise Exception("Could not open image: ", imgPath)
         return image
 
-    def writeImage(self, im, fileName="", directory=""):
+    def writeImage(self, im, fileName="", directory="", doCreateDirectory=False):
         if fileName == "":
             fileName = "run_{}.jpg".format(datetime.now().strftime("%Y%m%d%H%M%S"))
         if directory != "":
+            if doCreateDirectory:
+                createDirectory(directory)
             fileName = os.path.join(directory, fileName)
         cv2.imwrite(fileName, im)
 
-    def writeRGBArray(self, im, fileName="", directory=""):
+    def writeRGBArray(self, im, fileName="", directory="", doCreateDirectory=False):
         if fileName == "":
             fileName = "run_{}.npy".format(datetime.now().strftime("%Y%m%d%H%M%S"))
         if directory != "":
+            if doCreateDirectory:
+                createDirectory(directory)
             fileName = os.path.join(directory, fileName)
         np.save(fileName, im)
 

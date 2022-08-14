@@ -11,6 +11,8 @@ import numpy as np
 from tor.base.DieRecognizer import DieRecognizer
 import tor.client.ClientSettings as cs
 from tor.client.Cords import Cords
+if cs.ON_RASPI:
+    from tor.client.Camera import Camera
 from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
 from tor.client.Position import Position
@@ -229,24 +231,61 @@ elif mode == 19: # move forever between two positions
 elif mode == 20: #move through whole box and take images
     useTopLED = int(sys.argv[2])
     mm.doHoming()
-    xmin, xmax = 50, 200
-    ymin, ymax = 100, 150
-    zmin, zmax = 50, 90
+    #xmin, xmax, dx = 5, 245, 30
+    #ymin, ymax, dy = 120, 240, 30
+    #zmin, zmax, dz = 60, 190, 30
+    xmin, xmax, dx = 115, 135, 10
+    ymin, ymax, dy = 210, 240, 10
+    zmin, zmax, dz = 150, 190, 10
+    lm = LedManager()
     cam = Camera()
     dr = DieRecognizer()
-    for x in range(xmin, xmax, 10):
-        for y in range(ymin, ymax, 10):
-            for z in range(zmin, zmax, 5):
+    lm.setAllLeds()
+    if useTopLED:
+        mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
+    for x in range(xmin, xmax+1, dx):
+        for y in range(ymin, ymax+1, dy):
+            for z in range(zmin, zmax+1, dz):
                 pos = Position(x, y, z)
                 mm.moveToPos(pos, segmented=True)
                 mm.waitForMovementFinished(1)
-                if useTopLED:
-                    mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
                 image = cam.takePicture()
-                if useTopLED:
-                    mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
                 image = dr.transformImage(image)
-                dr.writeImage(image, "image_{}.jpg".format(datetime.now().strftime("%Y%m%d%H%M%S")), directory=cs.IMAGE_DIRECTORY)
+                dr.writeImage(image, "image_{}.jpg".format(datetime.now().strftime("%Y%m%d%H%M%S")), directory=cs.IMAGE_DIRECTORY, doCreateDirectory=True)
+    if useTopLED:
+        mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
+    lm.clear()
+
+elif mode == 21: #move to <n> random positions and take images
+    useTopLED = int(sys.argv[2])
+    nPositions = int(sys.argv[3])
+    mm.doHoming()
+    xmin, xmax = 5, 245
+    ymin, ymax = 120, 240
+    zmin, zmax = 50, 200
+    #xmin, xmax = 115, 135
+    #ymin, ymax = 205, 230
+    #zmin, zmax = 170, 195
+    lm = LedManager()
+    cam = Camera()
+    dr = DieRecognizer()
+    lm.setAllLeds()
+    if useTopLED:
+        mm.setTopLed(cs.LED_TOP_BRIGHTNESS)
+    for i in range(nPositions):
+        x = random.randint(xmin, xmax)
+        y = random.randint(ymin, ymax)
+        z = random.randint(zmin, zmax)
+        pos = Position(x, y, z)
+        mm.moveToPos(pos, segmented=True)
+        mm.waitForMovementFinished(1)
+        image = cam.takePicture()
+        image = dr.transformImage(image)
+        dr.writeImage(image, "image_{}.jpg".format(datetime.now().strftime("%Y%m%d%H%M%S")), directory=cs.IMAGE_DIRECTORY, doCreateDirectory=True)
+        print("{}/{}".format(i+1, nPositions))
+    if useTopLED:
+        mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
+    lm.clear()
 
 if mm is not None:
     mm.waitForMovementFinished(2)

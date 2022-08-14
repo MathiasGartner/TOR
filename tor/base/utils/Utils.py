@@ -1,6 +1,7 @@
 import logging
 log = logging.getLogger(__name__)
 
+import os
 import time
 
 def clamp(n, smallest, largest):
@@ -17,3 +18,7 @@ def sleepUntilTimestampIndex(step, timestamps):
 
 def sleepUntilTimestamp(timestamp):
     sleepUntilTimestampIndex(0, [timestamp])
+
+def createDirectory(directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
