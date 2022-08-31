@@ -14,7 +14,7 @@ class ClientManager:
         if cs.ON_RASPI:
             self.clientIdentity = self.askForClientIdentity(self.clientMacAddress)
         else:
-            self.clientIdentity = { "Id": -1, "IP": -1, "Material": "vacuum", "Position": -1, "Latin": "vacuum" }
+            self.clientIdentity = { "Id": -1, "IP": -1, "Material": "vacuum", "Position": -1, "Latin": "vacuum", "IsActive": 0 }
         self.clientId = self.clientIdentity["Id"]
         p = int(self.clientIdentity["Position"])
         if (p - 1) % 9 < 3:
@@ -47,6 +47,10 @@ class ClientManager:
         msg = {"MAC": macAddress}
         answer = self.sendAndGetAnswer(msg);
         return answer
+
+    def updateClientIsActive(self):
+        updatedClientIdentity = self.askForClientIdentity(self.clientMacAddress)
+        self.clientIdentity["IsActive"] = updatedClientIdentity["IsActive"]
 
     def sendDieRollResult(self, dieRollResult, userGenerated=False):
         msg = {
@@ -92,6 +96,13 @@ class ClientManager:
         }
         answer = self.sendAndGetAnswer(msg)
 
+    def sendStopClient(self, msg):
+        msg = {
+            "C": self.clientId,
+            "STOP": msg
+        }
+        answer = self.sendAndGetAnswer(msg)
+
     def sendHomeAfterNSuccessfulRuns(self, n):
         msg = {
             "C": self.clientId,
@@ -123,7 +134,7 @@ class ClientManager:
         }
         answer = self.sendAndGetAnswer(msg)
         isOK = answer["POSITION_OK"]
-        return True if isOK == 1 else 0
+        return isOK == 1
 
     def loadMeshpoints(self):
         cs.MESH_BED = cs.MESH_BED_DEFAULT

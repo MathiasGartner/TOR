@@ -59,6 +59,12 @@ def keepAskingForNextJob(askEveryNthSecond = None):
         if sleepFor > 0:
             time.sleep(sleepFor)
 
+def doHomingCheck():
+    homingSuccessful = mr.checkSuccesfulHoming()
+    if not homingSuccessful:
+        cm.sendStopClient("homing not successful")
+        cm.updateClientIsActive()
+
 def run():
     global runsSinceLastHoming
     global lastPickupX
@@ -111,11 +117,13 @@ def run():
         if runsSinceLastHoming >= homeEveryNRuns:
             cm.sendHomeAfterNSuccessfulRuns(homeEveryNRuns)
             mr.pickupDieWhileHoming()
+            doHomingCheck()
             runsSinceLastHoming = 0
         elif countNotFound >= cs.HOME_AFTER_N_FAILS:
             log.info("count not found: {} -> do homing...".format(countNotFound))
             cm.sendDieResultNotFoundNTimes(cs.HOME_AFTER_N_FAILS)
             mm.doHoming()
+            doHomingCheck()
             mm.moveToPosAfterHoming(cs.BEFORE_PICKUP_POSITION, True)
             mr.searchForDie()
             mm.moveToPos(cs.CENTER_TOP, True)
@@ -125,6 +133,7 @@ def run():
             log.info("count same result: {} -> do homing...".format(countSameResult))
             cm.sendSameDieResultNTimes(cs.HOME_AFTER_N_SAME_RESULTS, dieRollResult.result)
             dieRollResult = mr.pickupDieWhileHoming()
+            doHomingCheck()
             if not dieRollResult.found:
                 mr.searchForDie()
             else:
@@ -179,23 +188,24 @@ def doJobs():
     global currentState
     global exitUserModeAtTime
 
-    log.warning("current position: {}".format(MovementManager.currentPosition))
-
-    if args.doHomingOnStartup:
-        mr.pickupDieWhileHoming()
+    homingSuccessful = False
+    if cm.clientIdentity["IsActive"] == 0:
+        log.warning("client is not active")
     else:
-        #TODO: get current position from BTT SKR Board
-        #mm.refreshCurrentPositionFromBoard()
-        #mm.setCurrentPositionGCode(cs.HOME_POSITION.toCordLengths())
-        #MovementManager.currentPosition = cs.HOME_POSITION
-        pass
+        log.warning("current position: {}".format(MovementManager.currentPosition))
 
-    mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
-    mm.moveToPos(cs.CENTER_TOP, True)
-    mm.waitForMovementFinished()
-    log.info("now in starting position.")
+        if args.doHomingOnStartup:
+            mr.pickupDieWhileHoming()
+        else:
+            #TODO: get current position from BTT SKR Board
+            #mm.refreshCurrentPositionFromBoard()
+            #mm.setCurrentPositionGCode(cs.HOME_POSITION.toCordLengths())
+            #MovementManager.currentPosition = cs.HOME_POSITION
+            pass
+
+        doHomingCheck()
+
     time.sleep(0.5)
-
     lm.setAllLeds()
 
     finishedRWRuns = 0
@@ -205,6 +215,13 @@ def doJobs():
     steppersDisabled = False
     done = False
     while not done:
+        if "Q" in nextJob: # Q...quit
+            done = True
+            continue
+        if cm.clientIdentity["IsActive"] == 0:
+            time.sleep(cs.UPDATE_ISACTIVE_SLEEP_TIME)
+            cm.updateClientIsActive()
+            continue
         log.info("nextJob: {}".format(nextJob))
         if not "W" in nextJob:
             inParkingPosition = False
@@ -273,11 +290,13 @@ def doJobs():
                 isFirstRWJob = False
         elif "H" in nextJob: # H...homing
             mm.doHoming()
+            doHomingCheck()
             mm.moveToPosAfterHoming(cs.CENTER_TOP, True)
             mm.waitForMovementFinished()
         elif "HH" in nextJob:  # H...homing with die pickup
             mr.pickupDieWhileHoming()
             mm.waitForMovementFinished()
+            doHomingCheck()
             mm.moveToPosAfterHoming(cs.CENTER_TOP, True)
             mm.waitForMovementFinished()
         elif "P" in nextJob: # P...Performance
@@ -313,8 +332,6 @@ def doJobs():
             if sleepTime <= 0:
                 sleepTime = cs.STANDARD_CLIENT_SLEEP_TIME
             time.sleep(sleepTime)
-        elif "Q" in nextJob: # Q...quit
-            done = True
         elif "S" in nextJob: # S...load settings
             cm.loadSettings()
             cm.loadMeshpoints()
@@ -377,10 +394,13 @@ def doJobs():
                     im = mr.moveToPosAndTakeMagnetVerificationImage(pos)
                     dr.writeImage(im, "{}_{}_{}.png".format(prefix, cm.clientId, Utils.getFilenameTimestamp()), cs.IMAGE_DIRECTORY_POSITION, doCreateDirectory=True)
 
-    if steppersDisabled:
-        mm.enableSteppers()
-        steppersDisabled = False
-    mm.moveToParkingPosition(True)
+
+    if cm.clientIdentity["IsActive"] == 1:
+        if steppersDisabled:
+            mm.enableSteppers()
+            steppersDisabled = False
+        mm.moveToParkingPosition(True)
+
     log.info("finished")
     exitTOR = True
 
@@ -473,7 +493,10 @@ worker.start()
 
 worker.join()
 exitTOR = True # worker quitted accidentally
-mm.moveToParkingPosition(True)
+
+if cm.clientIdentity["IsActive"] == 1:
+    mm.moveToParkingPosition(True)
+
 jobScheduler.join()
 lm.clear()
 log.info("TORClient will now quit.")

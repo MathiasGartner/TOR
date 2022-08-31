@@ -42,12 +42,21 @@ def writeResult(clientId, result, x, y, userGenerated, source):
     db.commit()
 
 def getClientIdentity(clientMAC):
-    query = "SELECT Id, IP, Material, Position, Latin FROM client WHERE MAC = %(clientMAC)s"
+    query = "SELECT Id, IP, Material, Position, Latin, IsActive FROM client WHERE MAC = %(clientMAC)s"
     cursor.execute(query, { "clientMAC" : clientMAC })
     data = cursor.fetchone()
     if data is None:
         #raise Exception("Could not read client identity for: ", clientMAC)
         log.warning("Could not read client identity for: {}".format(clientMAC))
+    return data
+
+def getClientIdentityByClientId(clientId):
+    query = "SELECT Id, IP, Material, Position, Latin, IsActive FROM client WHERE Id = %(id)s"
+    cursor.execute(query, { "id" : clientId })
+    data = cursor.fetchone()
+    if data is None:
+        #raise Exception("Could not read client identity for: ", clientMAC)
+        log.warning("Could not read client identity for Id: {}".format(clientId))
     return data
 
 def getNextJobForClientId(clientId):

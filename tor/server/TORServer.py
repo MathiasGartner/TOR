@@ -1,3 +1,4 @@
+import copy
 import datetime
 import logging
 import itertools
@@ -6,8 +7,10 @@ import random
 import socket
 
 from tor.base import DBManager
+from tor.base import MailManager
 from tor.base import NetworkUtils
 from tor.base.PositionVerification import PositionVerification
+from tor.server.Job import DefaultJobs
 import tor.TORSettings as ts
 
 def getClientSettings(clientId):
@@ -101,6 +104,14 @@ def handleRequest(conn):
                 NetworkUtils.sendData(conn, {
                     "POSITION_OK": 1 if isOK else 0,
                 })
+            elif "STOP" in request:
+                DBManager.setClientIsActive(clientId, False)
+                jW = copy.deepcopy(DefaultJobs.WAIT)
+                jW.ClientId = clientId
+                DBManager.saveJobs(jW)
+                cId = DBManager.getClientIdentityByClientId(clientId)
+                MailManager.sendDeactiveClient(cId)
+                NetworkUtils.sendOK(conn)
         elif "MAC" in request:
             cId = DBManager.getClientIdentity(request["MAC"])
             NetworkUtils.sendData(conn, {"Id": cId.Id,

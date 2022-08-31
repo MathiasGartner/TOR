@@ -321,7 +321,9 @@ class MovementRoutines:
         self.mm.waitForMovementFinished()
 
     def moveToPosAndTakeMagnetVerificationImage(self, pos):
+        self.mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
         self.mm.moveToPos(pos, True)
+        self.mm.setFeedratePercentage(cs.FR_DEFAULT)
         self.mm.waitForMovementFinished(0.5)
         im = self.takePicture(cam=None, useTopLED=False)
         im = self.dr.transformImageForMagnetPositionVerification(im)
@@ -336,8 +338,23 @@ class MovementRoutines:
             self.mm.waitForMovementFinished()
         else:
             log.warning("Position could not be verified!")
-        print(isOK)
         return isOK
+
+    def checkSuccesfulHoming(self):
+        positionOK = self.verifyMagnetPosition()
+        if positionOK:
+            log.info("homing successful")
+        else:
+            log.warning("could not verify position after homing")
+            self.mm.doHoming()
+            self.mm.moveToPosAfterHoming(cs.CENTER_TOP, True)
+            self.mm.waitForMovementFinished()
+            positionOK = self.verifyMagnetPosition()
+            if positionOK:
+                log.warning("homing succesful (second attempt).")
+            else:
+                log.warning("could not verify position after homing two times")
+        return positionOK
 
     def getValidUserPosition(self, pos):
         validPos = Position(clamp(pos.x, 0, cs.LX), clamp(pos.y, 160, cs.LY), clamp(pos.z, 50, 220))
