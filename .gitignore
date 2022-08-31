@@ -9,6 +9,7 @@ db/*.idea
 /.idea/TOR.iml
 /.idea/misc.xml
 /position_verification/model/*
+.idea/TOR.iml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
