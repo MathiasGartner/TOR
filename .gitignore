@@ -9,6 +9,7 @@ db/*.idea
 /.idea/misc.xml
 /position_verification/model/*
 /.idea/TOR.iml
+/tor/resources/mail_oauth2.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
