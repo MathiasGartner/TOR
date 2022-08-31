@@ -352,14 +352,14 @@ def doJobs():
                     exitUserModeAtTime = datetime.now() + timedelta(seconds=cs.EXIT_USER_MODE_AFTER_N_SECONDS)
         elif "TAKE_IMAGE" in nextJob: # take test images
             imageType = nextJob["TAKE_IMAGE"]
-            if imageType == "MAGNET_POS_TRUE" or imageType == "MAGNET_POS_FALSE" or imageType == "MAGNET_POS_TRUE_TEST":
+            if imageType == "MAGNET_POS_TRUE" or imageType == "MAGNET_POS_FALSE" or imageType == "MAGNET_POS_TEST":
                 go = True
                 prefix = ""
-                distance = 10
+                distance = 6
                 wrongDistance = distance * 1.5
-                dx = time.time() % 2 * distance - distance
-                dy = time.time() % 2 * distance - distance
-                dz = time.time() % 2 * distance - distance
+                dx = time.time() % (2 * distance) - distance
+                dy = time.time() % (2 * distance) - distance
+                dz = time.time() % (2 * distance) - distance
                 if imageType == "MAGNET_POS_TRUE":
                     pos = cs.VERIFY_MAGNET_POSITION + Position(dx, dy, dz)
                     prefix = "ok"
@@ -374,7 +374,7 @@ def doJobs():
                     prefix = "test"
                     pos = cs.VERIFY_MAGNET_POSITION + Position(10*dx, 4*(dy-7), 3*(dz-8))
                 if go:
-                    im = mr.moveToPosAndTakeMagnetVerificationImage(pos, True)
+                    im = mr.moveToPosAndTakeMagnetVerificationImage(pos)
                     dr.writeImage(im, "{}_{}_{}.png".format(prefix, cm.clientId, Utils.getFilenameTimestamp()), cs.IMAGE_DIRECTORY_POSITION, doCreateDirectory=True)
 
     if steppersDisabled:

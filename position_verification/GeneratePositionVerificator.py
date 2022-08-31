@@ -12,15 +12,15 @@ light_model_filename = model_dir + "position_verification.tflite"
 
 def importImages(directory):
     image_list = []
-    for filename in glob.glob(directory + "/*.png"):
-        im = cv2.imread(filename)
-        #TODO should be grayscale
-        #im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    for filename in glob.glob(directory + "/*.jpg"):
+        im = cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
+        #TODO read png instead of jpg - should be in grayscale
+        im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
         image_list.append(im)
     return image_list
 
-noImages = importImages(data_dir + "/wrong")
-yesImages = importImages(data_dir + "/ok")
+noImages = importImages(data_dir + "wrong")
+yesImages = importImages(data_dir + "ok")
 
 class_names = ["wrong", "ok"]
 
@@ -52,14 +52,14 @@ img_width = 30
 
 num_classes = 2
 
-model = tf.keras.Sequential([
+model1 = tf.keras.Sequential([
     tf.keras.layers.Flatten(input_shape=(img_height, img_width)),
     tf.keras.layers.Dense(128, activation='relu'),
     tf.keras.layers.Dense(num_classes)
 ])
 
 filterSize = 5
-model = tf.keras.Sequential([
+model2 = tf.keras.Sequential([
     tf.keras.layers.Conv2D(filterSize, 3, activation='relu', input_shape=(img_height, img_width, 1)),
     tf.keras.layers.MaxPooling2D(),
     tf.keras.layers.Conv2D(filterSize, 3, activation='relu'),
@@ -70,6 +70,8 @@ model = tf.keras.Sequential([
     tf.keras.layers.Dense(128, activation='relu'),
     tf.keras.layers.Dense(num_classes)
 ])
+
+model = model1
 
 model.compile(
     optimizer='adam',
@@ -126,8 +128,9 @@ def plot_value_array(i, predictions_array, true_label):
 
 
 predictions = probability_model.predict(test_images)
+print(predictions)
 
-num_rows = 7
+num_rows = 6
 num_cols = 7
 num_images = num_rows*num_cols
 plt.figure(figsize=(2*2*num_cols, 2*num_rows))
