@@ -18,6 +18,11 @@ TIME_OFFSET_FOR_DISPLAY = "interval 2 hour"
 
 cursor = db.cursor(named_tuple=True)
 
+def __executeQuery(query):
+    cursor.execute(query)
+    data = cursor.fetchall()
+    return data
+
 def logClientAction(clientId, messageType, messageCode, message):
     query = "INSERT INTO clientlog (ClientId, MessageType, MessageCode, Message) VALUES (%s, %s, %s, %s)"
     data = (clientId, messageType, messageCode, message)
@@ -202,6 +207,12 @@ def getClientLogByClientId(clientId):
 def getResults():
     query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, DATE_ADD(Time, " + TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId ORDER BY d.Id DESC LIMIT 100"
     cursor.execute(query)
+    data = cursor.fetchall()
+    return data
+
+def getResultsByEvent(event):
+    query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, DATE_ADD(Time, " + TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId WHERE d.Source = %(event)s AND c.Position >=1 AND c.Position <= 27 ORDER BY d.Id DESC"
+    cursor.execute(query, {"event": event})
     data = cursor.fetchall()
     return data
 
