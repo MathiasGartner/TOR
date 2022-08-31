@@ -6,10 +6,9 @@ db/*.idea
 /scratches/update_tor_marlin.cmd
 /venv_38/
 /venv_conda/
-/.idea/TOR.iml
 /.idea/misc.xml
 /position_verification/model/*
-.idea/TOR.iml
+/.idea/TOR.iml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
