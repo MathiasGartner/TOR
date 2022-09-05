@@ -374,9 +374,9 @@ def doJobs():
                 prefix = ""
                 distance = 6
                 wrongDistance = distance * 1.5
-                dx = time.time() % (2 * distance) - distance
-                dy = time.time() % (2 * distance) - distance
-                dz = time.time() % (2 * distance) - distance
+                dx = 10 * time.time() % (2 * distance) - distance
+                dy = 10 * dx % (2 * distance) - distance
+                dz = 10 * dy % (2 * distance) - distance
                 if imageType == "MAGNET_POS_TRUE":
                     pos = cs.VERIFY_MAGNET_POSITION + Position(dx, dy, dz)
                     prefix = "ok"
@@ -386,13 +386,13 @@ def doJobs():
                     if abs(posDiff.x) <= wrongDistance and abs(posDiff.y) <= wrongDistance and abs(posDiff.z) <= wrongDistance:
                         go = False
                     else:
-                        pos = pos + posDiff
+                        pos = cs.VERIFY_MAGNET_POSITION + posDiff
                 elif imageType == "MAGNET_POS_TEST":
                     prefix = "test"
-                    pos = cs.VERIFY_MAGNET_POSITION + Position(10*dx, 4*(dy-7), 3*(dz-8))
+                    pos = cs.VERIFY_MAGNET_POSITION + Position(5 * dx, 2 * (dy-5), 3 * dz)
                 if go:
                     im = mr.moveToPosAndTakeMagnetVerificationImage(pos)
-                    dr.writeImage(im, "{}_{}_{}.png".format(prefix, cm.clientId, Utils.getFilenameTimestamp()), cs.IMAGE_DIRECTORY_POSITION, doCreateDirectory=True)
+                    dr.writeImage(im, "{}_id={}_{}.png".format(prefix, cm.clientId, Utils.getFilenameTimestamp()), cs.IMAGE_DIRECTORY_POSITION, doCreateDirectory=True)
 
 
     if cm.clientIdentity["IsActive"] == 1:
