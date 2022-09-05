@@ -1,18 +1,27 @@
 import concurrent.futures
 import copy
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
+import numpy as np
 import shlex
 import subprocess
 import time
 import os
 import sys
 
+import defusedxml.common
+import matplotlib as plt
+plt.use('Qt5Agg')
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
+from matplotlib.figure import Figure
+import matplotlib.dates as mdates
+import matplotlib.colors as colors
+
 from functools import partial
 
 from PyQt5.QtCore import Qt, QTimer, QRect, QThread, QAbstractTableModel, QAbstractListModel, QVariant, \
     QSortFilterProxyModel
-from PyQt5.QtWidgets import QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox, QCheckBox, QSpacerItem, QFrame, QLineEdit, QTableView, QTableWidgetItem
+from PyQt5.QtWidgets import QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox, QCheckBox, QSpacerItem, QFrame, QLineEdit, QTableView, QTableWidgetItem, QDateEdit
 from PyQt5.QtGui import QPixmap, QIcon, QPainter, QTextCursor, QColor
 
 app = QApplication(sys.argv)
@@ -146,11 +155,11 @@ class TORCommands:
     CLIENT_TURN_OFF_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 0 0 0;"
 
 class TORIcons:
-    APP_ICON = QIcon(os.path.join(os.path.dirname(__file__), r'../../resources/icon.svg'))
+    APP_ICON = QIcon(os.path.join(os.path.dirname(__file__), "..", "..", "resources", "icon.svg"))
 
-    LED_RED = QPixmap(os.path.join(os.path.dirname(__file__), r'../../resources/led-red.png')).scaled(15, 15)
-    LED_GREEN = QPixmap(os.path.join(os.path.dirname(__file__), r'../../resources/led-green.png')).scaled(15, 15)
-    LED_GRAY = QPixmap(os.path.join(os.path.dirname(__file__), r'../../resources/led-gray.png')).scaled(15, 15)
+    LED_RED = QPixmap(os.path.join(os.path.dirname(__file__), "..", "..", "resources", "led-red.png")).scaled(15, 15)
+    LED_GREEN = QPixmap(os.path.join(os.path.dirname(__file__), "..", "..", "resources", "led-green.png")).scaled(15, 15)
+    LED_GRAY = QPixmap(os.path.join(os.path.dirname(__file__), "..", "..", "resources", "led-gray.png")).scaled(15, 15)
 
 class ClientDetails:
     def __init__(self):
@@ -739,6 +748,43 @@ class MainWindow(QMainWindow):
         wdgDetails = QWidget()
         wdgDetails.setLayout(layDetails)
 
+        # Statistics
+
+        self.dteStatisticsStart = QDateEdit(calendarPopup=True)
+        self.dteStatisticsStart.setDateTime(datetime.now() - timedelta(days=1))
+        self.dteStatisticsEnd = QDateEdit(calendarPopup=True)
+        self.dteStatisticsEnd.setDateTime(datetime.now())
+        self.btnStatisticsUpdate = QPushButton("Update")
+        self.btnStatisticsUpdate.clicked.connect(self.btnStatisticsUpdate_clicked)
+
+        self.statCanvas = MplCanvas(self, width=5, height=7, dpi=100)
+        toolbar = NavigationToolbar(self.statCanvas, self)
+
+        layStatSettings = QHBoxLayout()
+        layStatSettings.addWidget(self.dteStatisticsStart)
+        layStatSettings.addSpacing(10)
+        layStatSettings.addWidget(self.dteStatisticsEnd)
+        layStatSettings.addSpacing(10)
+        layStatSettings.addWidget(self.btnStatisticsUpdate)
+        layStatSettings.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Fixed))
+        wdgStatSettings = QWidget()
+        wdgStatSettings.setLayout(layStatSettings)
+
+        layStatPlot = QVBoxLayout()
+        layStatPlot.addWidget(toolbar)
+        layStatPlot.addWidget(self.statCanvas)
+        wdgStatPlot = QWidget()
+        wdgStatPlot.setLayout(layStatPlot)
+
+        layStatistics = QVBoxLayout()
+        layStatistics.addWidget(wdgStatSettings)
+        layStatistics.addWidget(wdgStatPlot)
+
+        wdgStatistics = QWidget()
+        wdgStatistics.setLayout(layStatistics)
+
+        self.statColorBar = None
+
 
         layTORServer = QVBoxLayout()
         layTORServer.addWidget(QLabel("TOR server"))
@@ -747,12 +793,14 @@ class MainWindow(QMainWindow):
         wdgTORServer.setLayout(layTORServer)
 
         self.clientDetailsTabIndex = 2
+        self.statisticsTabIndex = 3
 
         self.tabDashboard = QTabWidget()
         self.tabDashboard.addTab(wdgDashboard, "Dashboard")
         #self.tabDashboard.addTab(wdgTORServer, "TORServer")
         self.tabDashboard.addTab(wdgJobOverivew, "Jobs")
         self.tabDashboard.addTab(wdgDetails, "Detail View")
+        self.tabDashboard.addTab(wdgStatistics, "Statistics")
         self.dashboardTabIndex = 0
         self.tabDashboard.currentChanged.connect(self.tabDashboard_currentChanged)
 
@@ -780,6 +828,8 @@ class MainWindow(QMainWindow):
     def tabDashboard_currentChanged(self, index):
         if index == self.clientDetailsTabIndex:
             self.loadAllClientDetails()
+        elif index == self.statisticsTabIndex:
+            self.reloadStatistics()
         self.currentSelectedTabIndex = index
 
     def executeCommandOnTORServer(self, cmd, timeout=DEFAULT_TIMEOUT_SERVER):
@@ -1124,6 +1174,69 @@ class MainWindow(QMainWindow):
     def btnRereshClientDetails_clicked(self):
         index = self.cmbClient.currentIndex()
         self.reloadClientDetailsBySelectedIndex(index)
+
+    ##################
+    ### Statistics ###
+    ##################
+
+    def btnStatisticsUpdate_clicked(self):
+        self.reloadStatistics()
+
+    def reloadStatistics(self):
+        print("reload statistics")
+        self.statCanvas.axes.cla()
+
+        dateStart = str(self.dteStatisticsStart.date().toPyDate())
+        dateEnd = str(self.dteStatisticsEnd.date().toPyDate())
+        print(dateStart + " - " + dateEnd)
+        query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, Time AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId WHERE DATE(Time) >= \"" + dateStart + "\" AND DATE(Time) <= \"" + dateEnd + "\" AND c.Position >=1 AND c.Position <= 27 ORDER BY d.Id DESC"
+        data = DBManager.executeQuery(query)
+        positions = [d.Position for d in data]
+        times = [d.Time.timestamp() for d in data]
+        clientNames = [c.Material for c in self.cds]
+
+        bins = [250, 27]
+        # compute the 2D histogram using numpy
+        H, xedges, yedges = np.histogram2d(times, positions, bins=bins)
+        # convert the x-edges into datetime format
+        to_datetime = np.vectorize(datetime.fromtimestamp)
+        xedges_datetime = to_datetime(xedges)
+
+        # plot the two cases side by side
+        #fig, ax = plt.subplots(1, 1, figsize=(18, 13))
+
+        ax = self.statCanvas.axes
+        fig = self.statCanvas.figure
+        if self.statColorBar is not None:
+            self.statColorBar.remove()
+        ax.cla()
+
+        plot = ax.pcolor(xedges_datetime, yedges, H.T, cmap='viridis')
+        ax.set_title('datetime')
+        self.statColorBar = fig.colorbar(plot, ax=ax)
+
+        # pretty up the xaxis labels
+        # loc = mdates.MinuteLocator(byminute=(0, 30))
+        loc = mdates.DayLocator()
+        # fmt = mdates.DateFormatter('%d.%m. - %H:%M:%S')
+        fmt = mdates.DateFormatter('%d.%m.')
+
+        ax.xaxis.set_major_locator(loc)
+        ax.xaxis.set_major_formatter(fmt)
+
+        ax.set_yticks(np.arange(1, 28, 1))
+        ax.set_yticklabels(clientNames)
+
+        fig.autofmt_xdate()
+        fig.tight_layout()
+
+        self.statCanvas.draw()
+
+class MplCanvas(FigureCanvasQTAgg):
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_subplot(111)
+        super(MplCanvas, self).__init__(fig)
 
 class DbTableModel(QAbstractTableModel):
     def __init__(self, data, parent=None):
