@@ -1,26 +1,31 @@
-import tensorflow as tf
-import numpy as np
-import matplotlib.pyplot as plt
 import cv2
 import glob
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+import tensorflow as tf
 from sklearn.model_selection import train_test_split
 
-data_dir = "/home/gartner/TOR2022/20220812_CoffeaArabica_Magnet/cropped/"
-model_dir = "./model/"
-saved_model_dirname = model_dir + "PositionVerificationTFModel"
-light_model_filename = model_dir + "position_verification.tflite"
+from tor.base.utils import Utils
+
+#data_dir = "/home/gartner/TOR2022/20220812_CoffeaArabica_Magnet/cropped/"
+#model_dir = "./model/"
+data_dir = os.path.join("D:" + os.sep, "TOR2022", "Pictures", Utils.getFilenameTimestampDay())
+model_dir = os.path.join("D:" + os.sep, "Sources", "TOR", "position_verification", "model")
+
+saved_model_dirname = os.path.join(model_dir, "PositionVerificationTFModel")
+light_model_filename = os.path.join(model_dir, "position_verification.tflite")
 
 def importImages(directory):
     image_list = []
-    for filename in glob.glob(directory + "/*.jpg"):
+    for filename in glob.glob(os.path.join(directory, "*.png")):
         im = cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
-        #TODO read png instead of jpg - should be in grayscale
-        im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+        #im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
         image_list.append(im)
     return image_list
 
-noImages = importImages(data_dir + "wrong")
-yesImages = importImages(data_dir + "ok")
+noImages = importImages(os.path.join(data_dir, "wrong"))
+yesImages = importImages(os.path.join(data_dir, "ok"))
 
 class_names = ["wrong", "ok"]
 
@@ -35,7 +40,7 @@ for im in yesImages:
     dataset_im.append(im_normalized.tolist())
     dataset_lbl.append(1)
 
-train_images, test_images, train_labels, test_labels = train_test_split(dataset_im, dataset_lbl, test_size=0.2, random_state=123)
+train_images, test_images, train_labels, test_labels = train_test_split(dataset_im, dataset_lbl, test_size=0.3, random_state=123)
 
 plt.figure(figsize=(10,10))
 for i in range(25):
@@ -131,7 +136,7 @@ predictions = probability_model.predict(test_images)
 print(predictions)
 
 num_rows = 6
-num_cols = 7
+num_cols = 3
 num_images = num_rows*num_cols
 plt.figure(figsize=(2*2*num_cols, 2*num_rows))
 for i in range(num_images):

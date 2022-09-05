@@ -4,7 +4,7 @@ log = logging.getLogger(__name__)
 import time
 
 import tor.client.ClientSettings as cs
-from tor.base.utils.Utils import *
+from tor.base.utils import Utils
 
 if cs.ON_RASPI:
     from rpi_ws281x import Adafruit_NeoPixel, Color
@@ -126,7 +126,7 @@ class LedManager:
         if color is None:
             color = self.DEFAULT_COLOR
         if r is not None and g is not None and b is not None:
-            color = Color(clamp255(r), clamp255(g), clamp255(b))
+            color = Color(Utils.clamp255(r), Utils.clamp255(g), Utils.clamp255(b))
         for i in range(self.strip.numPixels()):
             self.strip.setPixelColor(i, color)
         self.strip.show()

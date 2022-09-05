@@ -10,7 +10,7 @@ import time
 
 from tor.base.DieRecognizer import DieRecognizer
 from tor.base.DieRollResult import DieRollResult
-from tor.base.utils.Utils import *
+from tor.base.utils import Utils
 from tor.client import ClientSettings as cs
 from tor.client.ClientManager import ClientManager
 from tor.client.LedManager import LedManager
@@ -357,7 +357,7 @@ class MovementRoutines:
         return positionOK
 
     def getValidUserPosition(self, pos):
-        validPos = Position(clamp(pos.x, 0, cs.LX), clamp(pos.y, 160, cs.LY), clamp(pos.z, 50, 220))
+        validPos = Position(Utils.clamp(pos.x, 0, cs.LX), Utils.clamp(pos.y, 160, cs.LY), Utils.clamp(pos.z, 50, 220))
         return validPos
 
     def performUserAction(self, action, steps):

@@ -28,11 +28,8 @@ def sendTestMessage(to=ts.MAIL_RECIPIENTS):
     __trySendMessage(to, s, b, "Test message")
 
 def sendDeactiveClient(clientIdentity, to=ts.MAIL_RECIPIENTS):
-    s = "TOR: deactivate client {} ({})".format(clientIdentity["Id"], clientIdentity["Material"])
+    s = "TOR: deactivate client {} ({})".format(clientIdentity.Id, clientIdentity.Material)
     b = "<h3>The Transparency of Randomness has deactivated a client</h3>" \
         "<p><b>Client details:</b><br>Id: {}<br>Position: {}<br>IP: {}<br>Material: {}<br>Latin: {} </p>"\
-        .format(clientIdentity["Id"], clientIdentity["Position"], clientIdentity["IP"], clientIdentity["Material"], clientIdentity["Latin"])
+        .format(clientIdentity.Id, clientIdentity.Position, clientIdentity.IP, clientIdentity.Material, clientIdentity.Latin)
     __trySendMessage(to, s, b, "deactivate client")
-
-#cid = { "Id": 11, "IP": "192.134.34.23", "Material": "Pfeffer", "Position": 15, "Latin": "Schinus" }
-#sendDeactiveClient(cid)

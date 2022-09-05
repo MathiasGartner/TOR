@@ -18,7 +18,7 @@ TIME_OFFSET_FOR_DISPLAY = "interval 2 hour"
 
 cursor = db.cursor(named_tuple=True)
 
-def __executeQuery(query):
+def executeQuery(query):
     cursor.execute(query)
     data = cursor.fetchall()
     return data

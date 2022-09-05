@@ -3,14 +3,17 @@ import datetime
 import logging
 import itertools
 import json
+import numpy as np
 import random
 import socket
 
 from tor.base import DBManager
 from tor.base import MailManager
 from tor.base import NetworkUtils
+from tor.base.utils import Utils
 from tor.base.PositionVerification import PositionVerification
 from tor.server.Job import DefaultJobs
+import tor.server.ServerSettings as ss
 import tor.TORSettings as ts
 
 def getClientSettings(clientId):
@@ -99,11 +102,14 @@ def handleRequest(conn):
                     saveClientSettings(clientId, request["SETTINGS"])
             elif "MAGNET_POSITION_IMAGE" in request:
                 # TOOD: make this thread safe
-                isOK = pv.verifyPosition(request["MAGNET_POSITION_IMAGE"])
-                #isOK = False
+                im = request["MAGNET_POSITION_IMAGE"]
+                isOK = pv.verifyPosition(im)
+                isOK = False
                 NetworkUtils.sendData(conn, {
                     "POSITION_OK": 1 if isOK else 0,
                 })
+                prefix = "ok" if isOK else "wrong"
+                Utils.writeImage(np.array(im).astype(np.float32), "{}_id={}_{}.png".format(prefix, clientId, Utils.getFilenameTimestamp()), ss.TOR_MAGNET_PICTURE_DIRECTORY, doCreateDirectory=True)
             elif "STOP" in request:
                 DBManager.setClientIsActive(clientId, False)
                 jW = copy.deepcopy(DefaultJobs.WAIT)
@@ -118,7 +124,8 @@ def handleRequest(conn):
                                          "IP": cId.IP,
                                          "Material": cId.Material,
                                          "Position": cId.Position,
-                                         "Latin": cId.Latin
+                                         "Latin": cId.Latin,
+                                         "IsActive": cId.IsActive
                                          })
         else:
             log.warning("could not identify client.")

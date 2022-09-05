@@ -1,4 +1,5 @@
 import logging
+import os
 
 import tor.TORSettingsPrivate as tsp
 import tor.TORSettingsLocal as tsl
@@ -8,9 +9,10 @@ DB_USER = tsp.DB_USER
 DB_PASSWORD = tsp.DB_PASSWORD
 
 MAIL_USERNAME = "thetransparencyofrandomness@gmail.com"
-MAIL_OAUTH_FILE = "../resources/mail_oauth2.json"
+MAIL_OAUTH_FILE = os.path.join(tsl.TOR_PROGRAM_DIRECTORY_SERVER, "resources", "mail_oauth2.json")
 #MAIL_RECIPIENTS = ["mathiasgartner@gmx.at"]
 MAIL_RECIPIENTS = [MAIL_USERNAME, "mathiasgartner@gmx.at"]
+#MAIL_RECIPIENTS = [MAIL_USERNAME, "mathiasgartner@gmx.at", "vera.tolazzi@gmx.at"]
 
 SERVER_IP = tsl.SERVER_IP
 SERVER_PORT = tsl.SERVER_PORT

@@ -1,6 +1,7 @@
 import logging
 log = logging.getLogger(__name__)
 
+import cv2
 from datetime import datetime
 import os
 import time
@@ -26,3 +27,15 @@ def createDirectory(directory):
 
 def getFilenameTimestamp():
     return datetime.now().strftime("%Y%m%d%H%M%S")
+
+def getFilenameTimestampDay():
+    return datetime.now().strftime("%Y%m%d")
+
+def writeImage(im, fileName="", directory="", doCreateDirectory=False):
+    if fileName == "":
+        fileName = "run_{}.jpg".format(datetime.now().strftime("%Y%m%d%H%M%S"))
+    if directory != "":
+        if doCreateDirectory:
+            createDirectory(directory)
+        fileName = os.path.join(directory, fileName)
+    cv2.imwrite(fileName, im)

@@ -15,7 +15,7 @@ class PositionVerification:
 
     def verifyPosition(self, image):
         input_shape = self.input_details[0]['shape']
-        print(input_shape)
+        #print(input_shape)
         im_normalized = np.array(image).astype(np.float32) / 255.0
         input_data = [ im_normalized.tolist() ]
         input_data = np.array(input_data).astype(np.float32)
@@ -23,5 +23,6 @@ class PositionVerification:
         self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
         self.interpreter.invoke()
         output_data = self.interpreter.get_tensor(self.output_details[0]['index'])
-        print(output_data)
-        return output_data[0][0] < output_data[0][1]
+        isOk = output_data[0][0] < output_data[0][1]
+        log.info("verification weights [[wrong ok]]: {}, isOk={}".format(output_data, isOk))
+        return isOk
