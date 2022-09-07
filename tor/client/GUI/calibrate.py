@@ -8,7 +8,7 @@ from functools import partial
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QVBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox
-from PyQt5.QtGui import QPixmap, QIcon
+from PyQt5.QtGui import QPixmap, QIcon, QTextCursor
 
 app = QApplication(sys.argv)
 window = None
@@ -30,6 +30,7 @@ class WaitCursor(object):
 ### TOR imports ###
 ###################
 
+from tor.base.GUI import TORIcons
 from tor.base.utils import Utils
 from tor.client import ClientSettings as cs
 from tor.client.MovementManager import MovementManager
@@ -59,6 +60,7 @@ while torClientServiceStatus == 0:
     msg.setText("Detected running service \"TORClient\".")
     msg.setInformativeText("In order to run the calibration program the TORClient service has to be stopped.")
     msg.setWindowTitle("TOR Calibration")
+    msg.setWindowIcon(TORIcons.APP_ICON)
     closeBtn = msg.addButton("Stop TORClient", QMessageBox.YesRole)
     cancelBtn = msg.addButton("Exit calibration program", QMessageBox.NoRole)
     msg.exec_()
@@ -70,6 +72,7 @@ while torClientServiceStatus == 0:
             msgInfo.setText("Closing service \"TORClient\"...")
             msgInfo.setInformativeText("This window will be closed automatically as soon as the service is finished.")
             msgInfo.setWindowTitle("TOR Calibration")
+            msgInfo.setWindowIcon(TORIcons.APP_ICON)
             msgInfo.setWindowFlags(Qt.CustomizeWindowHint or Qt.WindowTitleHint)
             dummyBtn = msgInfo.addButton("Dummy", QMessageBox.NoRole)
             msgInfo.removeButton(dummyBtn)
@@ -190,8 +193,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowIcon(QIcon("../../resources/logo.png"))
         self.setWindowTitle("Calibration")
+        self.setWindowIcon(TORIcons.APP_ICON)
 
         self.currentSelectedTabIndex = 0
 
@@ -479,6 +482,8 @@ class MainWindow(QMainWindow):
 
     def addSpacerLineToStatusText(self):
         self.txtStatus.appendPlainText("----------------------")
+        self.txtStatus.moveCursor(QTextCursor.End)
+        app.processEvents()
 
     def addStatusText(self, text, spacerLineBefore=False, spacerLineAfter=False):
         if spacerLineBefore:
@@ -486,6 +491,7 @@ class MainWindow(QMainWindow):
         self.txtStatus.appendPlainText(text)
         if spacerLineAfter:
             self.addSpacerLineToStatusText()
+        self.txtStatus.moveCursor(QTextCursor.End)
         app.processEvents()
 
     ##############
@@ -812,6 +818,7 @@ if cs.ON_RASPI:
     msgHoming.setText("Do you want to perform homing before you proceed?")
     msgHoming.setInformativeText("Homing is required in order to localize the magnet.")
     msgHoming.setWindowTitle("TOR Calibration")
+    msgHoming.setWindowIcon(TORIcons.APP_ICON)
     yesBtn = msgHoming.addButton("Yes", QMessageBox.YesRole)
     moBtn = msgHoming.addButton("No", QMessageBox.NoRole)
     msgHoming.exec_()

@@ -94,6 +94,7 @@ class WaitCursor(object):
 ###################
 
 from tor.base import DBManager
+from tor.base.GUI import TORIcons
 from tor.server.Job import Job
 from tor.server.Job import DefaultJobs
 import tor.TORSettingsLocal as tsl
@@ -153,13 +154,6 @@ class TORCommands:
 
     CLIENT_TURN_ON_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 40 140 120 -b 95;"
     CLIENT_TURN_OFF_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 0 0 0;"
-
-class TORIcons:
-    APP_ICON = QIcon(os.path.join(os.path.dirname(__file__), "..", "..", "resources", "icon.svg"))
-
-    LED_RED = QPixmap(os.path.join(os.path.dirname(__file__), "..", "..", "resources", "led-red.png")).scaled(15, 15)
-    LED_GREEN = QPixmap(os.path.join(os.path.dirname(__file__), "..", "..", "resources", "led-green.png")).scaled(15, 15)
-    LED_GRAY = QPixmap(os.path.join(os.path.dirname(__file__), "..", "..", "resources", "led-gray.png")).scaled(15, 15)
 
 class ClientDetails:
     def __init__(self):
@@ -924,6 +918,8 @@ class MainWindow(QMainWindow):
 
     def addSpacerLineToStatusText(self):
         self.txtStatus.appendPlainText("----------------------")
+        self.txtStatus.moveCursor(QTextCursor.End)
+        app.processEvents()
 
     def addStatusText(self, text, spacerLineBefore=False, spacerLineAfter=False):
         if QThread.currentThread() != self.thread():
