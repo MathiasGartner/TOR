@@ -6,6 +6,9 @@ from datetime import datetime
 import os
 import time
 
+class EmptyObject:
+    pass
+
 def clamp(n, smallest, largest):
     return max(smallest, min(n, largest))
 

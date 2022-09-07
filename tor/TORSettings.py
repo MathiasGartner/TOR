@@ -14,6 +14,9 @@ MAIL_OAUTH_FILE = os.path.join(tsl.TOR_PROGRAM_DIRECTORY_SERVER, "resources", "m
 MAIL_RECIPIENTS = [MAIL_USERNAME, "mathiasgartner@gmx.at"]
 #MAIL_RECIPIENTS = [MAIL_USERNAME, "mathiasgartner@gmx.at", "vera.tolazzi@gmx.at"]
 
+VERIFY_MAGNET_TFMODELFILE = "/home/pi/TOR/position_verification.tflite"
+VERIFY_MAGNET_TFMODELFILE_ID = "/home/pi/TOR/position_verification_{}.tflite"
+
 SERVER_IP = tsl.SERVER_IP
 SERVER_PORT = tsl.SERVER_PORT
 

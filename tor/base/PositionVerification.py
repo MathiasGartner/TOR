@@ -4,14 +4,23 @@ log = logging.getLogger(__name__)
 import numpy as np
 import tflite_runtime.interpreter as tflite
 
-import tor.client.ClientSettings as cs
+import tor.TORSettings as ts
 
 class PositionVerification:
-    def __init__(self):
-        self.interpreter = tflite.Interpreter(model_path=cs.VERIFY_MAGNET_TFMODELFILE)
-        self.interpreter.allocate_tensors()
-        self.input_details = self.interpreter.get_input_details()
-        self.output_details = self.interpreter.get_output_details()
+    def __init__(self, clientId=None):
+        self.clientId = clientId
+        modelFilePath = ts.VERIFY_MAGNET_TFMODELFILE if clientId is None else ts.VERIFY_MAGNET_TFMODELFILE_ID.format(self.clientId)
+        try:
+            self.interpreter = tflite.Interpreter(model_path=modelFilePath)
+            self.interpreter.allocate_tensors()
+            self.input_details = self.interpreter.get_input_details()
+            self.output_details = self.interpreter.get_output_details()
+            self.isInitialized = True
+        except Exception as e:
+            self.isInitialized = False
+            log.warning("could not initialize PositionVerification for id: {}".format(self.clientId))
+            log.warning("modelFilePath: {}".format(modelFilePath))
+            log.warning("{}".format(repr(e)))
 
     def verifyPosition(self, image):
         input_shape = self.input_details[0]['shape']
@@ -23,6 +32,8 @@ class PositionVerification:
         self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
         self.interpreter.invoke()
         output_data = self.interpreter.get_tensor(self.output_details[0]['index'])
-        isOk = output_data[0][0] < output_data[0][1]
-        log.info("verification weights [[wrong ok]]: {}, isOk={}".format(output_data, isOk))
+        guessWrong = output_data[0][0]
+        guessOk = output_data[0][1]
+        isOk = guessWrong < guessOk
+        log.info("verification weights (wrong/ok): {}/{}, isOk={}".format(guessWrong, guessOk, isOk))
         return isOk

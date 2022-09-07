@@ -103,8 +103,11 @@ def handleRequest(conn):
             elif "MAGNET_POSITION_IMAGE" in request:
                 # TOOD: make this thread safe
                 im = request["MAGNET_POSITION_IMAGE"]
-                isOK = pv.verifyPosition(im)
                 isOK = False
+                if clientId in pvs and pvs[clientId].isInitialized:
+                    isOK = pvs[clientId].verifyPosition(im)
+                else:
+                    isOK = pv.verifyPosition(im)
                 NetworkUtils.sendData(conn, {
                     "POSITION_OK": 1 if isOK else 0,
                 })
@@ -137,6 +140,12 @@ logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=ts.SE
 log = logging.getLogger(__name__)
 
 pv = PositionVerification()
+pvs = {}
+
+if ss.VERIFY_MAGNET_BY_CLIENTID:
+    ids = ts.CLIENT_IDS
+    for id in ids:
+        pvs[id] = PositionVerification(clientId=id)
 
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serverSocket.bind((ts.SERVER_IP, ts.SERVER_PORT))
