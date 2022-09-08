@@ -36,7 +36,7 @@ def getFilenameTimestampDay():
 
 def writeImage(im, fileName="", directory="", doCreateDirectory=False):
     if fileName == "":
-        fileName = "run_{}.jpg".format(datetime.now().strftime("%Y%m%d%H%M%S"))
+        fileName = "dice_{}.jpg".format(getFilenameTimestamp())
     if directory != "":
         if doCreateDirectory:
             createDirectory(directory)

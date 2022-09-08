@@ -6,6 +6,7 @@ log = logging.getLogger(__name__)
 
 from datetime import datetime
 import numpy as np
+import os
 import time
 
 from tor.base.DieRecognizer import DieRecognizer
@@ -211,11 +212,8 @@ class MovementRoutines:
         if cs.USE_IMAGE_RECOGNITION:
             dieRollResult, processedImages = self.findDie(cam)
             log.info("result: {}".format(dieRollResult.result))
-            if cs.STORE_IMAGES:
-                directory = "found" if dieRollResult.found else "fail"
-                self.dr.writeImage(processedImages[1], directory=directory)
-                self.dr.writeImage(processedImages[0], directory=cs.WEB_DIRECTORY, fileName='current_view.jpg')
-                self.dr.writeRGBArray(processedImages[0], directory=directory)
+            if cs.STORE_IMAGES or (cs.STORE_IMAGES_NOT_FOUND and not dieRollResult.found):
+                self.dr.writeDiceImages(clientId=self.cm.clientId, images=processedImages, found=dieRollResult.found, timestamp=Utils.getFilenameTimestamp())
         return dieRollResult
 
     def pickupDie_pickup(self, dieRollResult, onSendResult=None):

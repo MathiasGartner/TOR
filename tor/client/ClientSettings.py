@@ -3,6 +3,7 @@ log = logging.getLogger(__name__)
 
 import math
 import numpy as np
+import os
 import platform
 import sys
 
@@ -183,6 +184,7 @@ SAME_RESULT_NEAR_THRESHOLD_X = 20
 USE_IMAGE_RECOGNITION = True
 SEARCH_RAMP = False
 STORE_IMAGES = False
+STORE_IMAGES_NOT_FOUND = True
 ALWAYS_MARK_DIE_ON_IMAGE = False
 SHOW_DIE_RESULT_WITH_LEDS = False
 
@@ -190,6 +192,7 @@ SHOW_DIE_RESULT_WITH_LEDS = False
 WEB_DIRECTORY = "/home/pi/tor/client/html"
 IMAGE_DIRECTORY = "/home/pi/pictures"
 IMAGE_DIRECTORY_POSITION = IMAGE_DIRECTORY + "/positions"
+IMAGE_DIRECTORY_DICE = IMAGE_DIRECTORY + "/dice"
 
 #die paramters
 DIE_SIZE_X=120

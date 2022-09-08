@@ -112,7 +112,7 @@ def handleRequest(conn):
                     "POSITION_OK": 1 if isOK else 0,
                 })
                 prefix = "ok" if isOK else "wrong"
-                Utils.writeImage(np.array(im).astype(np.float32), "{}_id={}_{}.png".format(prefix, clientId, Utils.getFilenameTimestamp()), ss.TOR_MAGNET_PICTURE_DIRECTORY, doCreateDirectory=True)
+                Utils.writeImage(np.array(im).astype(np.float32), "production_{}_id={}_{}.png".format(prefix, clientId, Utils.getFilenameTimestamp()), ss.TOR_MAGNET_PICTURE_DIRECTORY, doCreateDirectory=True)
             elif "STOP" in request:
                 DBManager.setClientIsActive(clientId, False)
                 jW = copy.deepcopy(DefaultJobs.WAIT)
@@ -136,7 +136,7 @@ def handleRequest(conn):
         log.warning("request not defined: {}".format(request))
 
 
-logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=ts.SERVER_LOG_LEVEL)
+logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=ss.SERVER_LOG_LEVEL)
 log = logging.getLogger(__name__)
 
 pv = PositionVerification()

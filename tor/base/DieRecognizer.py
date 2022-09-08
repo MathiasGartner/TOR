@@ -84,6 +84,12 @@ class DieRecognizer:
             fileName = os.path.join(directory, fileName)
         np.save(fileName, im)
 
+    def writeDiceImages(self, clientId, images, found, timestamp):
+        directory = os.path.join(cs.IMAGE_DIRECTORY_DICE, "found" if found else "fail")
+        fileNamePattern = "{}_id={}_{}.png"
+        self.writeImage(images[0], fileNamePattern.format("original", clientId, timestamp), directory=directory, doCreateDirectory=True)
+        self.writeImage(images[1], fileNamePattern.format("marked", clientId, timestamp), directory=directory, doCreateDirectory=True)
+
     def toGrayscale(self, image):
         im = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         return im

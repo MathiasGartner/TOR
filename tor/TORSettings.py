@@ -1,4 +1,3 @@
-import logging
 import os
 
 import tor.TORSettingsPrivate as tsp
@@ -11,21 +10,22 @@ DB_PASSWORD = tsp.DB_PASSWORD
 MAIL_USERNAME = "thetransparencyofrandomness@gmail.com"
 MAIL_OAUTH_FILE = os.path.join(tsl.TOR_PROGRAM_DIRECTORY_SERVER, "resources", "mail_oauth2.json")
 #MAIL_RECIPIENTS = ["mathiasgartner@gmx.at"]
-MAIL_RECIPIENTS = [MAIL_USERNAME, "mathiasgartner@gmx.at"]
-#MAIL_RECIPIENTS = [MAIL_USERNAME, "mathiasgartner@gmx.at", "vera.tolazzi@gmx.at"]
+#MAIL_RECIPIENTS = [MAIL_USERNAME, "mathiasgartner@gmx.at"]
+MAIL_RECIPIENTS = [MAIL_USERNAME, "mathiasgartner@gmx.at", "vera.tolazzi@gmx.at"]
 
-VERIFY_MAGNET_TFMODELFILE = "/home/pi/TOR/position_verification.tflite"
-VERIFY_MAGNET_TFMODELFILE_ID = "/home/pi/TOR/position_verification_{}.tflite"
+VERIFY_MAGNET_TFMODELFILE = os.path.join(tsl.TOR_PROGRAM_DIRECTORY_SERVER, "position_verification", "position_verification.tflite")
+VERIFY_MAGNET_TFMODELFILE_ID = os.path.join(tsl.TOR_PROGRAM_DIRECTORY_SERVER, "position_verification", "position_verification_{}.tflite")
 
 SERVER_IP = tsl.SERVER_IP
 SERVER_PORT = tsl.SERVER_PORT
 
 MAX_MSG_LENGTH = 1024+424
 
-SERVER_LOG_LEVEL = logging.INFO
-
 CLIENT_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 32]
 
+#DICE_RESULT_EVENT_SOURCE = 'Test2021'
 DICE_RESULT_EVENT_SOURCE = 'Test2022'
+#DICE_RESULT_EVENT_SOURCE = 'ArsElectronica2020'
+#DICE_RESULT_EVENT_SOURCE = 'CyberArts2021'
 #DICE_RESULT_EVENT_SOURCE = 'Kapelica2022'
 #DICE_RESULT_EVENT_SOURCE = 'JMAF2022'

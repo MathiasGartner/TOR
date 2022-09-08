@@ -97,6 +97,7 @@ from tor.base import DBManager
 from tor.base.GUI import TORIcons
 from tor.server.Job import Job
 from tor.server.Job import DefaultJobs
+import tor.server.ServerSettings as ss
 import tor.TORSettingsLocal as tsl
 import tor.TORSettings as ts
 
@@ -118,7 +119,7 @@ TAKE_N_RESULTS_FOR_RECENT_CONTRIBUTIONS = 200
 ### logging ###
 ###############
 
-logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=ts.SERVER_LOG_LEVEL)
+logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=ss.SERVER_LOG_LEVEL)
 log = logging.getLogger(__name__)
 
 def executeCommand(cmd, timeout=DEFAULT_TIMEOUT):
@@ -1005,6 +1006,9 @@ class MainWindow(QMainWindow):
         print("stop tor interactive")
 
     def btnEndAllUserModes_clicked(self):
+        #INFO: only sets flags realted to usermode in database, client should exit after given time interval by its own
+        for c in self.cds:
+            DBManager.exitUserMode(c.Id)
         print("ended all user modes")
 
     def btnTurnOnLEDs_clicked(self):
@@ -1182,16 +1186,18 @@ class MainWindow(QMainWindow):
         print("reload statistics")
         self.statCanvas.axes.cla()
 
-        dateStart = str(self.dteStatisticsStart.date().toPyDate())
-        dateEnd = str(self.dteStatisticsEnd.date().toPyDate())
-        print(dateStart + " - " + dateEnd)
-        query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, Time AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId WHERE DATE(Time) >= \"" + dateStart + "\" AND DATE(Time) <= \"" + dateEnd + "\" AND c.Position >=1 AND c.Position <= 27 ORDER BY d.Id DESC"
+        dateStart = self.dteStatisticsStart.date().toPyDate()
+        dateEnd = self.dteStatisticsEnd.date().toPyDate()
+        dateStartStr = str(dateStart)
+        dateEndStr = str(dateEnd)
+        print(dateStartStr + " - " + dateEndStr)
+        query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, Time AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId WHERE DATE(Time) >= \"" + dateStartStr + "\" AND DATE(Time) <= \"" + dateEndStr + "\" AND c.Position >=1 AND c.Position <= 27 ORDER BY d.Id DESC"
         data = DBManager.executeQuery(query)
         positions = [d.Position for d in data]
         times = [d.Time.timestamp() for d in data]
         clientNames = [c.Material for c in self.cds]
 
-        bins = [250, 27]
+        bins = [240, 27]
         # compute the 2D histogram using numpy
         H, xedges, yedges = np.histogram2d(times, positions, bins=bins)
         # convert the x-edges into datetime format
@@ -1209,6 +1215,7 @@ class MainWindow(QMainWindow):
 
         plot = ax.pcolor(xedges_datetime, yedges, H.T, cmap='viridis')
         ax.set_title('datetime')
+        ax.set_xlim([dateStart, dateEnd])
         self.statColorBar = fig.colorbar(plot, ax=ax)
 
         # pretty up the xaxis labels
