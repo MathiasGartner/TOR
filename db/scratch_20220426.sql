@@ -175,7 +175,7 @@ select c.material, count(*) as dcount, avg(result) from diceresult d left join c
                                                    where time > "2022-06-10" group by clientId order by dcount;
 
 select clientId, c.material, count(*) as dcount, avg(result) from diceresult d left join client c on c.Id = d.clientId
-                                                   where time > "2022-06-10" group by clientId order by clientId;
+                                                   where time > "2022-08-01" group by clientId order by clientId;
 
 select * from jobqueue order by id desc limit 1000;
 
@@ -187,3 +187,41 @@ select * from jobqueue order by id desc;
 select * from useraction order by id desc;
 
 select * from clientlog order by id desc;
+
+select * from diceresult where ClientId = 5 order by id desc;
+
+insert into jobqueue (ClientId, JobCode) values (29, "HH");
+insert into jobqueue (ClientId, JobCode) values (20, "HH");
+
+insert into jobqueue (ClientId, JobCode) values (29, "W");
+insert into jobqueue (ClientId, JobCode) values (20, "W");
+
+insert into jobqueue (ClientId, JobCode, JobParameters) values (25, "RW", "2 5 3");
+
+insert into jobqueue (ClientId, JobCode) values (11, "W");
+
+insert into jobqueue (ClientId, JobCode) values (18, "R");
+
+insert into jobqueue (ClientId, JobCode, JobParameters) values (11, "R", "H4");
+
+select * from diceresult order by id desc;
+
+select * from client;
+
+select * from clientsettings where Name = "CAM_SHUTTER_SPEED" order by Value;
+
+select * from clientsettings where ClientId = 18;
+
+select * from clientlog order by id desc;
+
+select * from meshpoints where ClientId = 20 and Type = "M";
+
+select * from clientsettings where ClientId = 20 or ClientId = 29;
+
+select * from client;
+
+insert into jobqueue (ClientId, JobCode, JobParameters) values (20, "TAKE_IMAGE", "MAGNET_POS_FALSE");
+
+insert into jobqueue (ClientId, JobCode) values (20, "W");
+
+update client set UserModeActive = 0 where id = 20;
