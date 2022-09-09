@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 from tor.base.utils import Utils
 import tor.TORSettings as ts
 
+# INFO: set local directories
 #data_dir = "/home/gartner/TOR2022/20220812_CoffeaArabica_Magnet/cropped/"
 #model_dir = "./model/"
 #data_dir = os.path.join("D:" + os.sep, "TOR2022", "Pictures", Utils.getFilenameTimestampDay())
@@ -77,8 +78,17 @@ def createVerificationModel(id=None, show=False):
         tf.keras.layers.Dense(num_classes)
     ])
 
-    filterSize = 5
     model2 = tf.keras.Sequential([
+        tf.keras.layers.Flatten(input_shape=(img_height, img_width)),
+        tf.keras.layers.Dense(128, activation='relu'),
+        tf.keras.layers.Dense(128, activation='relu'),
+        tf.keras.layers.Dense(128, activation='relu'),
+        tf.keras.layers.Dropout(0.5),
+        tf.keras.layers.Dense(num_classes)
+    ])
+
+    filterSize = 5
+    model3 = tf.keras.Sequential([
         tf.keras.layers.Conv2D(filterSize, 3, activation='relu', input_shape=(img_height, img_width, 1)),
         tf.keras.layers.MaxPooling2D(),
         tf.keras.layers.Conv2D(filterSize, 3, activation='relu'),
@@ -90,7 +100,22 @@ def createVerificationModel(id=None, show=False):
         tf.keras.layers.Dense(num_classes)
     ])
 
-    model = model1
+    model4 = tf.keras.Sequential([
+        tf.keras.layers.Conv2D(16, 3, padding='same', activation='relu', input_shape=(img_height, img_width, 1)),
+        tf.keras.layers.MaxPooling2D(),
+        tf.keras.layers.Conv2D(32, 3, padding='same', activation='relu'),
+        tf.keras.layers.MaxPooling2D(),
+        tf.keras.layers.Conv2D(64, 3, padding='same', activation='relu'),
+        tf.keras.layers.MaxPooling2D(),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(128, activation='relu'),
+        tf.keras.layers.Dropout(0.5),
+        tf.keras.layers.Dense(num_classes)
+    ])
+
+    model = model4
+    if show:
+        model.summary()
 
     model.compile(
         optimizer='adam',
@@ -169,10 +194,10 @@ def plot_value_array(i, predictions_array, true_label):
 # create models #
 #################
 
-#createVerificationModel(show=True)
+createVerificationModel(show=True)
 
 ids = []
 #ids = [1, 30, 12]
-ids = ts.CLIENT_IDS
+#ids = ts.CLIENT_IDS
 for id in ids:
     createVerificationModel(id, show=True)

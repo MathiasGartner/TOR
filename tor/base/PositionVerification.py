@@ -16,6 +16,7 @@ class PositionVerification:
             self.input_details = self.interpreter.get_input_details()
             self.output_details = self.interpreter.get_output_details()
             self.isInitialized = True
+            log.info("loaded PositionVerification for id: {}".format(self.clientId))
         except Exception as e:
             self.isInitialized = False
             log.warning("could not initialize PositionVerification for id: {}".format(self.clientId))
