@@ -1,0 +1,13 @@
+[Unit]
+Description=TOR Interactive Web Server
+After=network.target
+
+[Service]
+ExecStart=sudo /usr/bin/node /home/pi/TOR-Interactive/app.js
+WorkingDirectory=/home/pi/TOR-Interactive/
+Restart=always
+RestartSec=3
+User=pi
+
+[Install]
+WantedBy=multi-user.target

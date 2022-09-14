@@ -13,8 +13,11 @@ import tor.TORSettings as ts
 #data_dir = "/home/gartner/TOR2022/20220812_CoffeaArabica_Magnet/cropped/"
 #model_dir = "./model/"
 #data_dir = os.path.join("D:" + os.sep, "TOR2022", "Pictures", Utils.getFilenameTimestampDay())
-data_dir = os.path.join("D:" + os.sep, "TOR2022", "Pictures", "20220905")
-model_dir = os.path.join("D:" + os.sep, "Sources", "TOR", "position_verification", "model")
+#data_dir = os.path.join("D:" + os.sep, "TOR2022", "Pictures", "20220905")
+#model_dir = os.path.join("D:" + os.sep, "Sources", "TOR", "position_verification", "model")
+#data_dir = os.path.join("/home/tor", "TORPictures", "magnet_20220913")
+data_dir = os.path.join("/home/tor", "TORPictures", "magnet_initial")
+model_dir = os.path.join("/home/tor", "Sources", "TOR", "position_verification", "model")
 
 saved_model_dirname = os.path.join(model_dir, "PositionVerificationTFModel")
 saved_model_dirname_id = os.path.join(model_dir, "PositionVerificationTFModel_{}")
@@ -40,7 +43,7 @@ def importImages(directory, pattern=None):
 def createVerificationModel(id=None, show=False):
     pattern = None
     if id is not None:
-        pattern = "*_{}_*.png".format(id)
+        pattern = "*_id={}_*.png".format(id)
     noImages = importImages(os.path.join(data_dir, "wrong"), pattern)
     yesImages = importImages(os.path.join(data_dir, "ok"), pattern)
 
@@ -140,7 +143,7 @@ def createVerificationModel(id=None, show=False):
     tflite_model = converter.convert()
 
     with open(modelTFLightFilePath, "wb") as f:
-      f.write(tflite_model)
+        f.write(tflite_model)
 
     predictions = probability_model.predict(test_images)
     print(predictions)
@@ -196,8 +199,8 @@ def plot_value_array(i, predictions_array, true_label):
 
 createVerificationModel(show=True)
 
-ids = []
+#ids = [14, 19]
 #ids = [1, 30, 12]
-#ids = ts.CLIENT_IDS
+ids = ts.CLIENT_IDS
 for id in ids:
     createVerificationModel(id, show=True)

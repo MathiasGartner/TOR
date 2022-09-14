@@ -106,8 +106,12 @@ def handleRequest(conn):
                 isOK = False
                 if clientId in pvs and pvs[clientId].isInitialized:
                     isOK = pvs[clientId].verifyPosition(im)
-                else:
+                elif pv.isInitialized:
                     isOK = pv.verifyPosition(im)
+                else:
+                    isOK = True
+                #if datetime.datetime.now().minute > 13:
+                #    isOK = False
                 NetworkUtils.sendData(conn, {
                     "POSITION_OK": 1 if isOK else 0,
                 })

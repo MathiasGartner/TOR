@@ -9,7 +9,6 @@ import time
 import os
 import sys
 
-import defusedxml.common
 import matplotlib as plt
 plt.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
@@ -109,7 +108,7 @@ THREAD_POOL_SIZE = 27
 DEFAULT_TIMEOUT = 3
 DEFAULT_TIMEOUT_SERVER = 3
 DEFAULT_TIMEOUT_SSH = 7
-DEFAULT_TIMEOUT_PING = 1.5
+DEFAULT_TIMEOUT_PING = 2.5
 
 NEW_PROGRAM_NAME = "<new>"
 
@@ -891,7 +890,9 @@ class MainWindow(QMainWindow):
                     c.IsActive = d.IsActive
                     break
         for cdv in self.cdvs:
-            cdv.lblCurrentJob.setText("{} {}".format(cdv.clientDetails.CurrentJobCode, cdv.clientDetails.CurrentJobParameters))
+            jobStr = "{} {}".format(cdv.clientDetails.CurrentJobCode, cdv.clientDetails.CurrentJobParameters)
+            cdv.lblCurrentJob.setText(jobStr[0:9])
+            cdv.lblCurrentJob.setToolTip(jobStr)
             cdv.lblResultAverage.setText("{:.2f}±{:.2f}".format(cdv.clientDetails.ResultAverage, cdv.clientDetails.ResultStddev))
             cdv.lblResultStddev.setText("+-{}".format(cdv.clientDetails.ResultStddev))
             if cdv.clientDetails.IsBadStatistics():
