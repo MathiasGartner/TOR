@@ -786,6 +786,7 @@ class MainWindow(QMainWindow):
         wdgTORServer = QWidget()
         wdgTORServer.setLayout(layTORServer)
 
+        self.clientJobsTabIndex = 1
         self.clientDetailsTabIndex = 2
         self.statisticsTabIndex = 3
 
@@ -820,7 +821,9 @@ class MainWindow(QMainWindow):
     ###############
 
     def tabDashboard_currentChanged(self, index):
-        if index == self.clientDetailsTabIndex:
+        if index == self.clientJobsTabIndex:
+            self.cmbTour.setCurrentText("JMAF2022")
+        elif index == self.clientDetailsTabIndex:
             self.loadAllClientDetails()
         elif index == self.statisticsTabIndex:
             self.reloadStatistics()

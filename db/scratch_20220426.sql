@@ -184,6 +184,8 @@ select date(d.Time) as t, c.material, count(*) as dcount, avg(result) from dicer
 
 select * from jobqueue order by id desc;
 
+select * from client order by Position;
+
 select * from useraction order by id desc;
 
 select * from clientlog order by id desc;
@@ -225,3 +227,50 @@ insert into jobqueue (ClientId, JobCode, JobParameters) values (20, "TAKE_IMAGE"
 insert into jobqueue (ClientId, JobCode) values (20, "W");
 
 update client set UserModeActive = 0 where id = 20;
+
+select * from jobqueue order by id desc limit 10;
+
+insert into jobqueue (ClientId, JobCode, JobParameters) values (13, "TAKE_IMAGE", "MAGNET_POS_TRUE");
+insert into jobqueue (ClientId, JobCode, JobParameters) values (13, "TAKE_IMAGE", "MAGNET_POS_FALSE");
+insert into jobqueue (ClientId, JobCode, JobParameters) values (13, "TAKE_IMAGE", "MAGNET_POS_TRUE");
+
+
+insert into jobqueue (ClientId, JobCode, JobParameters) values (14, "TAKE_IMAGE", "MAGNET_POS_TRUE");
+insert into jobqueue (ClientId, JobCode, JobParameters) values (14, "TAKE_IMAGE", "MAGNET_POS_FALSE");
+insert into jobqueue (ClientId, JobCode, JobParameters) values (14, "TAKE_IMAGE", "MAGNET_POS_TRUE");
+
+
+insert into jobqueue (ClientId, JobCode, JobParameters) values (19, "TAKE_IMAGE", "MAGNET_POS_TRUE");
+insert into jobqueue (ClientId, JobCode, JobParameters) values (19, "TAKE_IMAGE", "MAGNET_POS_FALSE");
+insert into jobqueue (ClientId, JobCode, JobParameters) values (19, "TAKE_IMAGE", "MAGNET_POS_TRUE");
+
+insert into jobqueue (ClientId, JobCode) values (19, "W");
+
+insert into jobqueue (ClientId, JobCode, JobParameters) select id, "TAKE_IMAGE", "MAGNET_POS_TRUE" from client;
+insert into jobqueue (ClientId, JobCode, JobParameters) select id, "TAKE_IMAGE", "MAGNET_POS_FALSE" from client;
+
+insert into jobqueue (ClientId, JobCode) select id, "W" from client;
+
+select * from clientsettings where Name = "CAM_ISO";
+
+select * from client;
+
+
+insert into jobqueue (ClientId, JobCode, JobParameters) select id, "RW", "3 3 3" from client where position in (22, 23, 24, 25, 26, 27);
+insert into jobqueue (ClientId, JobCode) select id, "W" from client where position in (22, 23, 24, 25, 26, 27);
+
+select id, "RW", "3 3 3" from client where position in (25, 26, 27)
+
+select * from jobprogram
+
+insert into jobprogram (ClientId, Name, JobCode, JobParameters) select Id, "JMAF2022", "RW", "5, 90, 6" FROM client where Position < 28;
+
+update jobprogram set JobParameters = "5 90 6" where Name = "JMAF2022";
+
+select * from jobprogram;
+
+select * from client order by position;
+
+update jobprogram set clientId =3 where clientId = 12;
+
+select distinct(source) from diceresult;

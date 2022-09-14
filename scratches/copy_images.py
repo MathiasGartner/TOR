@@ -14,7 +14,7 @@ ips = []
 
 #positions = []
 positions = range(1, 28)
-positions = [22, 23, 24, 25, 26, 27]
+#positions = [22, 23, 24, 25, 26, 27]
 #positions = [25]
 
 if len(positions) > 0:

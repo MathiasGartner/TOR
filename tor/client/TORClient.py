@@ -60,6 +60,7 @@ def keepAskingForNextJob(askEveryNthSecond = None):
             time.sleep(sleepFor)
 
 def doHomingCheck():
+    lm.setAllLeds()
     homingSuccessful = mr.checkSuccesfulHoming()
     if not homingSuccessful:
         cm.sendStopClient("homing not successful")

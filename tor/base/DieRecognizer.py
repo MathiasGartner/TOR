@@ -86,7 +86,7 @@ class DieRecognizer:
 
     def writeDiceImages(self, clientId, images, found, timestamp):
         directory = os.path.join(cs.IMAGE_DIRECTORY_DICE, "found" if found else "fail")
-        fileNamePattern = "{}_id={}_{}.png"
+        fileNamePattern = "{}_id={}_{}.jpg"
         self.writeImage(images[0], fileNamePattern.format("original", clientId, timestamp), directory=directory, doCreateDirectory=True)
         self.writeImage(images[1], fileNamePattern.format("marked", clientId, timestamp), directory=directory, doCreateDirectory=True)
 

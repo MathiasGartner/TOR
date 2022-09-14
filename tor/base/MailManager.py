@@ -35,7 +35,6 @@ def sendDeactiveClient(clientIdentity, to=ts.MAIL_RECIPIENTS):
         .format(clientIdentity.Id, clientIdentity.Position, clientIdentity.IP, clientIdentity.Material, clientIdentity.Latin)
     trySendMessage(to, s, b, "deactivate client")
 
-log.info("test")
 cid = Utils.EmptyObject()
 setattr(cid, "Id", 11)
 setattr(cid, "IP", "192.134.34.23")
@@ -43,4 +42,4 @@ setattr(cid, "Material", "Pfeffer")
 setattr(cid, "Position", 15)
 setattr(cid, "Latin", "Schinus")
 setattr(cid, "Id", 11)
-sendDeactiveClient(cid)
+#sendDeactiveClient(cid)
