@@ -220,6 +220,7 @@ def doJobs():
             done = True
             continue
         if cm.clientIdentity["IsActive"] == 0:
+            mm.disableSteppers()
             time.sleep(cs.UPDATE_ISACTIVE_SLEEP_TIME)
             cm.updateClientIsActive()
             if cm.clientIdentity["IsActive"] == 1:
@@ -264,7 +265,7 @@ def doJobs():
                 waitNSeconds = int(runWaitParams[2]) or 1
             if isFirstRWJob:
                 #waitNTimes = pow(math.sin(cm.clientIdentity.x + cm.clientIdentity.y + cm.clientIdentity.z)+ 1, 4) * 20
-                waitNTimes = pow(math.sin(int(cm.clientIdentity["Position"])) + 1.2, 4) / 25.0 * waitNTimes * (waitNSeconds / 150)
+                waitNTimes = pow(math.sin(int(cm.clientIdentity["Position"])) + 1.2, 4) / 25.0 * (waitNTimes * waitNSeconds / 3)
             if finishedRWRuns < runNTimes:
                 log.info("perform run {}/{} ...".format(finishedRWRuns+1, runNTimes))
                 if steppersDisabled:
