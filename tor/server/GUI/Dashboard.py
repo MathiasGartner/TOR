@@ -943,6 +943,9 @@ class MainWindow(QMainWindow):
             self.executeCommandOnTORServer(TORCommands.SERVER_SERVICE_START)
             self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_START, onlyActive=True)
             self.executeCommandOnTORServer(TORCommands.INTERACTIVE_START)
+            for c in self.cds:
+                if not c.IsActive:
+                    self.__executeCommandOnClient(c, TORCommands.CLIENT_TURN_ON_LEDS)
 
     def btnStopAllTORPrograms_clicked(self):
         with WaitCursor():
@@ -954,6 +957,7 @@ class MainWindow(QMainWindow):
             DBManager.saveJobs(jobs)
 
             allWaiting = False
+            countWaiting = 0
             while allWaiting == False:
                 time.sleep(5)
                 busyClients = DBManager.getBusyClients()
@@ -963,6 +967,9 @@ class MainWindow(QMainWindow):
                     msg = "waiting for {} boxes to finish...".format(len(busyClients))
                     log.info(msg)
                     self.addStatusText(msg)
+                countWaiting = countWaiting + 1
+                if countWaiting > 15:
+                    break
 
             msg = "all boxes ready waiting..."
             log.info(msg)

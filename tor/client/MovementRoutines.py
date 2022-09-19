@@ -338,12 +338,34 @@ class MovementRoutines:
             log.warning("Position could not be verified!")
         return isOK
 
+    def wiggleOnCurrentPos(self):
+        dz = 4
+        posMoveUpAndDown = self.mm.currentPosition + Position(0, 0, dz)
+        self.mm.moveToPos(posMoveUpAndDown)
+        self.mm.waitForMovementFinished()
+        posMoveUpAndDown = self.mm.currentPosition + Position(0, 0, -1.5 * dz)
+        self.mm.moveToPos(posMoveUpAndDown)
+        self.mm.waitForMovementFinished()
+        posMoveUpAndDown = self.mm.currentPosition + Position(0, 0, 1.5 * dz)
+        self.mm.moveToPos(posMoveUpAndDown)
+        self.mm.waitForMovementFinished()
+        posMoveUpAndDown = self.mm.currentPosition + Position(0, 0, -2 * dz)
+        self.mm.moveToPos(posMoveUpAndDown)
+        self.mm.waitForMovementFinished()
+
     def checkSuccesfulHoming(self):
         positionOK = self.verifyMagnetPosition()
         if positionOK:
             log.info("homing successful")
         else:
             log.warning("could not verify position after homing")
+            self.mm.disableSteppers()
+            time.sleep(2)
+            self.wiggleOnCurrentPos()
+            self.mm.disableSteppers()
+            time.sleep(2)
+            self.wiggleOnCurrentPos()
+            time.sleep(2)
             self.mm.doHoming()
             self.mm.moveToPosAfterHoming(cs.CENTER_TOP, True)
             self.mm.waitForMovementFinished()
