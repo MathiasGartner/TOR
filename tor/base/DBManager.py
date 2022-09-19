@@ -259,7 +259,7 @@ def getResultStatistics(event):
             LEFT JOIN (SELECT ClientId, COUNT(*) AS Count, AVG(Result) AS AverageResult FROM diceresult WHERE Date(Time) = CURDATE() GROUP BY ClientId) today ON today.ClientId = c.Id
             LEFT JOIN (SELECT ClientId, COUNT(*) AS Count, AVG(Result) AS AverageResult FROM diceresult WHERE Source = %(event)s GROUP BY ClientId) event ON event.ClientId = c.Id
         WHERE Position IS NOT NULL
-        ORDER BY Position
+        ORDER BY Count2Hours DESC
         """
     cursor.execute(query, {"event": event})
     data = cursor.fetchall()

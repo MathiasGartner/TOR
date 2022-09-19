@@ -37,9 +37,14 @@ def sendDeactiveClient(clientIdentity, to=ts.MAIL_RECIPIENTS):
 
 def sendStatisticMail(data, to=ts.MAIL_RECIPIENTS):
     s = "TOR: status report"
-    b = ""
+    b = "<table>"
+    b = b + "<th><td>Position</td><td>Name</td><td>2 Hour</td><td></td><td>4 Hour</td><td></td><td>Day</td><td></td><td>Event</td><td></td></th>"
     for d in data:
-        b = b + ' '.join(str(x) for x in d) + "<br>"
+        b = b + "<tr>"
+        for text in d:
+            b = b + "<td>" + str(text) + "</td>"
+        b = b + "</tr>"
+    b = b + "</table>"
     trySendMessage(to, s, b, "status report")
 
 cid = Utils.EmptyObject()
