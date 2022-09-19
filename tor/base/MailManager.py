@@ -35,6 +35,13 @@ def sendDeactiveClient(clientIdentity, to=ts.MAIL_RECIPIENTS):
         .format(clientIdentity.Id, clientIdentity.Position, clientIdentity.IP, clientIdentity.Material, clientIdentity.Latin)
     trySendMessage(to, s, b, "deactivate client")
 
+def sendStatisticMail(data, to=ts.MAIL_RECIPIENTS):
+    s = "TOR: status report"
+    b = ""
+    for d in data:
+        b = b + ' '.join(str(x) for x in d) + "<br>"
+    trySendMessage(to, s, b, "status report")
+
 cid = Utils.EmptyObject()
 setattr(cid, "Id", 11)
 setattr(cid, "IP", "192.134.34.23")
