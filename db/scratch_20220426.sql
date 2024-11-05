@@ -265,7 +265,7 @@ select * from jobprogram
 
 insert into jobprogram (ClientId, Name, JobCode, JobParameters) select Id, "JMAF2022", "RW", "5, 90, 6" FROM client where Position < 28;
 
-update jobprogram set JobParameters = "5 90 6" where Name = "JMAF2022";
+update jobprogram set JobParameters = "5 80 6" where Name = "JMAF2022";
 
 select * from jobprogram;
 
@@ -274,3 +274,58 @@ select * from client order by position;
 update jobprogram set clientId =3 where clientId = 12;
 
 select distinct(source) from diceresult;
+
+select * from diceresult where Source = "JMAF2022";
+
+select * from jobqueue where JobCode = "A" order by id desc;
+
+select * from jobqueue order by id desc;
+
+select position, AllowUserMode, IsActive, CASE WHEN (AllowUserMode + IsActive) = 2 THEN 1 ELSE 0 END as AllowUserMode, UserModeActive FROM client order by position;
+
+update client set UserModeActive = 0 where position is not null;
+
+update client set AllowUserMode = 0 where position < 28;
+
+
+update jobprogram set JobCode = "W", JobParameters = NULL where Name = "JMAF2022" and ClientId = 11;
+
+update jobprogram set JobParameters = "5 70 6" where Name = "JMAF2022" and JobCode = "RW";
+
+
+update jobprogram set JobParameters = "5 60 6" where Name = "JMAF2022" and JobCode = "RW";
+
+update jobprogram set JobParameters = "5 140 6" where Name = "JMAF2022" and JobCode = "RW" and ClientId = 11;
+
+select * from diceresult where usergenerated = 1 order by id desc;
+
+select count(*) from diceresult where Source = "JMAF2022" group by result;
+
+
+select * from  jobprogram j left join client c on j.ClientId = c.id where j.Name = "JMAF2022";
+
+update jobprogram set JobParameters = "5 80 6" where Name = "JMAF2022" and JobCode = "RW" and clientid in (23, 16, 5, 7);
+
+update jobprogram set JobParameters = NULL, JobCode = "W" where Name = "JMAF2022" and ClientId = 1;
+
+select * from  jobprogram j where j.Name = "JMAF2022";
+
+
+update client set AllowUserMode = 0 where Position < 28
+
+select * from client where id = 23;
+
+select * from clientsettings where ClientId = 9;
+
+select * from meshpoints where ClientId = 3;
+
+select * from client where id = 22;
+
+
+select * from client where UserModeActive = 1;
+
+select j.*, c.Position from jobqueue j left join client c on c.Id = j.ClientId order by j.id desc;
+
+select * from client;
+
+select Id, MAC, IP, Position, Latin, Material from client;
