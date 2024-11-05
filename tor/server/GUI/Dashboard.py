@@ -136,8 +136,9 @@ def executeCommand(cmd, timeout=DEFAULT_TIMEOUT):
 
 class TORCommands:
     # r'ssh -i {0} pi@{1} "sudo rm -r tor; sudo rm -r scripts"'
-    SERVER_SSH_CONNECTION = "ssh -i {0} pi@{1}"
-    CLIENT_SSH_CONNECTION = "ssh -i {0} pi@{1}"
+    SERVER_SSH_CONNECTION = "ssh -i \"{0}\" pi@{1}"
+    CLIENT_SSH_CONNECTION = "ssh -i \"{0}\" pi@{1}"
+    CLIENT_SSH_CONNECTION_ROOT = "ssh -i \"{0}\" root@{1}"
 
     SERVER_SERVICE_START = "sudo systemctl daemon-reload; sudo systemctl restart TORServer"
     SERVER_SERVICE_STOP = "sudo systemctl stop TORServer"
@@ -154,6 +155,8 @@ class TORCommands:
 
     CLIENT_TURN_ON_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 40 140 120 -b 95;"
     CLIENT_TURN_OFF_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 0 0 0;"
+
+    CLIENT_START_CALIBRATION = "cd /home/pi/; torenv/bin/python3 -m tor.client.GUI.calibrate"
 
 class ClientDetails:
     def __init__(self):
@@ -201,8 +204,12 @@ class ClientDetails:
         else:
             self.IsOnline = False
 
-    def __executeSSH(self, cmd, timeout=DEFAULT_TIMEOUT_SSH):
-        cmdSSH = TORCommands.CLIENT_SSH_CONNECTION.format(tsl.PATH_TO_SSH_KEY, self.IP)
+    def __executeSSH(self, cmd, timeout=DEFAULT_TIMEOUT_SSH, asRoot=False):
+        cmdSSH = "";
+        if asRoot:
+            cmdSSH = TORCommands.CLIENT_SSH_CONNECTION_ROOT.format(tsl.PATH_TO_SSH_KEY_ROOT, self.IP)
+        else:
+            cmdSSH = TORCommands.CLIENT_SSH_CONNECTION.format(tsl.PATH_TO_SSH_KEY, self.IP)
         cmdFull = cmdSSH + " \"" + cmd + "\""
         print("EXECUTE: {}".format(cmdFull))
         if window is not None:
@@ -211,13 +218,13 @@ class ClientDetails:
         #print("FINISHE: {}".format(cmdFull))
         return val
 
-    def executeSSH(self, cmd, timeout=DEFAULT_TIMEOUT_SSH, useWaitCursor=True):
+    def executeSSH(self, cmd, timeout=DEFAULT_TIMEOUT_SSH, useWaitCursor=True, asRoot=False):
         val = -1
         if useWaitCursor:
             with WaitCursor():
-                val = self.__executeSSH(cmd, timeout=timeout)
+                val = self.__executeSSH(cmd, timeout=timeout, asRoot=asRoot)
         else:
-            val = self.__executeSSH(cmd, timeout=timeout)
+            val = self.__executeSSH(cmd, timeout=timeout, asRoot=asRoot)
         return val
 
 class ClientDetailView(QWidget):
@@ -267,6 +274,20 @@ class ClientDetailView(QWidget):
         #wdgLEDs = QWidget()
         #wdgLEDs.setLayout(layLEDs)
 
+        # Calibration
+        self.btnStartCalibration = QPushButton()
+        self.btnStartCalibration.setText("Start")
+        self.btnStartCalibration.setFixedSize(50, 18)
+        self.btnStartCalibration.clicked.connect(self.btnStartCalibration_clicked)
+
+        layCalibration = QHBoxLayout()
+        layCalibration.setContentsMargins(0, 0, 0, 0)
+        layCalibration.addWidget(self.btnStartCalibration)
+
+        grpCalibration = QGroupBox("Calibration")
+        grpCalibration.setLayout(layCalibration)
+
+
         # Options
         self.chkUserMode = QCheckBox()
         self.chkUserMode.clicked.connect(self.chkUserMode_clicked)
@@ -313,6 +334,7 @@ class ClientDetailView(QWidget):
         layMain.addWidget(grpClientService)
         layMain.addWidget(grpClientOptions)
         layMain.addWidget(grpLEDs)
+        layMain.addWidget(grpCalibration)
         #layMain.addWidget(wdgLEDs)
 
         self.grpMainGroup = QGroupBox()
@@ -329,6 +351,10 @@ class ClientDetailView(QWidget):
 
     def btnTurnOffLEDs_clicked(self):
         self.clientDetails.executeSSH(TORCommands.CLIENT_TURN_OFF_LEDS)
+
+    def btnStartCalibration_clicked(self):
+        log.info(f"start calibration for client {self.clientDetails.Latin}.")
+        self.clientDetails.executeSSH(TORCommands.CLIENT_START_CALIBRATION)
 
     def chkUserMode_clicked(self, checked):
         self.clientDetails.AllowUserMode = checked
@@ -364,7 +390,7 @@ class MainWindow(QMainWindow):
         self.IsUpdating = False
 
         self.currentSelectedTabIndex = 0
-        self.setWindowTitle("TOR")
+        self.setWindowTitle("The Transparency of Randomness")
         self.setWindowIcon(TORIcons.APP_ICON)
 
         self.cdvs = []
