@@ -138,7 +138,7 @@ class TORCommands:
     # r'ssh -i {0} pi@{1} "sudo rm -r tor; sudo rm -r scripts"'
     SERVER_SSH_CONNECTION = "ssh -i \"{0}\" pi@{1}"
     CLIENT_SSH_CONNECTION = "ssh -i \"{0}\" pi@{1}"
-    CLIENT_SSH_CONNECTION_ROOT = "ssh -i \"{0}\" root@{1}"
+    CLIENT_SSH_CONNECTION_X11ROOT = "ssh -X -i \"{0}\" root@{1}"
 
     SERVER_SERVICE_START = "sudo systemctl daemon-reload; sudo systemctl restart TORServer"
     SERVER_SERVICE_STOP = "sudo systemctl stop TORServer"
@@ -207,7 +207,7 @@ class ClientDetails:
     def __executeSSH(self, cmd, timeout=DEFAULT_TIMEOUT_SSH, asRoot=False):
         cmdSSH = "";
         if asRoot:
-            cmdSSH = TORCommands.CLIENT_SSH_CONNECTION_ROOT.format(tsl.PATH_TO_SSH_KEY_ROOT, self.IP)
+            cmdSSH = TORCommands.CLIENT_SSH_CONNECTION_X11ROOT.format(tsl.PATH_TO_SSH_KEY, self.IP)
         else:
             cmdSSH = TORCommands.CLIENT_SSH_CONNECTION.format(tsl.PATH_TO_SSH_KEY, self.IP)
         cmdFull = cmdSSH + " \"" + cmd + "\""
@@ -354,7 +354,8 @@ class ClientDetailView(QWidget):
 
     def btnStartCalibration_clicked(self):
         log.info(f"start calibration for client {self.clientDetails.Latin}.")
-        self.clientDetails.executeSSH(TORCommands.CLIENT_START_CALIBRATION)
+        #TODO: set timeout to a proper value
+        self.clientDetails.executeSSH(TORCommands.CLIENT_START_CALIBRATION, timeout=7000, asRoot=True)
 
     def chkUserMode_clicked(self, checked):
         self.clientDetails.AllowUserMode = checked
