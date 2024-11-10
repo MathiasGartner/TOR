@@ -13,8 +13,8 @@ MAIL_OAUTH_FILE = os.path.join(tsl.TOR_PROGRAM_DIRECTORY_SERVER, "resources", "m
 #MAIL_RECIPIENTS = [MAIL_USERNAME, "mathiasgartner@gmx.at"]
 MAIL_RECIPIENTS = [MAIL_USERNAME, "mathiasgartner@gmx.at", "vera.tolazzi@gmx.at"]
 
-VERIFY_MAGNET_TFMODELFILE = os.path.join(tsl.TOR_BASE_DIRECTORY_SERVER, "position_verification", "position_verification.tflite")
-VERIFY_MAGNET_TFMODELFILE_ID = os.path.join(tsl.TOR_BASE_DIRECTORY_SERVER, "position_verification", "position_verification_{}.tflite")
+VERIFY_MAGNET_TFMODELFILE = os.path.join(tsl.TOR_POSITION_VERIFICATION_MODEL_DIRECTORY_SERVER, "position_verification.tflite")
+VERIFY_MAGNET_TFMODELFILE_ID = os.path.join(tsl.TOR_POSITION_VERIFICATION_MODEL_DIRECTORY_SERVER, "position_verification_{}.tflite")
 
 SERVER_IP = tsl.SERVER_IP
 SERVER_PORT = tsl.SERVER_PORT
@@ -28,4 +28,5 @@ CLIENT_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
 #DICE_RESULT_EVENT_SOURCE = 'ArsElectronica2020'
 #DICE_RESULT_EVENT_SOURCE = 'CyberArts2021'
 #DICE_RESULT_EVENT_SOURCE = 'Kapelica2022'
-DICE_RESULT_EVENT_SOURCE = 'JMAF2022'
+#DICE_RESULT_EVENT_SOURCE = 'JMAF2022'
+DICE_RESULT_EVENT_SOURCE = 'Test2024'
