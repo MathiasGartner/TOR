@@ -1,0 +1,6 @@
+numpy==1.18.4
+opencv-contrib-python-headless==4.1.0.25
+picamera==1.13
+pyserial==3.4
+rpi-ws281x==4.2.3
+sip==6.5.1
