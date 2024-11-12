@@ -196,7 +196,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Calibration")
         self.setWindowIcon(TORIcons.APP_ICON)
 
-        self.currentSelectedTabIndex = 0
+        self.currentSelectedTabIndex = -1
+        self.isInMovement = False
 
         # Homing
         self.lblHoming = QLabel("Start the homing routine:")
@@ -420,8 +421,8 @@ class MainWindow(QMainWindow):
         layMove.setSizeConstraint(QLayout.SetFixedSize)
         wdgMove.setLayout(layMove)
 
-        self.bedTabIndex = 1
-        self.movementTabIndex = 5
+        self.bedTabIndex = 0
+        self.movementTabIndex = 4
         self.tabFunctions = QTabWidget()
         self.tabFunctions.currentChanged.connect(self.tabFunctions_currentChanged)
         #self.tabFunctions.addTab(wdgHoming, "Homing")
@@ -750,6 +751,7 @@ class MainWindow(QMainWindow):
     ############
 
     def move(self, direction, steps):
+        self.isInMovement = True
         posFrom = mm.currentPosition
         posTo = None
         deltaPos = None
@@ -766,6 +768,7 @@ class MainWindow(QMainWindow):
             posTo.z = Utils.clamp(posTo.z, MANUAL_MOVEMENT_Z_MIN, MANUAL_MOVEMENT_Z_MAX)
             mm.moveToPos(posTo, True)
             mm.waitForMovementFinished()
+        self.isInMovement = False
 
     def movementButton_clicked(self, direction, steps):
         with WaitCursor():
@@ -780,6 +783,7 @@ class MainWindow(QMainWindow):
     ############
 
     def tabFunctions_currentChanged(self, index):
+        log.info(f"tabFunctions_currentChanged: index={index}")
         if self.currentSelectedTabIndex == self.bedTabIndex:
             if mm.currentPosition.y < cs.RAMP_CRITICAL_Y:
                 mm.moveCloseToRamp(cs.BEFORE_PICKUP_POSITION, segmented=True, moveto=False)
@@ -788,7 +792,8 @@ class MainWindow(QMainWindow):
         self.currentSelectedTabIndex = index
 
     def keyPressEvent(self, event):
-        if self.tabFunctions.currentIndex() == self.movementTabIndex:
+        self.addStatusText(f"key pressed {event.key()} at tab {self.currentSelectedTabIndex}")
+        if self.currentSelectedTabIndex == self.movementTabIndex and not self.isInMovement:
             stepsize = self.spnKeyboardStepsize.value()
             if event.key() == Qt.Key_A:
                 self.move("X", stepsize)
