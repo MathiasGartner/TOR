@@ -152,6 +152,7 @@ class TORCommands:
     CLIENT_SERVICE_START = "sudo systemctl daemon-reload; sudo systemctl restart TORClient"
     CLIENT_SERVICE_STOP = "sudo systemctl stop TORClient"
     CLIENT_SERVICE_STATUS = "systemctl is-active --quiet TORClient"
+    CLIENT_VERSION = "sudo torenv/bin/python3 -m tor.client.Version"
 
     CLIENT_TURN_ON_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 40 140 120 -b 95;"
     CLIENT_TURN_OFF_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 0 0 0;"
@@ -173,10 +174,22 @@ class ClientDetails:
         self.ResultAverage = -1
         self.ResultStddev = -1
         self.IsOnline = False
+        self.VersionOkay = True
+        self.Version = ""
 
     def IsBadStatistics(self):
         maxStddevResult = 0.17
         return self.ResultAverage < (3.5-maxStddevResult) or self.ResultAverage > (3.5+maxStddevResult) or self.ResultStddev > 1.77
+
+    def getClientVersion(self):
+        if self.IsOnline or self.Position == 21:
+            #TODO: how to get client version?
+            #val = self.executeSSH(TORCommands.CLIENT_VERSION, useWaitCursor=False)
+            val = "0"
+            self.Version = val
+            if ts.VERSION_TOR != self.Version:
+                self.VersionOkay = False
+                window.addStatusText(f"<font color=\"Blue\">wrong version at client <{self.Position} - {self.Latin}> (v{self.Version})</font>")
 
     def getClientServiceStatus(self):
         self.ServiceStatus = "unknown"
@@ -391,7 +404,7 @@ class MainWindow(QMainWindow):
         self.IsUpdating = False
 
         self.currentSelectedTabIndex = 0
-        self.setWindowTitle("The Transparency of Randomness")
+        self.setWindowTitle(f"The Transparency of Randomness v{ts.VERSION_TOR}")
         self.setWindowIcon(TORIcons.APP_ICON)
 
         self.cdvs = []
@@ -877,9 +890,17 @@ class MainWindow(QMainWindow):
         threadFutures = [threadPool.submit(self.__executeCommandOnClient, c, cmd, timeout, onlyActive) for c in self.cds]
         concurrent.futures.wait(threadFutures)
 
-    def checkOnlineAndServiceStatusForClient(self, client):
+    def checkOnlineAndServiceStatusForClient(self, client: ClientDetails):
         client.checkOnlineStatus()
         client.getClientServiceStatus()
+
+    def checkVersionForClient(self, cdv: ClientDetailView):
+        cdv.clientDetails.getClientVersion()
+        # todo: set style if client version is not okay
+        #if cdv.clientDetails.VersionOkay:
+        #    cdv.grpMainGroup.setStyle("")
+        #else:
+        #    cdv.grpMainGroup.setStyle("")
 
     def initDashboard(self):
         for cdv in self.cdvs:
@@ -934,6 +955,10 @@ class MainWindow(QMainWindow):
 
         threadPool = concurrent.futures.ThreadPoolExecutor(THREAD_POOL_SIZE)
         threadFutures = [threadPool.submit(self.checkOnlineAndServiceStatusForClient, cdv.clientDetails) for cdv in self.cdvs]
+        concurrent.futures.wait(threadFutures)
+
+        threadPool = concurrent.futures.ThreadPoolExecutor(THREAD_POOL_SIZE)
+        threadFutures = [threadPool.submit(self.checkVersionForClient, cdv) for cdv in self.cdvs]
         concurrent.futures.wait(threadFutures)
 
         for cdv in self.cdvs:
