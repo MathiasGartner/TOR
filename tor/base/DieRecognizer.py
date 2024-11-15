@@ -229,7 +229,7 @@ class DieRecognizer:
 
         log.info("Blob count: {}".format(len(blobs)))
         for b in blobs:
-            log.info("    {}".format(b.pt))
+            log.info("\t{}".format(b.pt))
         return blobs, fake_blobs, found, result, diePositionRelative
 
     def removeFakeBlobs(self, blobs):

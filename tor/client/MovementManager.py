@@ -6,9 +6,11 @@ import numpy as np
 import re
 import time
 
+from tor.base.utils import Utils
 import tor.client.ClientSettings as cs
 from tor.client.Communicator import Communicator
 from tor.client.Cords import Cords
+from tor.client.InaManager import InaManager
 from tor.client.Position import Position
 
 class MovementManager:
@@ -18,7 +20,9 @@ class MovementManager:
     def __init__(self):
         self.com = Communicator()
         self.feedratePercentage = 0
-        MovementManager.currentPosition = Position(-1, -1, -1)
+        self.magnetHadContact = False
+        self.inaManager = InaManager()
+        MovementManager.currentPosition = Position(-1, -1, -1) # todo: is this line needed?
         if not MovementManager.isInitialized:
             self.torMarlinVersion = "X"
             self.hasCorrectVersion = self.checkTORMarlinVersion()
@@ -222,7 +226,16 @@ class MovementManager:
 
     def rollDie(self):
         log.info("die is now rolled...")
-        self.pulseMagnet()
+        log.info(f"t: {time.time()}")
+        t1 = time.time() + cs.PULSE_MAGNET_TIME_MS / 2000.0
+        t2 = time.time() + cs.PULSE_MAGNET_TIME_MS / 1000.0
+        self.inaManager.wake()
+        self.enableMagnet()
+        Utils.sleepUntilTimestamp(t1)
+        self.magnetHadContact = self.inaManager.magnetHasContact()
+        Utils.sleepUntilTimestamp(t2)
+        self.disableMagnet()
+        self.inaManager.sleep()
 
     def waitForMovementFinished(self, sleepTime=0):
         self.sendGCode("M400")

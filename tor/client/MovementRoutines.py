@@ -599,3 +599,6 @@ class MovementRoutines:
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
         self.mm.moveToPos(cs.CENTER_TOP, True)
         time.sleep(cs.DIE_ROLL_TIME / 2.0)
+
+    def getLastMagnetContactStatus(self):
+        return self.mm.magnetHadContact

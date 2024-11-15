@@ -54,7 +54,7 @@ def keepAskingForNextJob(askEveryNthSecond = None):
             userModeRequested = True
         lock.release()
         if not inUserMode:
-            log.info("nextJob: {}".format(nextJob))
+            log.debug("nextJob: {}".format(nextJob))
         sleepFor = nextTime - time.time()
         if sleepFor > 0:
             time.sleep(sleepFor)
@@ -81,6 +81,7 @@ def run():
         # roll
         currentState = "ROLL"
         mr.run(lastPickupX)
+        log.info(f"magnet status: {mr.getLastMagnetContactStatus()}")
     if not userModeRequested:
         # pickup die - take image
         currentState = "PICKUP_TAKEIMAGE"
@@ -173,7 +174,7 @@ def doJobsDummy():
 
     done = False
     while not done:
-        log.info("nextJob: {}".format(nextJob))
+        log.debug("nextJob: {}".format(nextJob))
         if "T" in nextJob:
             test = datetime.strptime(nextJob["T"], '%Y-%m-%d %H:%M:%S')
             print(test)
@@ -228,7 +229,7 @@ def doJobs():
                 mm.doHoming()
                 doHomingCheck()
             continue
-        log.info("nextJob: {}".format(nextJob))
+        log.debug("nextJob: {}".format(nextJob))
         if not "W" in nextJob:
             inParkingPosition = False
             if not inUserMode:
