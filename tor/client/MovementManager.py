@@ -21,7 +21,8 @@ class MovementManager:
         self.com = Communicator()
         self.feedratePercentage = 0
         self.magnetHadContact = False
-        self.inaManager = InaManager()
+        if cs.ON_RASPI:
+            self.inaManager = InaManager()
         MovementManager.currentPosition = Position(-1, -1, -1) # todo: is this line needed?
         if not MovementManager.isInitialized:
             self.torMarlinVersion = "X"

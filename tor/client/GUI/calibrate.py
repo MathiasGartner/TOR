@@ -7,7 +7,7 @@ from datetime import datetime
 from functools import partial
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QVBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QHBoxLayout, QVBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox
 from PyQt5.QtGui import QPixmap, QIcon, QTextCursor
 
 app = QApplication(sys.argv)
@@ -30,6 +30,7 @@ class WaitCursor(object):
 ### TOR imports ###
 ###################
 
+import tor.TORSettings as ts
 from tor.base.GUI import TORIcons
 from tor.base.utils import Utils
 from tor.client import ClientSettings as cs
@@ -137,9 +138,9 @@ if cs.ON_RASPI:
 ######################
 ### Initialization ###
 ######################
+mm = MovementManager()
 if cs.ON_RASPI:
     lm = LedManager()
-    mm = MovementManager()
     mr = MovementRoutines()
 
 ########################
@@ -293,6 +294,14 @@ class MainWindow(QMainWindow):
         wdgMagnetPointsSelection = QWidget()
         wdgMagnetPointsSelection.setLayout(layMagnetPointsSelection)
         layMagnet.addWidget(wdgMagnetPointsSelection, row, 1)
+
+        layMagnetContact = QHBoxLayout()
+        layMagnetContact.addWidget(QLabel("Magnet has contact: "))
+        self.lblMagnetContact = QLabel()
+        self.lblMagnetContact.setPixmap(TORIcons.LED_GRAY)
+        layMagnetContact.addWidget(self.lblMagnetContact)
+        layMagnet.addLayout(layMagnetContact, row, 2)
+
         row += 1
         layMagnet.addWidget(wdgMagnetPoints, row, 0, 1, 4)
         row += 1
@@ -422,6 +431,7 @@ class MainWindow(QMainWindow):
         wdgMove.setLayout(layMove)
 
         self.bedTabIndex = 0
+        self.magnetTabIndex = 1
         self.movementTabIndex = 4
         self.tabFunctions = QTabWidget()
         self.tabFunctions.currentChanged.connect(self.tabFunctions_currentChanged)
@@ -589,6 +599,7 @@ class MainWindow(QMainWindow):
     ##############
 
     def moveToMagnetPoint(self, id, x, y, z):
+        self.lblMagnetContact.setPixmap(TORIcons.LED_GRAY)
         self.addStatusText("Test point {}, move to position ({},{},{})".format(id, x, y, z), spacerLineBefore=True)
         if cs.ON_RASPI:
             pos = Position(x, y, z)
@@ -600,16 +611,22 @@ class MainWindow(QMainWindow):
             mm.waitForMovementFinished()
             time.sleep(2)
             mm.rollDie()
+            if mm.magnetHadContact:
+                self.lblMagnetContact.setPixmap(TORIcons.LED_GREEN)
+            else:
+                self.lblMagnetContact.setPixmap(TORIcons.LED_RED)
             time.sleep(0.1)
         else:
             time.sleep(2)
         self.addStatusText("reached position ({},{},{})".format(x, y, z), spacerLineAfter=True)
 
     def moveToMagnetPoint_clicked(self, mcp):
+        self.lblMagnetContact.setPixmap(TORIcons.LED_GRAY)
         with WaitCursor():
             self.moveToMagnetPoint(mcp.Id, mcp.txtCoordX.value(), mcp.txtCoordY.value(), mcp.txtCoordZ.value())
 
     def moveToCenterFromMagnet_clicked(self, mcp):
+        self.lblMagnetContact.setPixmap(TORIcons.LED_GRAY)
         with WaitCursor():
             self.addStatusText("move to center position", spacerLineBefore=True)
             if cs.ON_RASPI:
@@ -620,10 +637,14 @@ class MainWindow(QMainWindow):
             self.addStatusText("reached center position", spacerLineAfter=True)
 
     def btnMagnetCalibrationDoHoming_clicked(self):
+        self.lblMagnetContact.setPixmap(TORIcons.LED_GRAY)
         with WaitCursor():
+            mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
+            mm.waitForMovementFinished()
             self.doHoming(moveToCenterAfterHoming=True)
 
     def btnPickupDie_clicked(self):
+        self.lblMagnetContact.setPixmap(TORIcons.LED_GRAY)
         with WaitCursor():
             mr.pickupDie()
 
@@ -789,6 +810,8 @@ class MainWindow(QMainWindow):
                 mm.moveCloseToRamp(cs.BEFORE_PICKUP_POSITION, segmented=True, moveto=False)
             else:
                 mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
+        elif self.currentSelectedTabIndex == self.magnetTabIndex:
+            self.lblMagnetContact.setPixmap(TORIcons.LED_GRAY)
         self.currentSelectedTabIndex = index
 
     def keyPressEvent(self, event):
@@ -815,7 +838,7 @@ class MainWindow(QMainWindow):
 window = MainWindow()
 window.show()
 
-window.setWindowTitle("Calibrate \"{}/{}\" at Position {}".format(cm.clientIdentity["Material"], cm.clientIdentity["Latin"], cm.clientIdentity["Position"]))
+window.setWindowTitle(f"Calibrate \"{cm.clientIdentity['Material']}/{cm.clientIdentity['Latin']}\" at Position {cm.clientIdentity['Position']} (v{ts.VERSION_TOR})")
 
 if cs.ON_RASPI:
     msgHoming = QMessageBox()
