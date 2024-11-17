@@ -11,6 +11,18 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QTab
 from PyQt5.QtGui import QPixmap, QIcon, QTextCursor
 
 app = QApplication(sys.argv)
+app.setStyleSheet("""
+        QGroupBox 
+        { 
+            font-weight: bold; 
+        }
+
+        QGroupBox#PointGroup 
+        { 
+            font-weight: bold; font-size: 16px; 
+        }
+
+    """)
 window = None
 
 class WaitCursor(object):
@@ -168,10 +180,10 @@ class CalibrationPoint(QWidget):
         self.txtCoordZ.setMaximum(300.0)
 
         self.btnTestPoint = QPushButton()
-        self.btnTestPoint.setText("move to point")
+        self.btnTestPoint.setText("Move to Point")
 
         self.btnMoveToCenter = QPushButton()
-        self.btnMoveToCenter.setText("move to center")
+        self.btnMoveToCenter.setText("Move to Center")
 
         layMain = QGridLayout()
         layMain.addWidget(QLabel("X"), 0, 0)
@@ -180,10 +192,11 @@ class CalibrationPoint(QWidget):
         layMain.addWidget(self.txtCoordY, 1, 1)
         layMain.addWidget(QLabel("Z"), 2, 0)
         layMain.addWidget(self.txtCoordZ, 2, 1)
-        layMain.addWidget(self.btnMoveToCenter, 3, 0)
         layMain.addWidget(self.btnTestPoint, 3, 1)
+        layMain.addWidget(self.btnMoveToCenter, 4, 1)
 
         self.grpMainGroup = QGroupBox()
+        self.grpMainGroup.setObjectName("PointGroup")
         self.grpMainGroup.setTitle("Point #")
         self.grpMainGroup.setLayout(layMain)
         self.layMainGroup = QVBoxLayout()
@@ -229,25 +242,25 @@ class MainWindow(QMainWindow):
         wdgBedPoints = QWidget()
         wdgBedPoints.setLayout(layBedPoints)
 
-        self.btnBedCalibrationDoHoming = QPushButton("Do homing")
+        self.btnBedCalibrationDoHoming = QPushButton("Perform Recalibration")
         self.btnBedCalibrationDoHoming.clicked.connect(self.btnBedCalibrationDoHoming_clicked)
-        self.btnRestoreBedCalibration = QPushButton("Restore settings")
+        self.btnRestoreBedCalibration = QPushButton("Restore Settings")
         self.btnRestoreBedCalibration.clicked.connect(self.btnRestoreBedCalibration_clicked)
-        self.btnSaveBedCalibration = QPushButton("Save settings")
+        self.btnSaveBedCalibration = QPushButton("Save Settings")
         self.btnSaveBedCalibration.clicked.connect(self.btnSaveBedCalibration_clicked)
-        self.btnBedCalibrationPickup = QPushButton("Pick up")
+        self.btnBedCalibrationPickup = QPushButton("Pick Up")
         self.btnBedCalibrationPickup.clicked.connect(self.btnBedCalibrationPickup_clicked)
-        self.btnBedCalibrationSearch = QPushButton("Search routine")
+        self.btnBedCalibrationSearch = QPushButton("Perform Search Routine")
         self.btnBedCalibrationSearch.clicked.connect(self.btnBedCalibrationSearch_clicked)
 
         layBed = QGridLayout()
         layBed.addWidget(QLabel("<h3>Calibrate the pickup points.</h3>\n<h3>Make sure that the pickup works when the point is approached from the center.</h3>"), 0, 0, 1, 3)
         layBed.addWidget(wdgBedPoints, 1, 0, 1, 3)
         layBed.addWidget(self.btnBedCalibrationDoHoming, 2, 0)
-        layBed.addWidget(self.btnRestoreBedCalibration, 2, 1)
-        layBed.addWidget(self.btnSaveBedCalibration, 2, 2)
         layBed.addWidget(self.btnBedCalibrationPickup, 3, 0)
-        layBed.addWidget(self.btnBedCalibrationSearch, 3, 1)
+        layBed.addWidget(self.btnBedCalibrationSearch, 4, 0)
+        layBed.addWidget(self.btnSaveBedCalibration, 2, 2)
+        layBed.addWidget(self.btnRestoreBedCalibration, 3, 2)
 
         wdgBed = QWidget()
         layBed.setSizeConstraint(QLayout.SetFixedSize)
@@ -269,7 +282,7 @@ class MainWindow(QMainWindow):
 
         self.brpOnlyUseSpecificMagnetPoints = QButtonGroup()
         self.radOnlyUseSpecificMagnetPoints = []
-        for option in ["all", "left (1-2)", "right (3-4)", "1", "2", "3", "4"]:
+        for option in ["all (1-4)", "left (1-2)", "right (3-4)", "1", "2", "3", "4"]:
             self.radOnlyUseSpecificMagnetPoints.append(QRadioButton(option))
 
         self.btnMagnetCalibrationDoHoming = QPushButton("Do homing")
@@ -285,15 +298,22 @@ class MainWindow(QMainWindow):
         row = 0
         layMagnet.addWidget(QLabel("<h3>Calibrate the dropoff points.</h3>\n<h3>Make sure that the dropoff works when the point is approached from the center and freshly homed.</h3>"), row, 0, 1, 4)
         row += 1
-        layMagnet.addWidget(QLabel("points to use for dropoff:"), row, 0)
         layMagnetPointsSelection = QGridLayout()
-        for i in range(3):
-            layMagnetPointsSelection.addWidget(self.radOnlyUseSpecificMagnetPoints[i], 1+i, 0)
-        for i in range(4):
-            layMagnetPointsSelection.addWidget(self.radOnlyUseSpecificMagnetPoints[i+3], 1+i, 1)
+        layMagnetPointsSelection.addWidget(QLabel("points to use for dropoff:"), 0, 0, 1, 4)
+        layMagnetPointsSelection.addWidget(self.radOnlyUseSpecificMagnetPoints[0], 1, 0, 1, 4)
+        layMagnetPointsSelection.addWidget(self.radOnlyUseSpecificMagnetPoints[1], 2, 0, 1, 2)
+        layMagnetPointsSelection.addWidget(self.radOnlyUseSpecificMagnetPoints[2], 2, 2, 1, 2)
+        layMagnetPointsSelection.addWidget(self.radOnlyUseSpecificMagnetPoints[3], 3, 0)
+        layMagnetPointsSelection.addWidget(self.radOnlyUseSpecificMagnetPoints[4], 3, 1)
+        layMagnetPointsSelection.addWidget(self.radOnlyUseSpecificMagnetPoints[5], 3, 2)
+        layMagnetPointsSelection.addWidget(self.radOnlyUseSpecificMagnetPoints[6], 3, 3)
+        #for i in range(3):
+        #    layMagnetPointsSelection.addWidget(self.radOnlyUseSpecificMagnetPoints[i], 1+i, 0)
+        #for i in range(4):
+        #    layMagnetPointsSelection.addWidget(self.radOnlyUseSpecificMagnetPoints[i+3], 1+i, 1)
         wdgMagnetPointsSelection = QWidget()
         wdgMagnetPointsSelection.setLayout(layMagnetPointsSelection)
-        layMagnet.addWidget(wdgMagnetPointsSelection, row, 1)
+        layMagnet.addWidget(wdgMagnetPointsSelection, row, 0)
 
         layMagnetContact = QHBoxLayout()
         layMagnetContact.addWidget(QLabel("Magnet has contact: "))
@@ -306,9 +326,9 @@ class MainWindow(QMainWindow):
         layMagnet.addWidget(wdgMagnetPoints, row, 0, 1, 4)
         row += 1
         layMagnet.addWidget(self.btnMagnetCalibrationDoHoming, row, 0)
-        layMagnet.addWidget(self.btnPickupDie, row, 1)
-        layMagnet.addWidget(self.btnRestoreMagnetCalibration, row, 2)
+        layMagnet.addWidget(self.btnPickupDie, row + 1, 0)
         layMagnet.addWidget(self.btnSaveMagnetCalibration, row, 3)
+        layMagnet.addWidget(self.btnRestoreMagnetCalibration, row + 1, 3)
 
         wdgMagnet = QWidget()
         layMagnet.setSizeConstraint(QLayout.SetFixedSize)
@@ -334,6 +354,9 @@ class MainWindow(QMainWindow):
         row = 0
         layCamera.addWidget(QLabel("<h3>Configuration for the camera settings</h3>"), row, 0, 1, 2)
         row += 1
+        layCamera.addWidget(self.btnTakePicture, row, 0)
+        layCamera.addWidget(self.btnCameraSave, row, 1)
+        row += 1
         layCamera.addWidget(QLabel("ISO:"), row, 0)
         layCamera.addWidget(self.cmbISO, row, 1)
         row += 1
@@ -348,9 +371,6 @@ class MainWindow(QMainWindow):
         row += 1
         layCamera.addWidget(QLabel("processed image:"), row, 0)
         layCamera.addWidget(self.lblCameraProcessed, row, 1)
-        row += 1
-        layCamera.addWidget(self.btnTakePicture, row, 0)
-        layCamera.addWidget(self.btnCameraSave, row, 1)
 
         wdgCamera = QWidget()
         layCamera.setSizeConstraint(QLayout.SetFixedSize)
@@ -373,21 +393,29 @@ class MainWindow(QMainWindow):
         self.btnImageSave.clicked.connect(self.btnImageSave_clicked)
 
         layImage = QGridLayout()
-        layImage.addWidget(QLabel("<h3>Configuration for image cropping/scaling/...</h3>\n<h3>not implemented yet...</h3>"), 0, 0, 1, 3)
-        layImage.addWidget(QLabel("top left X:"), 1, 0)
-        layImage.addWidget(self.spnImageTLX, 1, 1)
-        layImage.addWidget(QLabel("top left Y:"), 2, 0)
-        layImage.addWidget(self.spnImageTLY, 2, 1)
-        layImage.addWidget(QLabel("bottom right X:"), 3, 0)
-        layImage.addWidget(self.spnImageBRX, 3, 1)
-        layImage.addWidget(QLabel("bottom right Y:"), 4, 0)
-        layImage.addWidget(self.spnImageBRY, 4, 1)
-        layImage.addWidget(QLabel("original image:"), 5, 0)
-        layImage.addWidget(self.lblImageOriginal, 5, 1)
-        layImage.addWidget(QLabel("processed image:"), 6, 0)
-        layImage.addWidget(self.lblImageProcessed, 6, 1)
-        layImage.addWidget(self.btnTakeImage, 7, 0)
-        layImage.addWidget(self.btnImageSave, 7, 1)
+        row = 0
+        layImage.addWidget(QLabel("<h3>Configuration for image cropping/scaling/...</h3>\n<h3>not implemented yet...</h3>"), row, 0, 1, 3)
+        row += 1
+        layImage.addWidget(self.btnTakeImage, row, 0)
+        layImage.addWidget(self.btnImageSave, row, 1)
+        row += 1
+        layImage.addWidget(QLabel("top left X:"), row, 0)
+        layImage.addWidget(self.spnImageTLX, row, 1)
+        row += 1
+        layImage.addWidget(QLabel("top left Y:"), row, 0)
+        layImage.addWidget(self.spnImageTLY, row, 1)
+        row += 1
+        layImage.addWidget(QLabel("bottom right X:"), row, 0)
+        layImage.addWidget(self.spnImageBRX, row, 1)
+        row += 1
+        layImage.addWidget(QLabel("bottom right Y:"), row, 0)
+        layImage.addWidget(self.spnImageBRY, row, 1)
+        row += 1
+        layImage.addWidget(QLabel("original image:"), row, 0)
+        layImage.addWidget(self.lblImageOriginal, row, 1)
+        row += 1
+        layImage.addWidget(QLabel("processed image:"), row, 0)
+        layImage.addWidget(self.lblImageProcessed, row, 1)
 
         wdgImage = QWidget()
         layImage.setSizeConstraint(QLayout.SetFixedSize)
@@ -422,7 +450,7 @@ class MainWindow(QMainWindow):
         layMove.addWidget(QLabel("use W,A,S,D and Q,E on the keyboard for movement."), 7, 0, 1, 8)
         layMove.addWidget(QLabel("Keyboard step size:"), 8, 0)
         self.spnKeyboardStepsize = QSpinBox()
-        self.spnKeyboardStepsize.setRange(1, 10)
+        self.spnKeyboardStepsize.setRange(1, 15)
         self.spnKeyboardStepsize.setValue(5)
         layMove.addWidget(self.spnKeyboardStepsize, 8, 1)
 

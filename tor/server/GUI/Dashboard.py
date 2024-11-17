@@ -27,7 +27,7 @@ app = QApplication(sys.argv)
 app.setStyleSheet("""
         * 
         { 
-            font-size: 11px 
+            font-size: 16px 
         } 
 
         QGroupBox 
@@ -688,6 +688,8 @@ class MainWindow(QMainWindow):
 
         # Client Details
 
+        tblRowHeight = 12
+
         self.cmbClient = QComboBox()
         self.cmbClient.setFixedWidth(180)
         self.cmbClient.insertItem(-1, "All", -1)
@@ -712,6 +714,7 @@ class MainWindow(QMainWindow):
         self.tblResults.horizontalHeader().setStretchLastSection(True)
         self.tblResults.setWordWrap(False)
         self.tblResults.setTextElideMode(Qt.ElideRight)
+        self.tblResults.verticalHeader().setDefaultSectionSize(tblRowHeight)
 
         self.clientDetailInfoList = [
             ["Name", QLabel("-")],
@@ -750,19 +753,34 @@ class MainWindow(QMainWindow):
         wdgClientDetailsTop = QWidget()
         wdgClientDetailsTop.setLayout(layClientDetailsTop)
 
-
         self.tblLogMessages = QTableView()
         self.tblLogMessages.horizontalHeader().setStretchLastSection(True)
         self.tblLogMessages.setWordWrap(False)
         self.tblLogMessages.setTextElideMode(Qt.ElideRight)
+        self.tblLogMessages.verticalHeader().setDefaultSectionSize(tblRowHeight)
+
+        self.prxLogMessages = LogMessageSortFilterProxyModel(None)
+        self.chkLogMessagesError = QCheckBox()
+        self.chkLogMessagesError.stateChanged.connect(self.prxLogMessages.chkErrorChanged)
+        self.chkLogMessagesError.setChecked(self.prxLogMessages.chkErrorStatus)
+        self.chkLogMessagesWarning = QCheckBox()
+        self.chkLogMessagesWarning.stateChanged.connect(self.prxLogMessages.chkWarningChanged)
+        self.chkLogMessagesWarning.setChecked(self.prxLogMessages.chkWarningStatus)
+        self.chkLogMessagesInfo = QCheckBox()
+        self.chkLogMessagesInfo.stateChanged.connect(self.prxLogMessages.chkInfoChanged)
+        self.chkLogMessagesInfo.setChecked(self.prxLogMessages.chkInfoStatus)
 
         self.tblResultStatistics = QTableView()
         #self.tblResultStatistics.horizontalHeader().setStretchLastSection(True)
         self.tblResultStatistics.setWordWrap(False)
         self.tblResultStatistics.setTextElideMode(Qt.ElideRight)
         self.tblResultStatistics.setSortingEnabled(True)
+        self.tblResultStatistics.verticalHeader().setDefaultSectionSize(tblRowHeight)
 
         layClientDetailsBottom = QHBoxLayout()
+        layClientDetailsBottom.addWidget(self.chkLogMessagesError)
+        layClientDetailsBottom.addWidget(self.chkLogMessagesWarning)
+        layClientDetailsBottom.addWidget(self.chkLogMessagesInfo)
         layClientDetailsBottom.addWidget(self.tblLogMessages)
         layClientDetailsBottom.addSpacing(20)
         layClientDetailsBottom.addWidget(self.tblResultStatistics)
@@ -775,9 +793,17 @@ class MainWindow(QMainWindow):
         layDetails.addWidget(wdgClientSelection)
         layDetails.addWidget(QLabel("Results"))
         layDetails.addWidget(wdgClientDetailsTop)
-        layDetails.addWidget(QLabel("Log messages"))
+        layLogMessageChk = QHBoxLayout()
+        layLogMessageChk.addWidget(QLabel("Log messages"))
+        layLogMessageChk.addWidget(QLabel("Errors"))
+        layLogMessageChk.addWidget(self.chkLogMessagesError)
+        layLogMessageChk.addWidget(QLabel("Warnings"))
+        layLogMessageChk.addWidget(self.chkLogMessagesWarning)
+        layLogMessageChk.addWidget(QLabel("Info"))
+        layLogMessageChk.addWidget(self.chkLogMessagesInfo)
+        layLogMessageChk.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Fixed))
+        layDetails.addLayout(layLogMessageChk)
         layDetails.addWidget(wdgClientDetailsBottom)
-
 
         wdgDetails = QWidget()
         wdgDetails.setLayout(layDetails)
@@ -1167,6 +1193,13 @@ class MainWindow(QMainWindow):
         proxyModel.setSourceModel(model)
         table.setModel(proxyModel)
 
+    def showDataInLogMessagesTable(self, data, table, tableModel, clientId):
+        model = tableModel(data)
+        self.prxLogMessages.clientId = clientId
+        proxyModel = self.prxLogMessages
+        proxyModel.setSourceModel(model)
+        table.setModel(proxyModel)
+
     def setTableWidths(self, table, widths):
         for i, w in enumerate(widths):
             table.setColumnWidth(i, w)
@@ -1182,7 +1215,7 @@ class MainWindow(QMainWindow):
 
     def loadAllClientDetails(self):
         logMessages = DBManager.getClientLog()
-        self.showDataInTable(logMessages, self.tblLogMessages, LogMessageTableModel)
+        self.showDataInLogMessagesTable(logMessages, self.tblLogMessages, LogMessageTableModel, None)
         self.setTableWidths(self.tblLogMessages, [50, 150, 50, 150, 200, 200])
 
         diceResults = DBManager.getResults()
@@ -1196,7 +1229,7 @@ class MainWindow(QMainWindow):
 
     def loadClientDetails(self, client):
         logMessages = DBManager.getClientLogByClientId(client.Id)
-        self.showDataInTable(logMessages, self.tblLogMessages, LogMessageTableModel)
+        self.showDataInLogMessagesTable(logMessages, self.tblLogMessages, LogMessageTableModel, client.Id)
         self.setTableWidths(self.tblLogMessages, [50, 150, 200, 200])
 
         diceResults = DBManager.getResultsByClientId(client.Id)
@@ -1376,6 +1409,39 @@ class ResultStatisticsTableModel(DbTableModel):
             else:
                 text = self.data[row][column]
             return text
+
+class LogMessageSortFilterProxyModel(QSortFilterProxyModel):
+    def __init__(self, clientId):
+        super().__init__()
+        self.clientId = clientId
+        self.chkErrorStatus = True
+        self.chkWarningStatus = True
+        self.chkInfoStatus = True
+
+    def chkErrorChanged(self, status=True):
+        self.chkErrorStatus = status
+        self.invalidateFilter()
+
+    def chkWarningChanged(self, status=True):
+        self.chkWarningStatus = status
+        self.invalidateFilter()
+
+    def chkInfoChanged(self, status=True):
+        self.chkInfoStatus = status
+        self.invalidateFilter()
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        src = self.sourceModel()
+        if src is None:
+            return False
+        val = src.data[source_row].Type
+        if val == "ERROR":
+            return self.chkErrorStatus
+        if val == "WARNING":
+            return self.chkWarningStatus
+        if val == "INFO":
+            return self.chkInfoStatus
+        return True
 
 ###################
 ### application ###
