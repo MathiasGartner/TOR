@@ -153,7 +153,7 @@ if cs.ON_RASPI:
 mm = MovementManager()
 if cs.ON_RASPI:
     lm = LedManager()
-    mr = MovementRoutines()
+    mr = MovementRoutines(cm)
 
 ########################
 ### imports on raspi ###

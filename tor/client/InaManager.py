@@ -11,16 +11,22 @@ if cs.ON_RASPI:
 
 class InaManager:
     def __init__(self, brightness=None):
-        self.ina = INA219(cs.INA_SHUNT_OHMS)
-        self.ina.configure()
+        self.ina = None
+        if cs.USE_INA:
+            self.ina = INA219(cs.INA_SHUNT_OHMS)
+            self.ina.configure()
 
     def sleep(self):
-        self.ina.sleep()
+        if self.ina is not None:
+            self.ina.sleep()
 
     def wake(self):
-        self.ina.wake()
+        if self.ina is not None:
+            self.ina.wake()
 
     def magnetHasContact(self):
+        if self.ina is None:
+            return True
         log.info(f"t_INA: {time.time()}")
         val = self.ina.current()
         numTries = 0
