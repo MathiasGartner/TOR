@@ -11,8 +11,8 @@ ips = []
 #ips = [107, 112]
 #ips = ["192.168.1.110", "192.168.1.127"]
 #ips = ["192.168.1.108"]
-#ips = ["192.168.1.117" ]
-ips = ["192.168.1.120"]
+ips = ["192.168.1.120" ]
+#ips = ["192.168.1.102", "192.168.1.107"]
 #positions = []
 #positions = [1, 2, 3, 4,5, 6, 7, 8, 9]
 positions = range(1, 28)
@@ -21,7 +21,7 @@ positions = range(1, 28)
 #positions = [16]
 #positions = [25, 19, 9, 20, 4, 13, 27, 1]
 #positions = [17]
-positions = []
+#positions = []
 
 #from itertools import chain
 #positions = chain(range(1, 21), range(23, 28))
@@ -41,7 +41,7 @@ path_key = tsl.PATH_TO_SSH_KEY
 cmd_new_shell = "invoke-expression 'cmd /c start powershell -Command {{ {0} }}'"
 
 #### TOR ####
-filename = "update_tor.cmd"
+filename = "../../scratches/update_tor.cmd"
 cmd_delete = r'ssh -i {0} pi@{1} "sudo rm -r tor; sudo rm -r scripts"'
 cmd_copy = r"scp -i {0} -r " + tsl.PATH_TO_TOR_SOURCE + r"/TOR/tor pi@{1}:/home/pi"
 #cmd_delete_service = r'ssh -i {0} pi@{1} "sudo rm -r scripts"'
@@ -49,7 +49,7 @@ cmd_copy_service = r"scp -i {0} -r " + tsl.PATH_TO_TOR_SCRIPTS + r"/TOR/scripts 
 #cmd_copy_service_system = r'ssh -i {0} pi@{1} "sudo cp /home/pi/scripts/TORClient.service /etc/systemd/system/TORClient.service"'
 #cmd_chmod_marlin = r'ssh -i {0} pi@{1} "sudo chmod +x /home/pi/scripts/flashTORMarlin.sh"'
 #cmd_chmod_temp = r'ssh -i {0} pi@{1} "sudo chmod +x /home/pi/scripts/temperature.sh"'
-cmd_install = r'ssh -i {0} pi@{1} "sudo cp /home/pi/scripts/TORClient.service /etc/systemd/system/TORClient.service; sudo chmod +x /home/pi/scripts/flashTORMarlin.sh; sudo chmod +x /home/pi/scripts/temperature.sh; sudo chmod +x /home/pi/scripts/installPyQt5.sh"'
+cmd_install = r'ssh -i {0} pi@{1} "sudo cp /home/pi/scripts/TORClient.service /etc/systemd/system/TORClient.service; sudo chmod +x /home/pi/scripts/flashTORMarlin.sh; sudo chmod +x /home/pi/scripts/temperature.sh; sudo chmod +x /home/pi/scripts/installPyQt5.sh; sudo chmod +x /home/pi/scripts/enableX11Root.sh"'
 
 with open(filename, 'w') as f:
     for ip in ips:
@@ -73,7 +73,7 @@ with open(filename, 'w') as f:
         f.write(cmd + "\n")
 
 #### TOR-Marlin ####
-filename = "update_tor_marlin.cmd"
+filename = "../../scratches/update_tor_marlin.cmd"
 cmd_delete = r'ssh -i {0} pi@{1} "sudo rm -r /home/pi/tormarlin"'
 cmd_mkdir = r'ssh -i {0} pi@{1} "mkdir /home/pi/tormarlin"'
 cmd_copy = r"scp -i {0} " + tsl.PATH_TO_TOR_MARLIN_FIRMWARE + r" pi@{1}:/home/pi/tormarlin/"
@@ -94,7 +94,7 @@ with open(filename, 'w') as f:
 
 #### TOR-Marlin ####
 
-filename = "update_tor_marlin_window.ps1"
+filename = "../../scratches/update_tor_marlin_window.ps1"
 with open(filename, 'w') as f:
     for ip in ips:
         cmds = ""
@@ -117,10 +117,10 @@ with open(filename, 'w') as f:
 
 #### wifi ####
 ips = range(100, 135)
-filename = "update_wifi.cmd"
-cmd_cp = r'scp -i {0} "D:\Dropbox\Uni\AEC\Elektronik\raspi boot files\wpa_supplicant.conf" pi@192.168.0.{1}:/home/pi/wpa_supplicant.conf'
-cmd_mv = r'ssh -i {0} pi@192.168.0.{1} "sudo mv /home/pi/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf"'
-cmd_reboot = r'ssh -i {0} pi@192.168.0.{1} "sudo reboot"'
+filename = "../../scratches/update_wifi.cmd"
+cmd_cp = r'scp -i {0} "D:\The Transparency of Randomness\Dropbox\Elektronik\raspi boot files\wpa_supplicant.conf" pi@192.168.1.{1}:/home/pi/wpa_supplicant.conf'
+cmd_mv = r'ssh -i {0} pi@192.168.1.{1} "sudo mv /home/pi/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf"'
+cmd_reboot = r'ssh -i {0} pi@192.168.1.{1} "sudo reboot"'
 
 with open(filename, 'w') as f:
     for ip in ips:
