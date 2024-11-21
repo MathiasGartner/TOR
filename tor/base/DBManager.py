@@ -150,8 +150,14 @@ def clearAllCurrentStates():
     query = "UPDATE client SET CurrentState = ''"
     cursor.execute(query)
 
-def getAllClients():
+def getAllClients(includeWihtoutPosition=False):
     query = "SELECT Id, IP, Material, Position, Latin, AllowUserMode, IsActive FROM client WHERE Position IS NOT NULL ORDER BY Position"
+    cursor.execute(query)
+    data = cursor.fetchall()
+    return data
+
+def getAllPossibleClients():
+    query = "SELECT Id, IP, Material, Position, Latin, AllowUserMode, IsActive FROM client ORDER BY Position"
     cursor.execute(query)
     data = cursor.fetchall()
     return data
