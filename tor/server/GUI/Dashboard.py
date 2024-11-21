@@ -147,7 +147,8 @@ class TORCommands:
     INTERACTIVE_STOP = "sudo systemctl stop TORInteractive"
 
     #CLIENT_PING = "ping -i 0.2 -c 1 {}"
-    CLIENT_PING = "ping -c 1 {}"
+    #CLIENT_PING = "ping -c 1 {}"
+    CLIENT_PING = "ping -w 1000 -n 1 {}"
 
     CLIENT_SERVICE_START = "sudo systemctl daemon-reload; sudo systemctl restart TORClient"
     CLIENT_SERVICE_STOP = "sudo systemctl stop TORClient"
