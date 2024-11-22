@@ -234,7 +234,7 @@ def doJobs():
             inParkingPosition = False
             if not inUserMode:
                 # this is no user mode state but used for a quick fix for clearing the wait status
-                # needed in the Dashboard when turning of the whole installation
+                # needed in the Dashboard when turning off the whole installation
                 cm.setUserModeReady("")
         if not "RW" in nextJob:
             finishedRWRuns = 0

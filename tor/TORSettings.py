@@ -10,6 +10,7 @@ DB_HOST = tsp.DB_HOST
 DB_USER = tsp.DB_USER
 DB_PASSWORD = tsp.DB_PASSWORD
 
+SEND_MAIL = False
 MAIL_USERNAME = "thetransparencyofrandomness@gmail.com"
 MAIL_OAUTH_FILE = os.path.join(tsl.TOR_PROGRAM_DIRECTORY_SERVER, "resources", "gmail_oauth2.json")
 #MAIL_RECIPIENTS = ["mathiasgartner@gmx.at"]

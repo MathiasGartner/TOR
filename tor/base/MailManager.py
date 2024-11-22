@@ -15,11 +15,14 @@ except Exception as e:
 
 def trySendMessage(to, subject, contents, description):
     if yag is not None:
-        try:
-            yag.send(to=to, subject=subject, contents=contents)
-        except Exception as e:
-            log.warning("could not send message \"{}\"".format(description))
-            log.warning("{}".format(repr(e)))
+        if ts.SEND_MAIL:
+            try:
+                yag.send(to=to, subject=subject, contents=contents)
+            except Exception as e:
+                log.warning("could not send message \"{}\"".format(description))
+                log.warning("{}".format(repr(e)))
+        else:
+            log.warning("Sending Mail Messages is disabled (SEND_MAIL = False)")
     else:
         log.warning("MailManager not initialized")
 
