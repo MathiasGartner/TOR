@@ -253,6 +253,12 @@ class MainWindow(QMainWindow):
         self.btnBedCalibrationSearch = QPushButton("Perform Search Routine")
         self.btnBedCalibrationSearch.clicked.connect(self.btnBedCalibrationSearch_clicked)
 
+        self.btnBedCalibrationDoTestRun = QPushButton("Do Test Run")
+        self.btnBedCalibrationDoTestRun.clicked.connect(self.btnDoTestRun_clicked)
+        self.btnBedCalibrationStopTestRun = QPushButton("Stop Test Run")
+        self.btnBedCalibrationStopTestRun.setEnabled(False)
+        self.btnBedCalibrationStopTestRun.clicked.connect(self.btnStopTestRun_clicked)
+
         layBed = QGridLayout()
         layBed.addWidget(QLabel("<h3>Calibrate the pickup points.</h3>\n<h3>Make sure that the pickup works when the point is approached from the center.</h3>"), 0, 0, 1, 3)
         layBed.addWidget(wdgBedPoints, 1, 0, 1, 3)
@@ -261,6 +267,8 @@ class MainWindow(QMainWindow):
         layBed.addWidget(self.btnBedCalibrationSearch, 4, 0)
         layBed.addWidget(self.btnSaveBedCalibration, 2, 2)
         layBed.addWidget(self.btnRestoreBedCalibration, 3, 2)
+        layBed.addWidget(self.btnBedCalibrationDoTestRun, 2, 1)
+        layBed.addWidget(self.btnBedCalibrationStopTestRun, 3, 1)
 
         wdgBed = QWidget()
         layBed.setSizeConstraint(QLayout.SetFixedSize)
@@ -280,7 +288,10 @@ class MainWindow(QMainWindow):
         wdgMagnetPoints = QWidget()
         wdgMagnetPoints.setLayout(layMagnetPoints)
 
-        self.brpOnlyUseSpecificMagnetPoints = QButtonGroup()
+
+
+        self.grpOnlyUseSpecificMagnetPoints = QGroupBox()
+        self.grpOnlyUseSpecificMagnetPoints.setTitle("Enabled Positions")
         self.radOnlyUseSpecificMagnetPoints = []
         for option in ["all (1-4)", "left (1-2)", "right (3-4)", "1", "2", "3", "4"]:
             self.radOnlyUseSpecificMagnetPoints.append(QRadioButton(option))
@@ -293,6 +304,15 @@ class MainWindow(QMainWindow):
         self.btnRestoreMagnetCalibration.clicked.connect(self.btnRestoreMagnetCalibration_clicked)
         self.btnSaveMagnetCalibration = QPushButton("Save settings")
         self.btnSaveMagnetCalibration.clicked.connect(self.btnSaveMagnetCalibration_clicked)
+
+        self.btnMagnetCalibrationMoveToAllPositions = QPushButton("Move to All Positions")
+        self.btnMagnetCalibrationMoveToAllPositions.clicked.connect(self.btnMagnetCalibrationMoveToAllPositions_clicked)
+
+        self.btnMagnetCalibrationDoTestRun = QPushButton("Do Test Run")
+        self.btnMagnetCalibrationDoTestRun.clicked.connect(self.btnDoTestRun_clicked)
+        self.btnMagnetCalibrationStopTestRun = QPushButton("Stop Test Run")
+        self.btnMagnetCalibrationStopTestRun.setEnabled(False)
+        self.btnMagnetCalibrationStopTestRun.clicked.connect(self.btnStopTestRun_clicked)
 
         layMagnet = QGridLayout()
         row = 0
@@ -311,9 +331,9 @@ class MainWindow(QMainWindow):
         #    layMagnetPointsSelection.addWidget(self.radOnlyUseSpecificMagnetPoints[i], 1+i, 0)
         #for i in range(4):
         #    layMagnetPointsSelection.addWidget(self.radOnlyUseSpecificMagnetPoints[i+3], 1+i, 1)
-        wdgMagnetPointsSelection = QWidget()
-        wdgMagnetPointsSelection.setLayout(layMagnetPointsSelection)
-        layMagnet.addWidget(wdgMagnetPointsSelection, row, 0)
+        #wdgMagnetPointsSelection = QWidget()
+        self.grpOnlyUseSpecificMagnetPoints.setLayout(layMagnetPointsSelection)
+        layMagnet.addWidget(self.grpOnlyUseSpecificMagnetPoints, row, 0)
 
         layMagnetContact = QHBoxLayout()
         layMagnetContact.addWidget(QLabel("Magnet has contact: "))
@@ -327,6 +347,9 @@ class MainWindow(QMainWindow):
         row += 1
         layMagnet.addWidget(self.btnMagnetCalibrationDoHoming, row, 0)
         layMagnet.addWidget(self.btnPickupDie, row + 1, 0)
+        layMagnet.addWidget(self.btnMagnetCalibrationMoveToAllPositions, row, 1)
+        layMagnet.addWidget(self.btnMagnetCalibrationDoTestRun, row, 2)
+        layMagnet.addWidget(self.btnMagnetCalibrationStopTestRun, row + 1, 2)
         layMagnet.addWidget(self.btnSaveMagnetCalibration, row, 3)
         layMagnet.addWidget(self.btnRestoreMagnetCalibration, row + 1, 3)
 
@@ -533,6 +556,17 @@ class MainWindow(QMainWindow):
         self.txtStatus.moveCursor(QTextCursor.End)
         app.processEvents()
 
+    def setElementsEnabled(self, enabled=True, elements=[], exclude=[]):
+        if not type(elements) == list:
+            elements = [elements]
+        if not type(exclude) == list:
+            exclude = [exclude]
+        for e in elements:
+            if not e in exclude:
+                e.setEnabled(enabled)
+            else:
+                e.setEnabled(not enabled)
+
     ##############
     ### homing ###
     ##############
@@ -552,9 +586,65 @@ class MainWindow(QMainWindow):
         with WaitCursor():
             self.doHoming()
 
+    ################
+    ### test run ###
+    ################
+
+    def btnDoTestRun_clicked(self):
+        self.inTestRun = True
+        if self.currentSelectedTabIndex == self.bedTabIndex:
+            self.setBedElementsEnabled(False, self.btnBedCalibrationStopTestRun)
+        elif self.currentSelectedTabIndex == self.magnetTabIndex:
+            self.setMagnetElementsEnabled(False, self.btnMagnetCalibrationStopTestRun)
+        self.tabFunctions.tabBar().setEnabled(False)
+        app.processEvents()
+        if cs.ON_RASPI:
+            lm.setAllLeds()
+        lastPickupX = cs.LX / 2.0
+        while self.inTestRun:
+            if cs.ON_RASPI:
+                mr.run(lastPickupX)
+                if mr.getLastMagnetContactStatus():
+                    self.lblMagnetContact.setPixmap(TORIcons.LED_GREEN)
+                else:
+                    self.lblMagnetContact.setPixmap(TORIcons.LED_RED)
+                app.processEvents()
+                dieRollResult = mr.pickupDie_takeImage()
+                app.processEvents()
+                mr.pickupDie_pickup(dieRollResult, cm.sendDieRollResult)
+                app.processEvents()
+                if dieRollResult.found:
+                    lastPickupX = dieRollResult.position.x
+                app.processEvents()
+                mm.waitForMovementFinished()
+            else:
+                time.sleep(1)
+            app.processEvents()
+
+    def btnStopTestRun_clicked(self):
+        self.inTestRun = False
+        if self.currentSelectedTabIndex == self.bedTabIndex:
+            self.setBedElementsEnabled(True, self.btnBedCalibrationStopTestRun)
+        elif self.currentSelectedTabIndex == self.magnetTabIndex:
+            self.setMagnetElementsEnabled(True, self.btnMagnetCalibrationStopTestRun)
+        self.tabFunctions.tabBar().setEnabled(True)
+
     ###########
     ### bed ###
     ###########
+
+    def setBedElementsEnabled(self, enabled=True, exclude=[]):
+        elements = [
+            self.btnBedCalibrationDoHoming,
+            self.btnBedCalibrationPickup,
+            self.btnBedCalibrationSearch,
+            self.btnBedCalibrationDoTestRun,
+            self.btnBedCalibrationStopTestRun,
+            self.btnSaveBedCalibration,
+            self.btnRestoreBedCalibration,
+            *self.bcps
+        ]
+        self.setElementsEnabled(enabled, elements, exclude)
 
     def moveToBedPoint(self, id, x, y, z, isCloseToRamp):
         self.addStatusText("Test point {}, move to position ({},{},{})".format(id, x, y, z), spacerLineBefore=True)
@@ -622,9 +712,29 @@ class MainWindow(QMainWindow):
             mr.searchForDie()
             mm.moveToPos(cs.CENTER_TOP, True)
 
+    def setTabsEnabled(self, enabled=True, exclude=[]):
+        if not type(exclude) == list:
+            exclude = [exclude]
+        for i in range(self.tabFunctions.count()):
+            if not i in exclude:
+                self.tabFunctions.setTabEnabled(enabled, i)
+
     ##############
     ### magnet ###
     ##############
+
+    def setMagnetElementsEnabled(self, enabled=True, exclude=[]):
+        elements = [
+            self.grpOnlyUseSpecificMagnetPoints,
+            self.btnMagnetCalibrationDoHoming,
+            self.btnPickupDie,
+            self.btnMagnetCalibrationDoTestRun,
+            self.btnMagnetCalibrationStopTestRun,
+            self.btnSaveMagnetCalibration,
+            self.btnRestoreMagnetCalibration,
+            *self.mcps
+        ]
+        self.setElementsEnabled(enabled, elements, exclude)
 
     def moveToMagnetPoint(self, id, x, y, z):
         self.lblMagnetContact.setPixmap(TORIcons.LED_GRAY)
@@ -675,6 +785,29 @@ class MainWindow(QMainWindow):
         self.lblMagnetContact.setPixmap(TORIcons.LED_GRAY)
         with WaitCursor():
             mr.pickupDie()
+
+    def btnMagnetCalibrationMoveToAllPositions_clicked(self):
+        positions = [0, 1, 2, 3]
+        if self.radOnlyUseSpecificMagnetPoints[1].isChecked():
+            positions = [0, 1]
+        elif self.radOnlyUseSpecificMagnetPoints[2].isChecked():
+            positions = [0, 1]
+        elif self.radOnlyUseSpecificMagnetPoints[3].isChecked():
+            positions = [0]
+        elif self.radOnlyUseSpecificMagnetPoints[4].isChecked():
+            positions = [1]
+        elif self.radOnlyUseSpecificMagnetPoints[5].isChecked():
+            positions = [2]
+        elif self.radOnlyUseSpecificMagnetPoints[6].isChecked():
+            positions = [3]
+        self.lblMagnetContact.setPixmap(TORIcons.LED_GRAY)
+        app.processEvents()
+        with WaitCursor():
+            for mcp in self.mcps:
+                if mcp.Id in positions:
+                    self.moveToMagnetPoint(mcp.Id, mcp.txtCoordX.value(), mcp.txtCoordY.value(), mcp.txtCoordZ.value())
+                    app.processEvents()
+
 
     def btnRestoreMagnetCalibration_clicked(self):
         with WaitCursor():
