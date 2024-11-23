@@ -10,6 +10,7 @@ db/*.idea
 /position_verification/model/*
 /.idea/TOR.iml
 /tor/resources/gmail_oauth2.json
+/scripts/development/updateClient/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
