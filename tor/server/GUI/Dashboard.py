@@ -23,11 +23,14 @@ from PyQt5.QtCore import Qt, QTimer, QRect, QThread, QAbstractTableModel, QAbstr
 from PyQt5.QtWidgets import QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox, QCheckBox, QSpacerItem, QFrame, QLineEdit, QTableView, QTableWidgetItem, QDateEdit
 from PyQt5.QtGui import QPixmap, QIcon, QPainter, QTextCursor, QColor
 
+QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+
 app = QApplication(sys.argv)
 app.setStyleSheet("""
         * 
         { 
-            font-size: 16px 
+            font-size: 11px 
         } 
 
         QGroupBox 
