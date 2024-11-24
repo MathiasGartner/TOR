@@ -156,6 +156,12 @@ def getAllClients(includeWihtoutPosition=False):
     data = cursor.fetchall()
     return data
 
+def getAllAvailableClients():
+    query = "SELECT Id, IP, Material, Position, Latin, AllowUserMode, IsActive FROM client WHERE IsAvailable = 1 ORDER BY Latin"
+    cursor.execute(query)
+    data = cursor.fetchall()
+    return data
+
 def getAllPossibleClients():
     query = "SELECT Id, IP, Material, Position, Latin, AllowUserMode, IsActive FROM client ORDER BY Position"
     cursor.execute(query)
@@ -179,6 +185,10 @@ def setUserModeEnabled(clientId, enabled):
 def setClientIsActive(clientId, active):
     query = "UPDATE client SET IsActive = %(active)s WHERE Id = %(clientId)s"
     cursor.execute(query, {"active": active, "clientId": clientId})
+
+def setClientPosition(clientId, position=None):
+    query = "UPDATE client SET Position = %(position)s WHERE Id = %(clientId)s"
+    cursor.execute(query, {"position": position, "clientId": clientId})
 
 def getAllJobProgramNames():
     query = "SELECT DISTINCT Name FROM jobprogram"

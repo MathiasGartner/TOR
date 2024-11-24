@@ -121,6 +121,14 @@ class ClientManager:
         }
         answer = self.sendAndGetAnswer(msg)
 
+    def sendNoMagnetContact(self, dropoffPos):
+        msg = {
+            "C": self.clientId,
+            "WARN": "NO_MAGNET_CONTACT",
+            "MESSAGE": f"No contact for magnet at position [{dropoffPos[0]:.2f}, {dropoffPos[1]:.2f}, {dropoffPos[2]:.2f}]."
+        }
+        answer = self.sendAndGetAnswer(msg)
+
     def sendUserModeReady(self):
         msg = {
             "C": self.clientId,
