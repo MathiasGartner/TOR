@@ -20,7 +20,10 @@ from functools import partial
 
 from PyQt5.QtCore import Qt, QTimer, QRect, QThread, QAbstractTableModel, QAbstractListModel, QVariant, \
     QSortFilterProxyModel
-from PyQt5.QtWidgets import QInputDialog, QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox, QCheckBox, QSpacerItem, QFrame, QLineEdit, QTableView, QTableWidgetItem, QDateEdit
+from PyQt5.QtWidgets import (QInputDialog, QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel,
+                             QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox,
+                             QGroupBox, QVBoxLayout, QHBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox,
+                             QCheckBox, QSpacerItem, QFrame, QLineEdit, QTableView, QTableWidgetItem, QDateEdit)
 from PyQt5.QtGui import QPixmap, QIcon, QPainter, QTextCursor, QColor
 
 QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
@@ -325,48 +328,55 @@ class ClientDetailViewFull(ClientDetailViewBase):
         self.btnX.setText("X")
         self.btnX.clicked.connect(self.btnX_clicked)
         self.btnChange = QPushButton()
-        self.btnChange.setText("change")
+        self.btnChange.setText("+")
+        self.btnChange.setFixedSize(50, 50)
         self.btnChange.clicked.connect(self.btnChange_clicked)
 
-        layMain = QVBoxLayout()
+        self.wdgEmpty = QWidget()
+        layEmpty = QVBoxLayout(self.wdgEmpty)
+        layEmpty.addWidget(self.btnChange, alignment=Qt.AlignCenter)
+
+        self.wdgMain = QWidget()
+        layMain = QVBoxLayout(self.wdgMain)
         layMain.addWidget(QLabel("test"))
         layMain.addWidget(self.btnX)
-        layMain.addWidget(self.btnChange)
+
+        self.layStack = QVBoxLayout()
+        self.layStack.addWidget(self.wdgEmpty)
+        self.layStack.addWidget(self.wdgMain)
 
         self.grpMainGroup = QGroupBox()
         self.grpMainGroup.setObjectName("ClientDetails")
         self.grpMainGroup.setTitle("Client #")
-        self.grpMainGroup.setLayout(layMain)
+        self.grpMainGroup.setLayout(self.layStack)
+
         layMainGroup = QVBoxLayout()
         layMainGroup.setContentsMargins(0, 0, 0, 0)
         layMainGroup.addWidget(self.grpMainGroup)
         self.setLayout(layMainGroup)
 
+
     def updateClient(self):
         if self.clientDetails is None:
-            self.grpMainGroup.setTitle("no Box selected")
-            self.btnChange.setVisible(True)
-            self.btnX.setVisible(False)
+            self.grpMainGroup.setTitle("No Box selected")
+            self.wdgEmpty.setVisible(True)
+            self.wdgMain.setVisible(False)
         else:
             self.grpMainGroup.setTitle("#{}: {}...".format(self.clientDetails.Position, self.clientDetails.Latin[0:9]))
-            self.btnChange.setVisible(False)
-            self.btnX.setVisible(True)
+            self.wdgEmpty.setVisible(False)
+            self.wdgMain.setVisible(True)
+        app.processEvents()
 
     def btnX_clicked(self):
         DBManager.setClientPosition(self.clientDetails.Id, None)
         self.clientDetails = None
-        self.btnChange.setVisible(True)
-        self.btnX.setVisible(False)
         self.changeClientCallback()
 
     def btnChange_clicked(self):
         clients = DBManager.getAllAvailableClients()
         options = []
-        ids = []
         for c in clients:
-            #if c.Position is None:
-            options.append(f"{c.Latin} ({c.IP})")
-            ids.append(c.Id)
+            options.append(f"\"{c.Latin}\" {f'(currently at pos. {c.Position})' if c.Position is not None else ''}")
         selection, okPressed = QInputDialog.getItem(self, f"Choose Box for Position {self.position}:", "Box:", options, 0, False)
         if okPressed and selection:
             selectedIndex = 0
@@ -374,10 +384,8 @@ class ClientDetailViewFull(ClientDetailViewBase):
                 if selection == c:
                     break
                 selectedIndex += 1
-            clientId = ids[selectedIndex]
-            DBManager.setClientPosition(clientId, self.position)
-            self.btnChange.setVisible(False)
-            self.btnX.setVisible(True)
+            client = clients[selectedIndex]
+            DBManager.setClientPosition(client.Id, self.position)
             self.changeClientCallback()
 
 class ClientDetailView(ClientDetailViewBase):
@@ -1013,7 +1021,8 @@ class MainWindow(QMainWindow):
 
     def initDashboard(self):
         for cdv in self.cdvs:
-            cdv.lblIsOnline.setToolTip("Id: {}\nIP: {}\nMaterial: {}\nLatin name: {}".format(cdv.clientDetails.Id, cdv.clientDetails.IP, cdv.clientDetails.Material, cdv.clientDetails.Latin))
+            if cdv.clientDetails is not None:
+                cdv.lblIsOnline.setToolTip("Id: {}\nIP: {}\nMaterial: {}\nLatin name: {}".format(cdv.clientDetails.Id, cdv.clientDetails.IP, cdv.clientDetails.Material, cdv.clientDetails.Latin))
 
     def updateDashboardFromTimer(self):
         if not self.IsBusy and self.tabDashboard.currentIndex() == self.dashboardTabIndex:
@@ -1050,17 +1059,18 @@ class MainWindow(QMainWindow):
                     c.IsActive = d.IsActive
                     break
         for cdv in self.cdvs:
-            jobStr = "{} {}".format(cdv.clientDetails.CurrentJobCode, cdv.clientDetails.CurrentJobParameters)
-            cdv.lblCurrentJob.setText(jobStr[0:9])
-            cdv.lblCurrentJob.setToolTip(jobStr)
-            cdv.lblResultAverage.setText("{:.2f}±{:.2f}".format(cdv.clientDetails.ResultAverage, cdv.clientDetails.ResultStddev))
-            cdv.lblResultStddev.setText("+-{}".format(cdv.clientDetails.ResultStddev))
-            if cdv.clientDetails.IsBadStatistics():
-                cdv.lblResultAverage.setStyleSheet("QLabel { color: \"red\"; }")
-                cdv.lblResultStddev.setStyleSheet("QLabel { color: \"red\"; }")
-            else:
-                cdv.lblResultAverage.setStyleSheet("")
-                cdv.lblResultStddev.setStyleSheet("")
+            if cdv.clientDetails is not None:
+                jobStr = "{} {}".format(cdv.clientDetails.CurrentJobCode, cdv.clientDetails.CurrentJobParameters)
+                cdv.lblCurrentJob.setText(jobStr[0:9])
+                cdv.lblCurrentJob.setToolTip(jobStr)
+                cdv.lblResultAverage.setText("{:.2f}±{:.2f}".format(cdv.clientDetails.ResultAverage, cdv.clientDetails.ResultStddev))
+                cdv.lblResultStddev.setText("+-{}".format(cdv.clientDetails.ResultStddev))
+                if cdv.clientDetails.IsBadStatistics():
+                    cdv.lblResultAverage.setStyleSheet("QLabel { color: \"red\"; }")
+                    cdv.lblResultStddev.setStyleSheet("QLabel { color: \"red\"; }")
+                else:
+                    cdv.lblResultAverage.setStyleSheet("")
+                    cdv.lblResultStddev.setStyleSheet("")
 
         threadPool = concurrent.futures.ThreadPoolExecutor(THREAD_POOL_SIZE)
         threadFutures = [threadPool.submit(self.checkOnlineAndServiceStatusForClient, cdv.clientDetails) for cdv in self.cdvs]
@@ -1071,13 +1081,14 @@ class MainWindow(QMainWindow):
         concurrent.futures.wait(threadFutures)
 
         for cdv in self.cdvs:
-            cdv.chkUserMode.setChecked(cdv.clientDetails.AllowUserMode)
-            cdv.chkIsActivated.setChecked(cdv.clientDetails.IsActive)
-            cdv.refreshClientServiceStatus()
-            if cdv.clientDetails.IsOnline:
-                cdv.lblIsOnline.setPixmap(TORIcons.LED_GREEN)
-            else:
-                cdv.lblIsOnline.setPixmap(TORIcons.LED_RED)
+            if cdv.clientDetails is not None:
+                cdv.chkUserMode.setChecked(cdv.clientDetails.AllowUserMode)
+                cdv.chkIsActivated.setChecked(cdv.clientDetails.IsActive)
+                cdv.refreshClientServiceStatus()
+                if cdv.clientDetails.IsOnline:
+                    cdv.lblIsOnline.setPixmap(TORIcons.LED_GREEN)
+                else:
+                    cdv.lblIsOnline.setPixmap(TORIcons.LED_RED)
         self.lblLastUpdateTime.setText("last update: {}".format(datetime.now().strftime("%H:%M:%S")))
         print("updateDashboard finished")
         self.IsUpdating = False
