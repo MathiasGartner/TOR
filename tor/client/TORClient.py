@@ -24,7 +24,7 @@ from tor.client.Position import Position
 #################
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-nohome", dest='doHomingOnStartup', action="store_false")
+parser.add_argument("-nohome", dest='skipHomingOnStartup', action="store_true")
 args = parser.parse_args()
 
 def keepAskingForNextJob(askEveryNthSecond = None):
@@ -65,6 +65,13 @@ def doHomingCheck():
     if not homingSuccessful:
         cm.sendStopClient("homing not successful")
         cm.updateClientIsActive()
+
+def waitUntilJobStarts(job):
+    # TODO: allow for early exit of this (may be needed if nextJob changes during sleep)
+    if "T" in job and job["T"] is not None and job["T"] != "None":
+        startTime = datetime.strptime(job["T"], '%Y-%m-%d %H:%M:%S')
+        startTimestamp = datetime.timestamp(startTime)
+        Utils.sleepUntilTimestamp(startTimestamp)
 
 def run():
     global runsSinceLastHoming
@@ -209,7 +216,7 @@ def doJobs():
     else:
         log.warning("current position: {}".format(MovementManager.currentPosition))
 
-        if args.doHomingOnStartup:
+        if not args.skipHomingOnStartup:
             mr.pickupDieWhileHoming()
         else:
             #TODO: get current position from BTT SKR Board
@@ -262,12 +269,10 @@ def doJobs():
 
         # do nextJob
         if "R" in nextJob:
-            if "T" in nextJob and nextJob["T"] is not None and nextJob["T"] != "None":
-                startTime = datetime.strptime(nextJob["T"], '%Y-%m-%d %H:%M:%S')
-                startTimestamp = datetime.timestamp(startTime)
-                Utils.sleepUntilTimestamp(startTimestamp)
+            waitUntilJobStarts(nextJob)
             run()
         elif "RW" in nextJob:
+            waitUntilJobStarts(nextJob)
             if nextJob["RW"] is None:
                 runNTimes = 1
                 waitNTimes = 1
@@ -336,6 +341,7 @@ def doJobs():
             elif performanceNo == 5:
                 mr.doRollDie(startTime)
         elif "W" in nextJob: # W...wait
+            waitUntilJobStarts(nextJob)
             currentState = "WAIT"
             if not inParkingPosition:
                 mm.moveToParkingPosition(True)
