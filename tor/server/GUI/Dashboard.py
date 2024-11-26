@@ -18,9 +18,9 @@ import matplotlib.colors as colors
 
 from functools import partial
 
-from PyQt5.QtCore import Qt, QTimer, QRect, QThread, QAbstractTableModel, QAbstractListModel, QVariant, \
-    QSortFilterProxyModel
-from PyQt5.QtWidgets import (QInputDialog, QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel,
+from PyQt5.QtCore import (Qt, QTimer, QRect, QThread, QAbstractTableModel, QAbstractListModel, QVariant,
+                          QSortFilterProxyModel)
+from PyQt5.QtWidgets import (QSplitter, QInputDialog, QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel,
                              QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox,
                              QGroupBox, QVBoxLayout, QHBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox,
                              QCheckBox, QSpacerItem, QFrame, QLineEdit, QTableView, QTableWidgetItem, QDateEdit)
@@ -338,8 +338,23 @@ class ClientDetailViewFull(ClientDetailViewBase):
 
         self.wdgMain = QWidget()
         layMain = QVBoxLayout(self.wdgMain)
-        layMain.addWidget(QLabel("test"))
-        layMain.addWidget(self.btnX)
+        layMain.addWidget(self.btnX, alignment=Qt.AlignRight)
+
+        layClientStatus = QGridLayout()
+        layClientStatus.setContentsMargins(0, 0, 0, 0)
+        layClientStatus.addWidget(QLabel("online:"), 0, 0)
+        layClientStatus.addWidget(self.lblIsOnline, 0, 1)
+        layClientStatus.addWidget(QLabel("current job:"), 1, 0)
+        layClientStatus.addWidget(self.lblCurrentJob, 1, 1)
+        layClientStatus.addWidget(QLabel("avg result:"), 2, 0)
+        layClientStatus.addWidget(self.lblResultAverage, 2, 1)
+        #layClientStatus.addWidget(QLabel("stddev:"), 3, 0)
+        #layClientStatus.addWidget(self.lblResultStddev, 3, 1)
+
+        grpClientStatus = QGroupBox("Status")
+        grpClientStatus.setLayout(layClientStatus)
+
+        layMain.addWidget(grpClientStatus)
 
         self.layStack = QVBoxLayout()
         self.layStack.addWidget(self.wdgEmpty)
@@ -362,7 +377,7 @@ class ClientDetailViewFull(ClientDetailViewBase):
             self.wdgEmpty.setVisible(True)
             self.wdgMain.setVisible(False)
         else:
-            self.grpMainGroup.setTitle("#{}: {}...".format(self.clientDetails.Position, self.clientDetails.Latin[0:9]))
+            self.grpMainGroup.setTitle("#{}: {}".format(self.clientDetails.Position, self.clientDetails.Latin))
             self.wdgEmpty.setVisible(False)
             self.wdgMain.setVisible(True)
         app.processEvents()
@@ -415,8 +430,6 @@ class ClientDetailView(ClientDetailViewBase):
 
         grpLEDs = QGroupBox("LEDs")
         grpLEDs.setLayout(layLEDs)
-        #wdgLEDs = QWidget()
-        #wdgLEDs.setLayout(layLEDs)
 
         # Calibration
         self.btnStartCalibration = QPushButton()
@@ -553,12 +566,12 @@ class MainWindow(QMainWindow):
         wdgClientDetails.setLayout(layClientDetails)
 
         self.btnStartAllTORPrograms = QPushButton()
-        self.btnStartAllTORPrograms.setText("START installation")
+        self.btnStartAllTORPrograms.setText("START")
         self.btnStartAllTORPrograms.clicked.connect(self.btnStartAllTORPrograms_clicked)
         self.btnStartAllTORPrograms.setStyleSheet("QPushButton { font-weight: bold }; ")
 
         self.btnStopAllTORPrograms = QPushButton()
-        self.btnStopAllTORPrograms.setText("STOP installation")
+        self.btnStopAllTORPrograms.setText("STOP")
         self.btnStopAllTORPrograms.clicked.connect(self.btnStopAllTORPrograms_clicked)
         self.btnStopAllTORPrograms.setStyleSheet("QPushButton { font-weight: bold }; ")
 
@@ -615,7 +628,7 @@ class MainWindow(QMainWindow):
         spacerSize = 30
         layDashboardButtons = QVBoxLayout()
         layDashboardButtons.addSpacing(spacerSize)
-        layDashboardButtons.addWidget(QLabel("<h3>Installation</h3>"))
+        layDashboardButtons.addWidget(QLabel("<h3>The Transparency of Randomness</h3>"))
         layDashboardButtons.addWidget(self.btnStartAllTORPrograms)
         layDashboardButtons.addWidget(self.btnStopAllTORPrograms)
         layDashboardButtons.addSpacing(spacerSize)
@@ -635,11 +648,12 @@ class MainWindow(QMainWindow):
         layDashboardButtons.addWidget(self.btnStartTORInteractive)
         layDashboardButtons.addWidget(self.btnStopTORInteractive)
         layDashboardButtons.addWidget(self.btnEndAllUserModes)
-        layDashboardButtons.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
+        layDashboardButtons.addSpacerItem(QSpacerItem(0, spacerSize, QSizePolicy.Expanding, QSizePolicy.MinimumExpanding))
         layDashboardButtons.addWidget(self.btnUpdateDashboard)
         layDashboardButtons.addWidget(self.lblLastUpdateTime)
 
         wdgDashboardButtons = QWidget()
+        wdgDashboardButtons.setMaximumWidth(250)
         wdgDashboardButtons.setLayout(layDashboardButtons)
 
         layDashboard = QHBoxLayout()
@@ -947,13 +961,11 @@ class MainWindow(QMainWindow):
         self.txtStatus = QPlainTextEdit()
         self.txtStatus.setReadOnly(True)
 
-        layMain = QVBoxLayout()
-        layMain.addWidget(self.tabDashboard)
-        layMain.addWidget(self.txtStatus)
+        splMain = QSplitter(Qt.Vertical)
+        splMain.addWidget(self.tabDashboard)
+        splMain.addWidget(self.txtStatus)
 
-        wdgMain = QWidget()
-        wdgMain.setLayout(layMain)
-        self.setCentralWidget(wdgMain)
+        self.setCentralWidget(splMain)
 
         self.initDashboard()
         self.updateDashboard()
@@ -1115,6 +1127,8 @@ class MainWindow(QMainWindow):
             self.executeCommandOnTORServer(TORCommands.SERVER_SERVICE_START)
             self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_START, onlyActive=True)
             self.executeCommandOnTORServer(TORCommands.INTERACTIVE_START)
+            if ss.STARTUP_JOB_PROGRAM_NAME is not None and ss.STARTUP_JOB_PROGRAM_NAME != "":
+                DBManager.setJobsByJobProgram(ss.STARTUP_JOB_PROGRAM_NAME, ss.STARTUP_JOB_DELAY_MINUTES)
             for c in self.cds:
                 if not c.IsActive:
                     self.__executeCommandOnClient(c, TORCommands.CLIENT_TURN_ON_LEDS)
@@ -1381,7 +1395,12 @@ class MainWindow(QMainWindow):
         dateStartStr = str(dateStart)
         dateEndStr = str(dateEnd)
         print(dateStartStr + " - " + dateEndStr)
-        query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, Time AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId WHERE DATE(Time) >= \"" + dateStartStr + "\" AND DATE(Time) <= \"" + dateEndStr + "\" AND c.Position >=1 AND c.Position <= 27 ORDER BY d.Id DESC"
+        maxPos = 0
+        if ss.BOX_FORMATION == "3x3x3":
+            maxPos = 27
+        elif ss.BOX_FORMATION == "3x3":
+            maxPos = 9
+        query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, Time AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId WHERE DATE(Time) >= \"" + dateStartStr + "\" AND DATE(Time) <= \"" + dateEndStr + "\" AND c.Position >=1 AND c.Position <= " + str(maxPos) + " ORDER BY d.Id DESC"
         data = DBManager.executeQuery(query)
         positions = [d.Position for d in data]
         times = [d.Time.timestamp() for d in data]
@@ -1417,7 +1436,7 @@ class MainWindow(QMainWindow):
         ax.xaxis.set_major_locator(loc)
         ax.xaxis.set_major_formatter(fmt)
 
-        ax.set_yticks(np.arange(1, 28, 1))
+        ax.set_yticks(np.arange(1, maxPos+1, 1))
         ax.set_yticklabels(clientNames)
 
         fig.autofmt_xdate()

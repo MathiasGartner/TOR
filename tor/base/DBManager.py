@@ -147,8 +147,12 @@ def setCurrentStateForUserMode(clientId, state):
     cursor.execute(query, { "state": state, "clientId" : clientId })
 
 def clearAllCurrentStates():
-    query = "UPDATE client SET CurrentState = ''"
+    query = "UPDATE client SET CurrentState = '', UserModeActive = 0"
     cursor.execute(query)
+
+def setJobsByJobProgram(programName, startInNMinutes=0):
+    query = "INSERT INTO jobqueue (ClientId, JobCode, JobParameters, ExecuteAt) SELECT ClientId, JobCode, JobParameters, Date_ADD(NOW(), INTERVAL %(minutes)s MINUTE) FROM jobprogram WHERE Name = %(programName)s"
+    cursor.execute(query, { "programName": programName, "minutes": startInNMinutes })
 
 def getAllClients(includeWihtoutPosition=False):
     query = "SELECT Id, IP, Material, Position, Latin, AllowUserMode, IsActive FROM client WHERE Position IS NOT NULL ORDER BY Position"
