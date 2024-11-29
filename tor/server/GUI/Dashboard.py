@@ -1493,6 +1493,8 @@ class LogMessageTableModel(DbTableModel):
         if role == Qt.BackgroundColorRole:
             if self.data[row].Type == "ERROR":
                 return QVariant(QColor(255, 210, 210))
+            elif self.data[row].Type == "WARNING":
+                return QVariant(QColor(254, 219, 187))
 
 class DiceResultTableModel(DbTableModel):
     def __init__(self, data, parent=None):

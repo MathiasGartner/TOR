@@ -77,7 +77,7 @@ class ClientManager:
     def sendDieNotFound(self):
         msg = {
             "C": self.clientId,
-            "E": "NOT_LOC",
+            "WARN": "NOT_LOC",
             "MESSAGE": "Could not locate die."
         }
         answer = self.sendAndGetAnswer(msg)
@@ -85,7 +85,7 @@ class ClientManager:
     def sendDieResultNotRecognized(self):
         msg = {
             "C": self.clientId,
-            "E": "NOT_REC",
+            "WARN": "NOT_REC",
             "MESSAGE": "Could not recognize die result."
         }
         answer = self.sendAndGetAnswer(msg)
@@ -93,7 +93,7 @@ class ClientManager:
     def sendDieResultNotFoundNTimes(self, n):
         msg = {
             "C": self.clientId,
-            "E": "NOT_FOUND_N",
+            "WARN": "NOT_FOUND_N",
             "MESSAGE": "Could not find die {} times.".format(n)
         }
         answer = self.sendAndGetAnswer(msg)
@@ -101,7 +101,7 @@ class ClientManager:
     def sendSameDieResultNTimes(self, n, result):
         msg = {
             "C": self.clientId,
-            "E": "SAME_RESULT_N",
+            "WARN": "SAME_RESULT_N",
             "MESSAGE": "Got the same results {} times in a row. Always find a {}".format(n, result)
         }
         answer = self.sendAndGetAnswer(msg)
@@ -110,6 +110,14 @@ class ClientManager:
         msg = {
             "C": self.clientId,
             "STOP": msg
+        }
+        answer = self.sendAndGetAnswer(msg)
+
+    def sendHomingNotSuccessful(self):
+        msg = {
+            "C": self.clientId,
+            "E": "HOME",
+            "MESSAGE": "Homing could not be performed successful"
         }
         answer = self.sendAndGetAnswer(msg)
 

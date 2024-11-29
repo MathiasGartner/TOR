@@ -64,6 +64,7 @@ def doHomingCheck():
     homingSuccessful = mr.checkSuccesfulHoming()
     if not homingSuccessful:
         cm.sendStopClient("homing not successful")
+        cm.sendHomingNotSuccessful()
         cm.updateClientIsActive()
 
 def waitUntilJobStarts(job):
