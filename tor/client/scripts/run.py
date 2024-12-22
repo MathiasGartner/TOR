@@ -340,6 +340,19 @@ elif mode == 24:
     conn.close()
     print("done")
 
+# sudo torenv/bin/python3 -m tor.client.scripts.run 25 Y0 Y250
+elif mode == 25: # move between two G-Code positions on a single motor
+    from tor.client.Communicator import Communicator
+    com = Communicator()
+    coords = [sys.argv[2], sys.argv[3]]
+    while True:
+        for c in coords:
+            com.send(f"G1 {c}")
+            com.send("M400")
+            com.recvUntilOk()
+            com.send("M118 A1 move finished")
+            com.recvUntilOk()
+
 if mm is not None:
     mm.waitForMovementFinished(2)
     #mm.moveHome()
