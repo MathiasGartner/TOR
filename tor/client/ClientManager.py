@@ -113,6 +113,14 @@ class ClientManager:
         }
         answer = self.sendAndGetAnswer(msg)
 
+    def sendOTPWTriggered(self):
+        msg = {
+            "C": self.clientId,
+            "E": "OTPW",
+            "MESSAGE": "OTPW triggered"
+        }
+        answer = self.sendAndGetAnswer(msg)
+
     def sendHomingNotSuccessful(self):
         msg = {
             "C": self.clientId,

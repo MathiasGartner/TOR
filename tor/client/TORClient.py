@@ -238,6 +238,10 @@ def doJobs():
     steppersDisabled = False
     done = False
     while not done:
+        if mm.checkOTPW():
+            cm.sendStopClient("OTPW Triggered")
+            cm.sendOTPWTriggered()
+            cm.updateClientIsActive()
         if "Q" in nextJob: # Q...quit
             done = True
             continue

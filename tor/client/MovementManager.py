@@ -21,6 +21,7 @@ class MovementManager:
         self.com = Communicator()
         self.feedratePercentage = 0
         self.magnetHadContact = False
+        self.otpwCount = 0
         if cs.ON_RASPI:
             self.inaManager = InaManager()
         MovementManager.currentPosition = Position(-1, -1, -1) # todo: is this line needed?
@@ -39,6 +40,7 @@ class MovementManager:
         self.sendGCode("M17")
         self.__updateCurrentPosition()
         self.waitForMovementFinished()
+        self.clearOTPW()
 
     def sendGCode(self, cmd):
         log.debug("SEND: {}".format(cmd))
@@ -99,6 +101,37 @@ class MovementManager:
             versionOkay = False
             log.error("TOR-Marlin v{} installed, but v{} required.".format(self.torMarlinVersion, cs.TOR_MARLIN_VERSION))
         return versionOkay
+
+    def clearOTPW(self):
+        self.sendGCode("M912")
+
+    def checkOTPW(self):
+        otpwTriggered = False
+        if cs.USE_OTPW:
+            while True:
+                otpwRegistered = False
+                msgs = self.sendGCode("M911")
+                if not cs.ON_RASPI:
+                    msgs = ""
+                for msg in msgs:
+                    if "true" in msg:
+                        otpwRegistered = True
+                        break
+                if otpwRegistered:
+                    self.otpwCount += 1
+                    log.info(f"OTPW registered, otpwCount: {self.otpwCount}")
+                    self.clearOTPW()
+                    time.sleep(cs.OTPW_WAIT_S)
+                else:
+                    self.otpwCount = 0
+                    break
+                    #log.info("no OTPW")
+                if self.otpwCount >= cs.OTPW_MAX_COUNT:
+                    otpwTriggered = True
+                    log.info("OTPW triggered")
+                    self.otpwCount = 0
+                    break
+        return otpwTriggered
 
     def toggleLED(self, ledId, isOn, r=0, b=0, g=0, brightness=255):
         raise Exception("LEDs are not supported")

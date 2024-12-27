@@ -14,7 +14,7 @@ if sys.platform == "linux" and platform.platform() == "Linux-4.19.118+-armv6l-wi
 else:
     ON_RASPI = False
 
-TOR_MARLIN_VERSION = "1.3"
+TOR_MARLIN_VERSION = "1.4"
 
 #logging
 LOG_LEVEL = logging.INFO
@@ -29,9 +29,9 @@ L_ANCHOR_E_HOOK_Y = 15
 
 MIN_Z = 30
 
-LX = 249 #TOR_ANCHOR_X_E0 in tor-marlin
-LY = 249 #TOR_ANCHOR_X_Y in tor-marlin
-LZ = 290 - 15 + 0 #height - hook + empiric value..
+LX = 249.0 #TOR_ANCHOR_X_E0 in tor-marlin
+LY = 249.0 #TOR_ANCHOR_X_Y in tor-marlin
+LZ = 290.0 - 15 + 0 #height - hook + empiric value..
 LMAX = math.sqrt(LX**2 + LY**2 + LZ**2)
 
 RAMP_FORBIDDEN_X_MIN = 50
@@ -67,6 +67,10 @@ INA_SHUNT_OHMS = 0.1
 INA_NUM_RESET_TRIES = 3
 INA_CURRENT_THRESHOLD = 550
 
+USE_OTPW = True
+OTPW_MAX_COUNT = 3
+OTPW_WAIT_S = 2
+
 USE_LEFT_DROPOFF_REGION = True
 USE_RIGHT_DROPOFF_REGION = True
 
@@ -83,7 +87,7 @@ PULLEY_RADIUS_OVER_CORD_THICKNESS_EFFECTIVE = PULLEY_RADIUS / CORD_THICKNESS_EFF
 PULLEY_RADIUS_OVER_CORD_THICKNESS_EFFECTIVE_SQR = PULLEY_RADIUS_OVER_CORD_THICKNESS_EFFECTIVE * PULLEY_RADIUS_OVER_CORD_THICKNESS_EFFECTIVE
 
 #special positions
-BOX_SIZE = Position(LX, LY, LZ)
+BOX_SIZE = Position(LX, LY, PICKUP_Z)
 CORNER_Z = Position(0, 0, 0)
 CORNER_Y = Position(LX, 0, 0)
 CORNER_X = Position(LX, LY, 0)
