@@ -36,6 +36,7 @@ def sendDeactiveClient(clientIdentity, to=ts.MAIL_RECIPIENTS):
     b = "<h3>The Transparency of Randomness has deactivated a client</h3>" \
         "<p><b>Client details:</b><br>Id: {}<br>Position: {}<br>IP: {}<br>Material: {}<br>Latin: {} </p>"\
         .format(clientIdentity.Id, clientIdentity.Position, clientIdentity.IP, clientIdentity.Material, clientIdentity.Latin)
+    #TODO: add error log to message
     trySendMessage(to, s, b, "deactivate client")
 
 def sendStatisticMail(data, to=ts.MAIL_RECIPIENTS):

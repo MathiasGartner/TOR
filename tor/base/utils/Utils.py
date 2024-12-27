@@ -17,7 +17,7 @@ def clamp255(n):
 
 def sleepUntilTimestampIndex(step, timestamps):
     sleepFor = timestamps[step] - time.time()
-    log.info("sleep: {}".format(sleepFor))
+    log.debug("sleep: {}".format(sleepFor))
     if sleepFor > 0:
         time.sleep(sleepFor)
 

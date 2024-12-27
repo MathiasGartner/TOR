@@ -104,6 +104,9 @@ if args.feedratePercentage != cs.FR_DEFAULT:
 
 if args.doHoming:
     mm.doHoming()
+    mm.waitForMovementFinished()
+    mm.moveToPosAfterHoming(cs.CENTER_TOP, True)
+    mm.waitForMovementFinished()
     exit(0)
 
 if args.pickup:
