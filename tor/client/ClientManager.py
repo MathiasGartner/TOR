@@ -62,6 +62,10 @@ class ClientManager:
         updatedClientIdentity = self.askForClientIdentity(self.clientMacAddress)
         self.clientIdentity["IsActive"] = updatedClientIdentity["IsActive"]
 
+    def clientIsActive(self):
+        isActive = bool(self.clientIdentity["IsActive"])
+        return isActive
+
     def sendDieRollResult(self, dieRollResult, userGenerated=False):
         msg = {
             "C": self.clientId,

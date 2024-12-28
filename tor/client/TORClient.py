@@ -60,12 +60,14 @@ def keepAskingForNextJob(askEveryNthSecond = None):
             time.sleep(sleepFor)
 
 def doHomingCheck():
-    lm.setAllLeds()
-    homingSuccessful = mr.checkSuccesfulHoming()
-    if not homingSuccessful:
-        cm.sendStopClient("homing not successful")
-        cm.sendHomingNotSuccessful()
-        cm.updateClientIsActive()
+    checkFunctionality()
+    if cm.clientIsActive():
+        lm.setAllLeds()
+        homingSuccessful = mr.checkSuccesfulHoming()
+        if not homingSuccessful:
+            cm.sendStopClient("homing not successful")
+            cm.sendHomingNotSuccessful()
+            cm.updateClientIsActive()
 
 def waitUntilJobStarts(job):
     # TODO: allow for early exit of this (may be needed if nextJob changes during sleep)
@@ -86,6 +88,9 @@ def run():
 
     lm.setAllLeds()
 
+    checkFunctionality()
+    if not cm.clientIsActive():
+        return
     if not userModeRequested:
         # roll
         currentState = "ROLL"
@@ -95,11 +100,16 @@ def run():
             countNoMagnetContact = 0
         else:
             countNoMagnetContact += 1
+
+    checkFunctionality()
+    if not cm.clientIsActive():
+        return
     if not userModeRequested:
         if magnetHadContact:
             # pickup die - take image
             currentState = "PICKUP_TAKEIMAGE"
             dieRollResult = mr.pickupDie_takeImage()
+
     if not userModeRequested:
         if magnetHadContact:
             # pickup die - pickup
@@ -120,6 +130,9 @@ def run():
                 cm.sendDieResultNotRecognized()
                 countNotFound += 1
 
+    checkFunctionality()
+    if not cm.clientIsActive():
+        return
     if not userModeRequested:
         #check if homing is needed
         runsSinceLastHoming += 1
@@ -188,6 +201,15 @@ def exitUserMode():
     time.sleep(cs.STANDARD_CLIENT_SLEEP_TIME)
     lm.setAllLeds()
 
+def checkFunctionality():
+    #TODO: board needs to be reset with M997 once it is activated after a OTPW. check what settings need to be re-initiliazed.
+    #      is it the best thing to reinstantiate the MovementManager object? or call the mm.__init() method?
+    if mm.checkOTPW():
+        log.warning("OTPW triggered, client will be stopped")
+        cm.sendStopClient("OTPW Triggered")
+        cm.sendOTPWTriggered()
+        cm.updateClientIsActive()
+
 def doJobsDummy():
     global exitTOR
     global nextJob
@@ -212,21 +234,24 @@ def doJobs():
     global exitUserModeAtTime
 
     homingSuccessful = False
-    if cm.clientIdentity["IsActive"] == 0:
+    if not cm.clientIsActive():
         log.warning("client is not active")
     else:
         log.warning("current position: {}".format(MovementManager.currentPosition))
 
-        if not args.skipHomingOnStartup:
-            mr.pickupDieWhileHoming()
-        else:
-            #TODO: get current position from BTT SKR Board
-            #mm.refreshCurrentPositionFromBoard()
-            #mm.setCurrentPositionGCode(cs.HOME_POSITION.toCordLengths())
-            #MovementManager.currentPosition = cs.HOME_POSITION
-            pass
+        checkFunctionality()
 
-        doHomingCheck()
+        if cm.clientIsActive():
+            if not args.skipHomingOnStartup:
+                mr.pickupDieWhileHoming()
+            else:
+                #TODO: get current position from BTT SKR Board
+                #mm.refreshCurrentPositionFromBoard()
+                #mm.setCurrentPositionGCode(cs.HOME_POSITION.toCordLengths())
+                #MovementManager.currentPosition = cs.HOME_POSITION
+                pass
+
+            doHomingCheck()
 
     time.sleep(0.5)
     lm.setAllLeds()
@@ -238,18 +263,15 @@ def doJobs():
     steppersDisabled = False
     done = False
     while not done:
-        if mm.checkOTPW():
-            cm.sendStopClient("OTPW Triggered")
-            cm.sendOTPWTriggered()
-            cm.updateClientIsActive()
+        checkFunctionality()
         if "Q" in nextJob: # Q...quit
             done = True
             continue
-        if cm.clientIdentity["IsActive"] == 0:
+        if not cm.clientIsActive():
             mm.disableSteppers()
             time.sleep(cs.UPDATE_ISACTIVE_SLEEP_TIME)
             cm.updateClientIsActive()
-            if cm.clientIdentity["IsActive"] == 1:
+            if cm.clientIsActive():
                 log.info("reactivated client, now homing...")
                 mm.doHoming()
                 doHomingCheck()
@@ -426,7 +448,7 @@ def doJobs():
                     dr.writeImage(im, "{}_id={}_{}.png".format(prefix, cm.clientId, Utils.getFilenameTimestamp()), cs.IMAGE_DIRECTORY_POSITION, doCreateDirectory=True)
 
 
-    if cm.clientIdentity["IsActive"] == 1:
+    if cm.clientIsActive():
         if steppersDisabled:
             mm.enableSteppers()
             steppersDisabled = False
@@ -526,7 +548,7 @@ worker.start()
 worker.join()
 exitTOR = True # worker quitted accidentally
 
-if cm.clientIdentity["IsActive"] == 1:
+if cm.clientIsActive():
     mm.moveToParkingPosition(True)
 
 jobScheduler.join()

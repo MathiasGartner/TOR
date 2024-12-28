@@ -106,6 +106,7 @@ class MovementManager:
         self.sendGCode("M912")
 
     def checkOTPW(self):
+        log.info("perform OTPW check")
         otpwTriggered = False
         if cs.USE_OTPW:
             while True:
@@ -116,13 +117,15 @@ class MovementManager:
                 for msg in msgs:
                     if "true" in msg:
                         otpwRegistered = True
-                        break
+                        log.warning(msg)
                 if otpwRegistered:
                     self.otpwCount += 1
                     log.info(f"OTPW registered, otpwCount: {self.otpwCount}")
                     self.clearOTPW()
                     time.sleep(cs.OTPW_WAIT_S)
                 else:
+                    if self.otpwCount > 0:
+                        log.info("reset OTPW count")
                     self.otpwCount = 0
                     break
                     #log.info("no OTPW")
