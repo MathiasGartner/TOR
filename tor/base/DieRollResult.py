@@ -8,7 +8,7 @@ class DieRollResult:
         self.position = position
 
     def __str__(self):
-        return "<DieRollResult: (found={}, result={}, position={})>".format(self.found, self.result, self.position)
+        return f"<DieRollResult: (found={self.found}, result={self.result}, position={self.position})>"
 
     def __repr__(self):
         return self.__str__()

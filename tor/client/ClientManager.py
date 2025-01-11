@@ -206,7 +206,7 @@ class ClientManager:
             "GET": "SETTINGS"
         }
         settings = self.sendAndGetAnswer(msg)
-        log.info("{}".format(settings))
+        log.debug("{}".format(settings))
         availableSettingTypes = {
             "USE_MAGNET_BETWEEN_P0P1": "BOOL",
             "USE_MAGNET_BETWEEN_P2P3": "BOOL",

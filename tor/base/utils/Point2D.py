@@ -11,7 +11,7 @@ class Point2D:
         return Point2D(dx, dy)
 
     def __str__(self):
-        return "<Point2D: (x={}, y={})>".format(self.x, self.y)
+        return f"<Point2D: (x={self.x:.2f}, y={self.y:.2f})>"
 
     def __repr__(self):
         return self.__str__()
