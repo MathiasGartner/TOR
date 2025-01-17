@@ -59,6 +59,26 @@ def keepAskingForNextJob(askEveryNthSecond = None):
         if sleepFor > 0:
             time.sleep(sleepFor)
 
+def updateClientIsActiveState():
+    wasActive = cm.clientIsActive()
+    cm.updateClientIsActive()
+    isActive = cm.clientIsActive()
+    log.info(f"wasActive: {wasActive}, isActive: {isActive}, if: {not wasActive and isActive}")
+    if not wasActive and isActive:
+        log.info("reactivated client, now homing...")
+        mm.resetBoard()
+        checkFunctionality()
+        mm.doHoming()
+        doHomingCheck()
+
+def checkFunctionality():
+    if cm.clientIsActive():
+        if mm.checkOTPW():
+            log.warning("OTPW triggered, client will be stopped")
+            cm.sendStopClient("OTPW Triggered")
+            cm.sendOTPWTriggered()
+            updateClientIsActiveState()
+
 def doHomingCheck():
     checkFunctionality()
     if cm.clientIsActive():
@@ -67,7 +87,7 @@ def doHomingCheck():
         if not homingSuccessful:
             cm.sendStopClient("homing not successful")
             cm.sendHomingNotSuccessful()
-            cm.updateClientIsActive()
+            updateClientIsActiveState()
 
 def waitUntilJobStarts(job):
     # TODO: allow for early exit of this (may be needed if nextJob changes during sleep)
@@ -88,7 +108,6 @@ def run():
 
     lm.setAllLeds()
 
-    checkFunctionality()
     if not cm.clientIsActive():
         return
     if not userModeRequested:
@@ -201,15 +220,6 @@ def exitUserMode():
     time.sleep(cs.STANDARD_CLIENT_SLEEP_TIME)
     lm.setAllLeds()
 
-def checkFunctionality():
-    #TODO: board needs to be reset with M997 once it is activated after a OTPW. check what settings need to be re-initiliazed.
-    #      is it the best thing to reinstantiate the MovementManager object? or call the mm.__init() method?
-    if mm.checkOTPW():
-        log.warning("OTPW triggered, client will be stopped")
-        cm.sendStopClient("OTPW Triggered")
-        cm.sendOTPWTriggered()
-        cm.updateClientIsActive()
-
 def doJobsDummy():
     global exitTOR
     global nextJob
@@ -263,20 +273,18 @@ def doJobs():
     steppersDisabled = False
     done = False
     while not done:
+        log.info("doJobs loop")
         checkFunctionality()
+        log.info(f"client is active: {cm.clientIsActive()}")
         if "Q" in nextJob: # Q...quit
             done = True
             continue
         if not cm.clientIsActive():
             mm.disableSteppers()
             time.sleep(cs.UPDATE_ISACTIVE_SLEEP_TIME)
-            cm.updateClientIsActive()
-            if cm.clientIsActive():
-                log.info("reactivated client, now homing...")
-                mm.doHoming()
-                doHomingCheck()
+            updateClientIsActiveState()
             continue
-        log.debug("nextJob: {}".format(nextJob))
+        log.info("nextJob: {}".format(nextJob))
         if not "W" in nextJob:
             inParkingPosition = False
             if not inUserMode:
