@@ -8,36 +8,83 @@ from tor.base.utils import Utils
 
 if cs.ON_RASPI:
     from ina219 import INA219
+    from ina219 import DeviceRangeError
 
 class InaManager:
     def __init__(self, brightness=None):
-        self.ina = None
+        self.__ina = None
         if cs.USE_INA:
-            self.ina = INA219(cs.INA_SHUNT_OHMS)
-            self.ina.configure()
+            try:
+                self.__ina = INA219(cs.INA_SHUNT_OHMS)
+                self.__ina.configure()
+            except Exception as e:
+                log.error("Error while initializing INA")
+                log.error("{}".format(repr(e)))
+                self.__ina = None
+
+    def configure(self):
+        try:
+            if self.__ina is not None:
+                self.__ina.configure()
+        except Exception as e:
+            log.error("Error while configuring INA")
+            log.error("{}".format(repr(e)))
+
+    def reset(self):
+        try:
+            if self.__ina is not None:
+                self.__ina.reset()
+        except Exception as e:
+            log.error("Error while resetting INA")
+            log.error("{}".format(repr(e)))
 
     def sleep(self):
-        if self.ina is not None:
-            self.ina.sleep()
+        try:
+            if self.__ina is not None:
+                self.__ina.sleep()
+        except Exception as e:
+            log.error("Error while sleeping INA")
+            log.error("{}".format(repr(e)))
 
     def wake(self):
-        if self.ina is not None:
-            self.ina.wake()
+        try:
+            if self.__ina is not None:
+                self.__ina.wake()
+        except Exception as e:
+            log.error("Error while waking INA")
+            log.error("{}".format(repr(e)))
+
+    def current(self):
+        val = 0.0
+        try:
+            if self.__ina is not None:
+                val = self.__ina.current()
+        except DeviceRangeError as e:
+            log.warning("INA current overflow")
+            log.warning("{}".format(repr(e)))
+            val = cs.INA_OVERFLOW_VAL
+        except Exception as e:
+            log.error("Error while reading INA current")
+            log.error("{}".format(repr(e)))
+            val = cs.INA_OVERFLOW_VAL
+        return val
 
     def magnetHasContact(self):
-        if self.ina is None:
+        hasContact = True
+        if self.__ina is None:
             return True
-        log.info(f"t_INA: {time.time()}")
-        val = self.ina.current()
+        log.debug(f"t_INA: {time.time()}")
+        val = self.current()
         numTries = 0
         while val == 0.0 and numTries < cs.INA_NUM_RESET_TRIES:
-            log.info(f"t_INA: {time.time()}")
-            self.ina.reset()
-            self.ina.configure()
-            val = self.ina.current()
             numTries += 1
+            log.debug(f"t_INA: {time.time()}")
+            log.info(f"retry INA: val: {val}, numTries: {numTries}")
+            self.reset()
+            self.configure()
+            val = self.current()
         log.info(f"INA current: {val}")
         hasContact = val > cs.INA_CURRENT_THRESHOLD
-        log.info(f"status: {hasContact}")
+        log.info(f"magnet has contact: {hasContact}")
         return hasContact
 
