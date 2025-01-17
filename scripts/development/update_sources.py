@@ -18,7 +18,7 @@ filename = "../../scripts/development/update_tor.cmd"
 cmd_delete = r'ssh -i {0} pi@{1} "sudo rm -r tor; sudo rm -r scripts; mkdir scripts"'
 cmd_copy = r"scp -i {0} -r " + tsl.PATH_TO_TOR_SOURCE + r"/TOR/tor pi@{1}:/home/pi"
 cmd_copy_service = r"scp -i {0} -r " + tsl.PATH_TO_TOR_SCRIPTS + r"/TOR/scripts/client/* pi@{1}:/home/pi/scripts/"
-cmd_install = r'ssh -i {0} pi@{1} "sudo cp /home/pi/scripts/TORClient.service /etc/systemd/system/TORClient.service; sudo chmod +x /home/pi/scripts/*.sh"'
+cmd_install = r'ssh -i {0} pi@{1} "sudo cp /home/pi/scripts/TOR*.service /etc/systemd/system/; sudo chmod +x /home/pi/scripts/*.sh"'
 
 with open(filename, 'w') as fAll:
     for c in clients:
