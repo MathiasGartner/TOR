@@ -42,11 +42,22 @@ class MovementManager:
         self.waitForMovementFinished()
         self.clearOTPW()
 
-    def sendGCode(self, cmd):
+    def sendGCode(self, cmd, recvAnswer=True):
         log.debug("SEND: {}".format(cmd))
         self.com.send(cmd)
+        if not recvAnswer:
+            return None
         msgs = self.com.recvUntilOk()
         return msgs
+
+    def resetBoard(self):
+        log.warning("Reset Board")
+        self.sendGCode("M997", recvAnswer=False)
+        #self.com.close()
+        del self.com
+        time.sleep(20)
+        self.com = Communicator()
+        self.__initBoard()
 
     def setFeedratePercentage(self, fr):
         self.sendGCode("M220 S{}".format(fr))
@@ -77,6 +88,7 @@ class MovementManager:
             if match:
                 tmpCords = Cords([float(match.group(i)) for i in range(1, 5)])
                 #INFO: modified cord lengths are not used here...
+                #TODO: is this information relevant?
                 pos = tmpCords.toPosition()
                 print("new position from SKR board: {}".format(pos))
         return pos
@@ -99,7 +111,10 @@ class MovementManager:
             log.info("TOR-Marlin v{} installed.".format(self.torMarlinVersion))
         else:
             versionOkay = False
-            log.error("TOR-Marlin v{} installed, but v{} required.".format(self.torMarlinVersion, cs.TOR_MARLIN_VERSION))
+            if self.torMarlinVersion == "X":
+                log.error("Could not read TOR-Marlin version.")
+            else:
+                log.error("TOR-Marlin v{} installed, but v{} required.".format(self.torMarlinVersion, cs.TOR_MARLIN_VERSION))
         return versionOkay
 
     def clearOTPW(self):
@@ -263,7 +278,7 @@ class MovementManager:
 
     def rollDie(self):
         log.info("die is now rolled...")
-        log.info(f"t: {time.time()}")
+        log.debug(f"t: {time.time()}")
         t1 = time.time() + cs.PULSE_MAGNET_TIME_MS / 2000.0
         t2 = time.time() + cs.PULSE_MAGNET_TIME_MS / 1000.0
         self.inaManager.wake()
