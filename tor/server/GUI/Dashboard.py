@@ -99,6 +99,7 @@ class WaitCursor(object):
 ###################
 
 from tor.base import DBManager
+from tor.base import NetworkUtils
 from tor.base.GUI import TORIcons
 from tor.server.Job import Job
 from tor.server.Job import DefaultJobs
@@ -159,7 +160,6 @@ class TORCommands:
     CLIENT_SERVICE_START = "sudo systemctl daemon-reload; sudo systemctl restart TORClient"
     CLIENT_SERVICE_STOP = "sudo systemctl stop TORClient"
     CLIENT_SERVICE_STATUS = "systemctl is-active --quiet TORClient"
-    CLIENT_VERSION = "sudo torenv/bin/python3 -m tor.client.Version"
 
     CLIENT_TURN_ON_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 40 140 120 -b 95;"
     CLIENT_TURN_OFF_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 0 0 0;"
@@ -197,15 +197,21 @@ class ClientDetails:
         maxStddevResult = 0.17
         return self.ResultAverage < (3.5-maxStddevResult) or self.ResultAverage > (3.5+maxStddevResult) or self.ResultStddev > 1.77
 
-    def getClientVersion(self):
-        if self.IsOnline or self.Position == 21:
-            #TODO: how to get client version?
-            #val = self.executeSSH(TORCommands.CLIENT_VERSION, useWaitCursor=False)
-            val = "0"
-            self.Version = val
-            if ts.VERSION_TOR != self.Version:
-                self.VersionOkay = False
-                window.addStatusText(f"<font color=\"Blue\">wrong version at client <{self.Position} - {self.Latin}> (v{self.Version})</font>")
+    def getClientStatus(self):
+        if self.IsOnline:
+            conn = NetworkUtils.createConnection(self.IP, ts.STATUS_PORT)
+            NetworkUtils.sendData(conn, {"TYPE": "STATUS"})
+            answer = NetworkUtils.recvData(conn)
+            conn.close()
+            if isinstance(answer, dict):
+                self.Version = answer["TOR_VERSION"]
+                self.VersionOkay = ts.VERSION_TOR == self.Version
+                if not self.VersionOkay:
+                    log.warning(f"wrong TOR version at client <{self.Position} - {self.Latin}> (v{self.Version})")
+                else:
+                    log.info(f"correct TOR version at {self.Latin}")
+            else:
+                log.info(f"Could not load client status for {self.Latin}")
 
     def getClientServiceStatus(self):
         self.ServiceStatus = "unknown"
@@ -1026,13 +1032,8 @@ class MainWindow(QMainWindow):
         client.checkOnlineStatus()
         client.getClientServiceStatus()
 
-    def checkVersionForClient(self, cdv: ClientDetailView):
-        cdv.clientDetails.getClientVersion()
-        # todo: set style if client version is not okay
-        #if cdv.clientDetails.VersionOkay:
-        #    cdv.grpMainGroup.setStyle("")
-        #else:
-        #    cdv.grpMainGroup.setStyle("")
+    def checkStatusForClient(self, cdv: ClientDetailView):
+        cdv.clientDetails.getClientStatus()
 
     def initDashboard(self):
         for cdv in self.cdvs:
@@ -1092,7 +1093,7 @@ class MainWindow(QMainWindow):
         concurrent.futures.wait(threadFutures)
 
         threadPool = concurrent.futures.ThreadPoolExecutor(THREAD_POOL_SIZE)
-        threadFutures = [threadPool.submit(self.checkVersionForClient, cdv) for cdv in self.cdvs]
+        threadFutures = [threadPool.submit(self.checkStatusForClient, cdv) for cdv in self.cdvs]
         concurrent.futures.wait(threadFutures)
 
         for cdv in self.cdvs:
@@ -1104,6 +1105,10 @@ class MainWindow(QMainWindow):
                     cdv.lblIsOnline.setPixmap(TORIcons.LED_GREEN)
                 else:
                     cdv.lblIsOnline.setPixmap(TORIcons.LED_RED)
+                if cdv.clientDetails.VersionOkay:
+                    pass
+                else:
+                    pass
         self.lblLastUpdateTime.setText("last update: {}".format(datetime.now().strftime("%H:%M:%S")))
         print("updateDashboard finished")
         self.IsUpdating = False

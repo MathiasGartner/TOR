@@ -3,6 +3,7 @@ log = logging.getLogger(__name__)
 
 import json
 import numpy as np
+import socket
 
 import tor.client.ClientSettings as cs
 import tor.TORSettings as ts
@@ -34,11 +35,45 @@ def getMAC(interface='wlan0'):
     mac = "00:00:00:00:00:00"
   return mac
 
+def getOwnIP():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+    except Exception as e:
+        log.error("Error getting own IP:")
+        log.error("{}".format(repr(e)))
+    return ip
+
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
+
+def createServerConnection():
+    conn = createConnection(ts.SERVER_IP, ts.SERVER_PORT)
+    if conn is None:
+        log.error("Could not connect to TORServer")
+    return conn
+
+def createConnection(ip, port):
+    conn = None
+    ok = False
+    try:
+        conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        conn.connect((ip, port))
+        ok = True
+    except Exception as e:
+        log.error(f"Error while connecting to {ip}:{port}")
+        log.error("{}".format(repr(e)))
+        conn = None
+    #TODO: why is this done a second time??
+    if not ok:
+        conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        conn.connect((ip, port))
+    return conn
 
 def recvData(conn):
     msgReceived = conn.recv(ts.MAX_MSG_LENGTH)

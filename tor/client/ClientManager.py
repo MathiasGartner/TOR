@@ -32,18 +32,7 @@ class ClientManager:
         self.z = (p - 1) % 3
 
     def createConnection(self):
-        conn = None
-        ok = False
-        try:
-            conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            conn.connect((ts.SERVER_IP, ts.SERVER_PORT))
-            ok = True
-        except Exception as e:
-            log.error("Error while connecting to TORServer:")
-            log.error("{}".format(repr(e)))
-        if not ok:
-            conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            conn.connect((ts.SERVER_IP, ts.SERVER_PORT))
+        conn = NetworkUtils.createServerConnection()
         return conn
 
     def sendAndGetAnswer(self, msg):
