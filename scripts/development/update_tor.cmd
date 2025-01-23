@@ -1,7 +1,7 @@
 updateClient\tor_32.cmd
 updateClient\tor_30.cmd
-updateClient\tor_12.cmd
 updateClient\tor_18.cmd
+updateClient\tor_8.cmd
 updateClient\tor_15.cmd
 updateClient\tor_20.cmd
 updateClient\tor_17.cmd
@@ -17,7 +17,7 @@ updateClient\tor_21.cmd
 updateClient\tor_26.cmd
 updateClient\tor_24.cmd
 updateClient\tor_28.cmd
-updateClient\tor_8.cmd
+updateClient\tor_12.cmd
 updateClient\tor_25.cmd
 updateClient\tor_29.cmd
 updateClient\tor_6.cmd

@@ -1,7 +1,7 @@
 marlin_win_32.ps1
 marlin_win_30.ps1
-marlin_win_12.ps1
 marlin_win_18.ps1
+marlin_win_8.ps1
 marlin_win_15.ps1
 marlin_win_20.ps1
 marlin_win_17.ps1
@@ -17,7 +17,7 @@ marlin_win_21.ps1
 marlin_win_26.ps1
 marlin_win_24.ps1
 marlin_win_28.ps1
-marlin_win_8.ps1
+marlin_win_12.ps1
 marlin_win_25.ps1
 marlin_win_29.ps1
 marlin_win_6.ps1

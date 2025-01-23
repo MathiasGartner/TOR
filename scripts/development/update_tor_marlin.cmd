@@ -1,7 +1,7 @@
 marlin_32.cmd
 marlin_30.cmd
-marlin_12.cmd
 marlin_18.cmd
+marlin_8.cmd
 marlin_15.cmd
 marlin_20.cmd
 marlin_17.cmd
@@ -17,7 +17,7 @@ marlin_21.cmd
 marlin_26.cmd
 marlin_24.cmd
 marlin_28.cmd
-marlin_8.cmd
+marlin_12.cmd
 marlin_25.cmd
 marlin_29.cmd
 marlin_6.cmd

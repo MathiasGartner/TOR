@@ -19,6 +19,7 @@ cmd_delete = r'ssh -i {0} pi@{1} "sudo rm -r tor; sudo rm -r scripts; mkdir scri
 cmd_copy = r"scp -i {0} -r " + tsl.PATH_TO_TOR_SOURCE + r"/TOR/tor pi@{1}:/home/pi"
 cmd_copy_service = r"scp -i {0} -r " + tsl.PATH_TO_TOR_SCRIPTS + r"/TOR/scripts/client/* pi@{1}:/home/pi/scripts/"
 cmd_install = r'ssh -i {0} pi@{1} "sudo cp /home/pi/scripts/TOR*.service /etc/systemd/system/; sudo chmod +x /home/pi/scripts/*.sh"'
+cmd_service = r'ssh -i {0} pi@{1} "sudo systemctl daemon-reload; sudo systemctl enable TORStatus --now"'
 
 with open(filename, 'w') as fAll:
     for c in clients:
@@ -42,6 +43,10 @@ with open(filename, 'w') as fAll:
             fIP.write(cmd + "\n")
             fPos.write(cmd + "\n")
             cmd = cmd_install.format(path_key, full_ip)
+            f.write(cmd + "\n")
+            fIP.write(cmd + "\n")
+            fPos.write(cmd + "\n")
+            cmd = cmd_service.format(path_key, full_ip)
             f.write(cmd + "\n")
             fIP.write(cmd + "\n")
             fPos.write(cmd + "\n")

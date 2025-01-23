@@ -17,6 +17,7 @@ class InaManager:
             try:
                 self.__ina = INA219(cs.INA_SHUNT_OHMS)
                 self.__ina.configure()
+                log.info("INA initialized")
             except Exception as e:
                 log.error("Error while initializing INA")
                 log.error("{}".format(repr(e)))
