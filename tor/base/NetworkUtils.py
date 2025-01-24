@@ -58,20 +58,25 @@ def createServerConnection():
         log.error("Could not connect to TORServer")
     return conn
 
-def createConnection(ip, port):
+def createConnection(ip, port, timeout=None, verbose=True):
     conn = None
     ok = False
     try:
         conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if timeout is not None:
+            conn.settimeout(timeout)
         conn.connect((ip, port))
         ok = True
     except Exception as e:
-        log.error(f"Error while connecting to {ip}:{port}")
-        log.error("{}".format(repr(e)))
+        if verbose:
+            log.error(f"Error while connecting to {ip}:{port}")
+            log.error("{}".format(repr(e)))
         conn = None
     #TODO: why is this done a second time??
     if not ok:
         conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if timeout is not None:
+            conn.settimeout(timeout)
         conn.connect((ip, port))
     return conn
 
