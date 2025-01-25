@@ -191,8 +191,8 @@ class ClientDetails:
         self.ResultAverage = -1
         self.ResultStddev = -1
         self.IsOnline = False
-        self.VersionOkay = True
-        self.Version = ""
+        self.VersionOkay = False
+        self.Version = "unknown"
 
     def sendMsgToStatusManager(self, msg, timeout=ts.STATUS_TIMEOUT):
         conn = NetworkUtils.createConnection(self.IP, ts.STATUS_PORT, timeout, verbose=False)
@@ -231,6 +231,8 @@ class ClientDetails:
                 log.info(f"correct TOR version at {self.Latin}")
             self.ClientServiceStatus = answer["TOR_CLIENT_SERVICE"]
         else:
+            self.Version = "unknown"
+            self.VersionOkay = False
             log.info(f"Could not load client status for {self.Latin}")
 
     def checkOnlineStatusByPing(self):
@@ -314,19 +316,19 @@ class ClientDetailViewBase(QWidget):
         self.clientDetails.IsActive = checked
         DBManager.setClientIsActive(self.clientDetails.Id, checked)
 
-    def refreshClientServiceStatus(self):
+    def refreshClientStatus(self):
         #to be implemented in subclasses
         pass
 
     def btnStartClientService_clicked(self):
         self.clientDetails.sendMsgToStatusManager(TORCommands.MSG_CLIENT_SERVICE_START, ts.STATUS_TIMEOUT_SERVICE)
         self.clientDetails.getClientStatus()
-        self.refreshClientServiceStatus()
+        self.refreshClientStatus()
 
     def btnStopClientService_clicked(self):
         self.clientDetails.sendMsgToStatusManager(TORCommands.MSG_CLIENT_SERVICE_STOP, ts.STATUS_TIMEOUT_SERVICE)
         self.clientDetails.getClientStatus()
-        self.refreshClientServiceStatus()
+        self.refreshClientStatus()
 
 class ClientDetailViewFull(ClientDetailViewBase):
     def __init__(self, position: int, changeClientCallback=None):
@@ -335,6 +337,8 @@ class ClientDetailViewFull(ClientDetailViewBase):
         self.position = position
         self.changeClientCallback = changeClientCallback
 
+        self.lblTORVersion = QLabel()
+        self.lblTORVersionText = QLabel()
         self.lblStatusServiceRunning = QLabel()
         self.lblClientServiceRunning = QLabel()
 
@@ -360,6 +364,10 @@ class ClientDetailViewFull(ClientDetailViewBase):
         layClientStatus.addWidget(QLabel("online:"), row, 0)
         layClientStatus.addWidget(self.lblIsOnline, row, 1)
         row += 1
+        layClientStatus.addWidget(QLabel("Version:"), row, 0)
+        layClientStatus.addWidget(self.lblTORVersion, row, 1)
+        layClientStatus.addWidget(self.lblTORVersionText, row, 2)
+        row += 1
         layClientStatus.addWidget(QLabel("responding:"), row, 0)
         layClientStatus.addWidget(self.lblStatusServiceRunning, row, 1)
         row += 1
@@ -384,12 +392,22 @@ class ClientDetailViewFull(ClientDetailViewBase):
         self.btnTurnOffLEDs.setFixedSize(30, 18)
         layLEDs.addWidget(self.btnTurnOnLEDs)
         layLEDs.addWidget(self.btnTurnOffLEDs)
-
         grpLEDs = QGroupBox("LEDs")
         grpLEDs.setLayout(layLEDs)
 
+        #Options
+        layClientOptions = QGridLayout()
+        layClientOptions.setContentsMargins(0, 0, 0, 0)
+        layClientOptions.addWidget(QLabel("User mode enabled"), 0, 0)
+        layClientOptions.addWidget(self.chkUserMode, 0, 1)
+        layClientOptions.addWidget(QLabel("Client activated"), 1, 0)
+        layClientOptions.addWidget(self.chkIsActivated, 1, 1)
+        grpClientOptions = QGroupBox("Options")
+        grpClientOptions.setLayout(layClientOptions)
+
         layMain.addWidget(grpClientStatus)
         layMain.addWidget(grpLEDs)
+        layMain.addWidget(grpClientOptions)
 
         self.layStack = QVBoxLayout()
         self.layStack.addWidget(self.wdgEmpty)
@@ -437,24 +455,33 @@ class ClientDetailViewFull(ClientDetailViewBase):
             client = clients[selectedIndex]
             DBManager.setClientPosition(client.Id, self.position)
             self.changeClientCallback()
-            #todo update data from tor status manager
 
-    def refreshClientServiceStatus(self):
-        self.lblStatusServiceRunning.setToolTip(self.clientDetails.StatusManagerServiceStatus)
-        if self.clientDetails.StatusManagerServiceStatus == "active":
-            self.lblStatusServiceRunning.setPixmap(TORIcons.LED_GREEN)
-        elif self.clientDetails.StatusManagerServiceStatus == "inactive":
-            self.lblStatusServiceRunning.setPixmap(TORIcons.LED_RED)
-        else:
-            self.lblStatusServiceRunning.setPixmap(TORIcons.LED_GRAY)
+    def refreshClientStatus(self):
+        if self.clientDetails is not None:
+            self.lblIsOnline.setPixmap(TORIcons.LED_GREEN if self.clientDetails.IsOnline else TORIcons.LED_RED)
+            self.lblTORVersion.setPixmap(TORIcons.LED_GREEN if self.clientDetails.VersionOkay else TORIcons.LED_RED)
+            self.lblTORVersionText.setText(self.clientDetails.Version)
 
-        self.lblClientServiceRunning.setToolTip(self.clientDetails.ClientServiceStatus)
-        if self.clientDetails.ClientServiceStatus == "active":
-            self.lblClientServiceRunning.setPixmap(TORIcons.LED_GREEN)
-        elif self.clientDetails.ClientServiceStatus == "inactive":
-            self.lblClientServiceRunning.setPixmap(TORIcons.LED_RED)
-        else:
-            self.lblClientServiceRunning.setPixmap(TORIcons.LED_GRAY)
+            self.lblStatusServiceRunning.setToolTip(self.clientDetails.StatusManagerServiceStatus)
+
+            if self.clientDetails.StatusManagerServiceStatus == "active":
+                self.lblStatusServiceRunning.setPixmap(TORIcons.LED_GREEN)
+            elif self.clientDetails.StatusManagerServiceStatus == "inactive":
+                self.lblStatusServiceRunning.setPixmap(TORIcons.LED_RED)
+            else:
+                self.lblStatusServiceRunning.setPixmap(TORIcons.LED_GRAY)
+
+            self.lblClientServiceRunning.setToolTip(self.clientDetails.ClientServiceStatus)
+            if self.clientDetails.ClientServiceStatus == "active":
+                self.lblClientServiceRunning.setPixmap(TORIcons.LED_GREEN)
+            elif self.clientDetails.ClientServiceStatus == "inactive":
+                self.lblClientServiceRunning.setPixmap(TORIcons.LED_RED)
+            else:
+                self.lblClientServiceRunning.setPixmap(TORIcons.LED_GRAY)
+
+            self.chkUserMode.setChecked(self.clientDetails.AllowUserMode)
+            self.chkIsActivated.setChecked(self.clientDetails.IsActive)
+
         app.processEvents()
 
 class ClientDetailView(ClientDetailViewBase):
@@ -549,12 +576,23 @@ class ClientDetailView(ClientDetailViewBase):
         #TODO: set timeout to a proper value
         self.clientDetails.executeSSH(TORCommands.CLIENT_START_CALIBRATION, timeout=7000, asRoot=True)
 
-    def refreshClientServiceStatus(self):
-        self.lblStatusClientService.setToolTip(self.clientDetails.ClientServiceStatus)
-        if self.clientDetails.ClientServiceStatus == "active":
-            self.lblStatusClientService.setPixmap(TORIcons.LED_GREEN)
-        else:
-            self.lblStatusClientService.setPixmap(TORIcons.LED_GRAY)
+    def refreshClientStatus(self):
+        if self.clientDetails is not None:
+            self.lblStatusClientService.setToolTip(self.clientDetails.ClientServiceStatus)
+            if self.clientDetails.ClientServiceStatus == "active":
+                self.lblStatusClientService.setPixmap(TORIcons.LED_GREEN)
+            else:
+                self.lblStatusClientService.setPixmap(TORIcons.LED_GRAY)
+            if self.clientDetails.IsOnline:
+                self.lblIsOnline.setPixmap(TORIcons.LED_GREEN)
+            else:
+                self.lblIsOnline.setPixmap(TORIcons.LED_RED)
+            if self.clientDetails.VersionOkay:
+                pass
+            else:
+                pass
+            self.chkUserMode.setChecked(self.clientDetails.AllowUserMode)
+            self.chkIsActivated.setChecked(self.clientDetails.IsActive)
         app.processEvents()
 
 class MainWindow(QMainWindow):
@@ -1034,17 +1072,26 @@ class MainWindow(QMainWindow):
     ### methods ###
     ###############
 
+    def reloadAllClientStatus(self):
+        threadPool = concurrent.futures.ThreadPoolExecutor(THREAD_POOL_SIZE)
+        threadFutures = [threadPool.submit(cdv.clientDetails.getClientStatus) for cdv in self.cdvs if cdv.clientDetails is not None]
+        concurrent.futures.wait(threadFutures)
+
     def reloadClients(self):
-        clients = DBManager.getAllClients()
-        self.cds.clear()
-        for cdv in self.cdvs:
-            cdv.clientDetails = None
-            for c in clients:
-                if c.Position == cdv.position:
-                    cd = ClientDetails(c)
-                    cdv.clientDetails = cd
-                    self.cds.append(cd)
-            cdv.updateClient()
+        with WaitCursor():
+            clients = DBManager.getAllClients()
+            self.cds.clear()
+            for cdv in self.cdvs:
+                cdv.clientDetails = None
+                for c in clients:
+                    if c.Position == cdv.position:
+                        cd = ClientDetails(c)
+                        cdv.clientDetails = cd
+                        self.cds.append(cd)
+                cdv.updateClient()
+            self.reloadAllClientStatus()
+            for cdv in self.cdvs:
+                cdv.refreshClientStatus()
 
     def tabDashboard_currentChanged(self, index):
         if index == self.clientJobsTabIndex:
@@ -1080,9 +1127,6 @@ class MainWindow(QMainWindow):
         threadPool = concurrent.futures.ThreadPoolExecutor(THREAD_POOL_SIZE)
         threadFutures = [threadPool.submit(c.sendMsgToStatusManager, msg, timeout) for c in self.cds if (c.IsOnline and (not onlyActive or c.IsActive))]
         concurrent.futures.wait(threadFutures)
-
-    def checkStatusForClient(self, cdv: ClientDetailView):
-        cdv.clientDetails.getClientStatus()
 
     def initDashboard(self):
         for cdv in self.cdvs:
@@ -1137,23 +1181,10 @@ class MainWindow(QMainWindow):
                     cdv.lblResultAverage.setStyleSheet("")
                     cdv.lblResultStddev.setStyleSheet("")
 
-        threadPool = concurrent.futures.ThreadPoolExecutor(THREAD_POOL_SIZE)
-        threadFutures = [threadPool.submit(self.checkStatusForClient, cdv) for cdv in self.cdvs]
-        concurrent.futures.wait(threadFutures)
+        self.reloadAllClientStatus()
 
         for cdv in self.cdvs:
-            if cdv.clientDetails is not None:
-                cdv.chkUserMode.setChecked(cdv.clientDetails.AllowUserMode)
-                cdv.chkIsActivated.setChecked(cdv.clientDetails.IsActive)
-                cdv.refreshClientServiceStatus()
-                if cdv.clientDetails.IsOnline:
-                    cdv.lblIsOnline.setPixmap(TORIcons.LED_GREEN)
-                else:
-                    cdv.lblIsOnline.setPixmap(TORIcons.LED_RED)
-                if cdv.clientDetails.VersionOkay:
-                    pass
-                else:
-                    pass
+            cdv.refreshClientStatus()
         self.lblLastUpdateTime.setText("last update: {}".format(datetime.now().strftime("%H:%M:%S")))
         log.info("updateDashboard finished")
         self.IsUpdating = False
