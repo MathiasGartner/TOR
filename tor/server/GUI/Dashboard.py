@@ -137,7 +137,7 @@ def executeCommand(cmd, timeout=DEFAULT_TIMEOUT):
         p.wait(timeout)
     except subprocess.TimeoutExpired:
         p.kill()
-        print("KILLED: {}".format(cmd))
+        log.info("KILLED: {}".format(cmd))
     val = p.returncode
     #print("val: {}".format(val))
     return val
@@ -158,11 +158,11 @@ class TORCommands:
     #CLIENT_PING = "ping -c 1 {}"
     CLIENT_PING = "ping -w 1000 -n 1 {}"
 
-    CLIENT_SERVICE_START = "sudo systemctl daemon-reload; sudo systemctl restart TORClient"
-    CLIENT_SERVICE_STOP = "sudo systemctl stop TORClient"
+    MSG_CLIENT_SERVICE_START = {"TORCLIENT": "START"}
+    MSG_CLIENT_SERVICE_STOP = {"TORCLIENT": "STOP"}
 
-    CLIENT_TURN_ON_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 40 140 120 -b 95;"
-    CLIENT_TURN_OFF_LEDS = "sudo torenv/bin/python3 -m tor.client.scripts.led 0 0 0;"
+    MSG_CLIENT_TURN_ON_LEDS = {"LED": "ON"}
+    MSG_CLIENT_TURN_OFF_LEDS = {"LED": "OFF"}
 
     CLIENT_START_CALIBRATION = "cd /home/pi/; torenv/bin/python3 -m tor.client.GUI.calibrate"
 
@@ -194,6 +194,13 @@ class ClientDetails:
         self.VersionOkay = True
         self.Version = ""
 
+    def sendMsgToStatusManager(self, msg, timeout=ts.STATUS_TIMEOUT):
+        conn = NetworkUtils.createConnection(self.IP, ts.STATUS_PORT, timeout, verbose=False)
+        NetworkUtils.sendData(conn, msg)
+        answer = NetworkUtils.recvData(conn)
+        conn.close()
+        return answer
+
     def IsBadStatistics(self):
         maxStddevResult = 0.17
         return self.ResultAverage < (3.5-maxStddevResult) or self.ResultAverage > (3.5+maxStddevResult) or self.ResultStddev > 1.77
@@ -201,10 +208,8 @@ class ClientDetails:
     def getClientStatus(self):
         answer = None
         try:
-            conn = NetworkUtils.createConnection(self.IP, ts.STATUS_PORT, 1.0, verbose=False)
-            NetworkUtils.sendData(conn, {"TYPE": "STATUS"})
-            answer = NetworkUtils.recvData(conn)
-            conn.close()
+            msg = {"TYPE": "STATUS"}
+            answer = self.sendMsgToStatusManager(msg)
             self.IsOnline = True
             self.StatusManagerServiceStatus = "active"
         except socket.timeout as e:
@@ -232,6 +237,7 @@ class ClientDetails:
         log.info(f"checkOnlineStatusByPing for client {self.Latin}")
         cmd = TORCommands.CLIENT_PING.format(self.IP)
         val = executeCommand(cmd, timeout=DEFAULT_TIMEOUT_PING)
+        #TODO: check this. val=0 als happens if ping is not successful
         if val == 0:
             self.IsOnline = True
         else:
@@ -244,7 +250,7 @@ class ClientDetails:
         else:
             cmdSSH = TORCommands.CLIENT_SSH_CONNECTION.format(tsl.PATH_TO_SSH_KEY, self.IP)
         cmdFull = cmdSSH + " \"" + cmd + "\""
-        print("EXECUTE: {}".format(cmdFull))
+        log.info("EXECUTE: {}".format(cmdFull))
         if window is not None:
             window.addStatusText("<font color=\"Blue\">{}</font>".format(cmdFull))
         val = executeCommand(cmdFull, timeout=timeout)
@@ -295,10 +301,10 @@ class ClientDetailViewBase(QWidget):
         self.btnStopClientService.clicked.connect(self.btnStopClientService_clicked)
 
     def btnTurnOnLEDs_clicked(self):
-        self.clientDetails.executeSSH(TORCommands.CLIENT_TURN_ON_LEDS)
+        self.clientDetails.sendMsgToStatusManager(TORCommands.MSG_CLIENT_TURN_ON_LEDS, timeout=ts.STATUS_TIMEOUT_LED)
 
     def btnTurnOffLEDs_clicked(self):
-        self.clientDetails.executeSSH(TORCommands.CLIENT_TURN_OFF_LEDS)
+        self.clientDetails.sendMsgToStatusManager(TORCommands.MSG_CLIENT_TURN_OFF_LEDS, timeout=ts.STATUS_TIMEOUT_LED)
 
     def chkUserMode_clicked(self, checked):
         self.clientDetails.AllowUserMode = checked
@@ -313,12 +319,12 @@ class ClientDetailViewBase(QWidget):
         pass
 
     def btnStartClientService_clicked(self):
-        self.clientDetails.executeSSH(TORCommands.CLIENT_SERVICE_START)
+        self.clientDetails.sendMsgToStatusManager(TORCommands.MSG_CLIENT_SERVICE_START, ts.STATUS_TIMEOUT_SERVICE)
         self.clientDetails.getClientStatus()
         self.refreshClientServiceStatus()
 
     def btnStopClientService_clicked(self):
-        self.clientDetails.executeSSH(TORCommands.CLIENT_SERVICE_STOP)
+        self.clientDetails.sendMsgToStatusManager(TORCommands.MSG_CLIENT_SERVICE_STOP, ts.STATUS_TIMEOUT_SERVICE)
         self.clientDetails.getClientStatus()
         self.refreshClientServiceStatus()
 
@@ -371,7 +377,19 @@ class ClientDetailViewFull(ClientDetailViewBase):
         grpClientStatus = QGroupBox("Status")
         grpClientStatus.setLayout(layClientStatus)
 
+        #LEDs
+        layLEDs = QHBoxLayout()
+        layLEDs.setContentsMargins(0, 0, 0, 0)
+        self.btnTurnOnLEDs.setFixedSize(30, 18)
+        self.btnTurnOffLEDs.setFixedSize(30, 18)
+        layLEDs.addWidget(self.btnTurnOnLEDs)
+        layLEDs.addWidget(self.btnTurnOffLEDs)
+
+        grpLEDs = QGroupBox("LEDs")
+        grpLEDs.setLayout(layLEDs)
+
         layMain.addWidget(grpClientStatus)
+        layMain.addWidget(grpLEDs)
 
         self.layStack = QVBoxLayout()
         self.layStack.addWidget(self.wdgEmpty)
@@ -419,6 +437,7 @@ class ClientDetailViewFull(ClientDetailViewBase):
             client = clients[selectedIndex]
             DBManager.setClientPosition(client.Id, self.position)
             self.changeClientCallback()
+            #todo update data from tor status manager
 
     def refreshClientServiceStatus(self):
         self.lblStatusServiceRunning.setToolTip(self.clientDetails.StatusManagerServiceStatus)
@@ -1041,7 +1060,7 @@ class MainWindow(QMainWindow):
         with WaitCursor():
             cmdSSH = TORCommands.SERVER_SSH_CONNECTION.format(tsl.PATH_TO_SSH_KEY, tsl.SERVER_IP)
             cmdFull = cmdSSH + " \"" + cmd + "\""
-            print("SERVEXE: {}".format(cmdFull))
+            log.info("SERVEXE: {}".format(cmdFull))
             if window is not None:
                 window.addStatusText("<font color=\"Red\">{}</font>".format(cmdFull))
             val = executeCommand(cmdFull, timeout=timeout)
@@ -1055,6 +1074,11 @@ class MainWindow(QMainWindow):
     def executeCommandOnAllClients(self, cmd, timeout=DEFAULT_TIMEOUT_SSH, onlyActive=False):
         threadPool = concurrent.futures.ThreadPoolExecutor(THREAD_POOL_SIZE)
         threadFutures = [threadPool.submit(self.__executeCommandOnClient, c, cmd, timeout, onlyActive) for c in self.cds]
+        concurrent.futures.wait(threadFutures)
+
+    def sendMsgToAllClients(self, msg, timeout=ts.STATUS_TIMEOUT, onlyActive=False):
+        threadPool = concurrent.futures.ThreadPoolExecutor(THREAD_POOL_SIZE)
+        threadFutures = [threadPool.submit(c.sendMsgToStatusManager, msg, timeout) for c in self.cds if (c.IsOnline and (not onlyActive or c.IsActive))]
         concurrent.futures.wait(threadFutures)
 
     def checkStatusForClient(self, cdv: ClientDetailView):
@@ -1073,7 +1097,7 @@ class MainWindow(QMainWindow):
         if self.IsUpdating:
             return
         self.IsUpdating = True
-        print("updateDashboard")
+        log.info("updateDashboard")
         jobs = DBManager.getCurrentJobs()
         for j in jobs:
             for c in self.cds:
@@ -1131,7 +1155,7 @@ class MainWindow(QMainWindow):
                 else:
                     pass
         self.lblLastUpdateTime.setText("last update: {}".format(datetime.now().strftime("%H:%M:%S")))
-        print("updateDashboard finished")
+        log.info("updateDashboard finished")
         self.IsUpdating = False
 
     def addSpacerLineToStatusText(self):
@@ -1154,13 +1178,13 @@ class MainWindow(QMainWindow):
         with WaitCursor():
             DBManager.clearAllCurrentStates()
             self.executeCommandOnTORServer(TORCommands.SERVER_SERVICE_START)
-            self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_START, onlyActive=True)
+            self.sendMsgToAllClients(TORCommands.MSG_CLIENT_SERVICE_START, timeout=ts.STATUS_TIMEOUT_SERVICE, onlyActive=True)
             self.executeCommandOnTORServer(TORCommands.INTERACTIVE_START)
             if ss.STARTUP_JOB_PROGRAM_NAME is not None and ss.STARTUP_JOB_PROGRAM_NAME != "":
                 DBManager.setJobsByJobProgram(ss.STARTUP_JOB_PROGRAM_NAME, ss.STARTUP_JOB_DELAY_MINUTES)
             for c in self.cds:
                 if not c.IsActive:
-                    self.__executeCommandOnClient(c, TORCommands.CLIENT_TURN_ON_LEDS)
+                    c.sendMsgToStatusManager(TORCommands.MSG_CLIENT_TURN_ON_LEDS, ts.STATUS_TIMEOUT_LED)
 
     def btnStopAllTORPrograms_clicked(self):
         with WaitCursor():
@@ -1191,59 +1215,59 @@ class MainWindow(QMainWindow):
             self.addStatusText(msg)
             time.sleep(3)
             self.executeCommandOnTORServer(TORCommands.INTERACTIVE_STOP)
-            self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_STOP)
+            self.sendMsgToAllClients(TORCommands.MSG_CLIENT_SERVICE_STOP, ts.STATUS_TIMEOUT_SERVICE)
             self.executeCommandOnTORServer(TORCommands.SERVER_SERVICE_STOP)
             DBManager.clearAllCurrentStates()
             time.sleep(3)
-            self.executeCommandOnAllClients(TORCommands.CLIENT_TURN_OFF_LEDS)
+            self.sendMsgToAllClients(TORCommands.MSG_CLIENT_TURN_OFF_LEDS, ts.STATUS_TIMEOUT_LED)
 
     def btnStartAllClientService_clicked(self):
-        print("start")
+        log.info("start")
         with WaitCursor():
-            self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_START, onlyActive=True)
+            self.sendMsgToAllClients(TORCommands.MSG_CLIENT_SERVICE_START, ts.STATUS_TIMEOUT_SERVICE, onlyActive=True)
         self.updateDashboard()
 
     def btnStopAllClientService_clicked(self):
-        print("stop")
+        log.info("stop")
         with WaitCursor():
-            self.executeCommandOnAllClients(TORCommands.CLIENT_SERVICE_STOP)
+            self.sendMsgToAllClients(TORCommands.MSG_CLIENT_SERVICE_STOP, ts.STATUS_TIMEOUT_SERVICE)
         self.updateDashboard()
 
     def btnSaveSettings_clicked(self):
-        print("saved")
+        log.info("saved")
 
     def btnRestoreSettings_clicked(self):
-        print("restored")
+        log.info("restored")
 
     def btnStartTORServer_clicked(self):
         self.executeCommandOnTORServer(TORCommands.SERVER_SERVICE_START)
-        print("start TORServer")
+        log.info("start TORServer")
 
     def btnStopTORServer_clicked(self):
         self.executeCommandOnTORServer(TORCommands.SERVER_SERVICE_STOP)
-        print("stop TORServer")
+        log.info("stop TORServer")
 
     def btnStartTORInteractive_clicked(self):
         self.executeCommandOnTORServer(TORCommands.INTERACTIVE_START)
-        print("start tor interactive")
+        log.info("start tor interactive")
 
     def btnStopTORInteractive_clicked(self):
         self.executeCommandOnTORServer(TORCommands.INTERACTIVE_STOP)
-        print("stop tor interactive")
+        log.info("stop tor interactive")
 
     def btnEndAllUserModes_clicked(self):
         #INFO: only sets flags realted to usermode in database, client should exit after given time interval by its own
         for c in self.cds:
             DBManager.exitUserMode(c.Id)
-        print("ended all user modes")
+        log.info("ended all user modes")
 
     def btnTurnOnLEDs_clicked(self):
-        self.executeCommandOnAllClients(TORCommands.CLIENT_TURN_ON_LEDS)
-        print("turn on LEDs")
+        self.sendMsgToAllClients(TORCommands.MSG_CLIENT_TURN_ON_LEDS, ts.STATUS_TIMEOUT_LED)
+        log.info("turn on LEDs")
 
     def btnTurnOffLEDs_clicked(self):
-        self.executeCommandOnAllClients(TORCommands.CLIENT_TURN_OFF_LEDS)
-        print("turn off LEDs")
+        self.sendMsgToAllClients(TORCommands.MSG_CLIENT_TURN_OFF_LEDS, ts.STATUS_TIMEOUT_LED)
+        log.info("turn off LEDs")
 
     def btnUpdateDashboard_clicked(self):
         with WaitCursor():
@@ -1416,14 +1440,14 @@ class MainWindow(QMainWindow):
         self.reloadStatistics()
 
     def reloadStatistics(self):
-        print("reload statistics")
+        log.info("reload statistics")
         self.statCanvas.axes.cla()
 
         dateStart = self.dteStatisticsStart.date().toPyDate()
         dateEnd = self.dteStatisticsEnd.date().toPyDate()
         dateStartStr = str(dateStart)
         dateEndStr = str(dateEnd)
-        print(dateStartStr + " - " + dateEndStr)
+        log.info(dateStartStr + " - " + dateEndStr)
         maxPos = 0
         if ss.BOX_FORMATION == "3x3x3":
             maxPos = 27

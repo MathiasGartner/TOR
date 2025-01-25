@@ -16,6 +16,16 @@ def getServiceStatusTORClient():
         isActive = True
     return isActive
 
+def startServiceTORClient():
+    cmd = ["sudo", "systemctl", "daemon-reload"]
+    subprocess.call(cmd)
+    cmd = ["sudo", "systemctl", "restart", "TORClient"]
+    subprocess.call(cmd)
+
+def stopServiceTORClient():
+    cmd = ["sudo", "systemctl", "stop", "TORClient"]
+    subprocess.call(cmd)
+
 def handleRequest(conn):
     request = NetworkUtils.recvData(conn)
     if isinstance(request, dict):
@@ -31,6 +41,20 @@ def handleRequest(conn):
                 log.info(msg)
             else:
                 log.warning(f"request type not defined: {request['TYPE']}")
+        elif "LED" in request:
+            from tor.client.LedManager import LedManager
+            lm = LedManager()
+            if request["LED"] == "ON":
+                lm.setAllLeds()
+            else:
+                lm.clear()
+            NetworkUtils.sendOK(conn)
+        elif "TORCLIENT" in request:
+            if request["TORCLIENT"] == "START":
+                startServiceTORClient()
+            else:
+                stopServiceTORClient()
+            NetworkUtils.sendOK(conn)
         else:
             log.warning("request not defined: {}".format(request))
     else:
