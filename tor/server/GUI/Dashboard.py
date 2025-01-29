@@ -19,8 +19,7 @@ import matplotlib.colors as colors
 
 from functools import partial
 
-from PyQt5.QtCore import (Qt, QTimer, QRect, QThread, QAbstractTableModel, QAbstractListModel, QVariant,
-                          QSortFilterProxyModel)
+from PyQt5.QtCore import Qt, QTimer, QRect, QThread, QAbstractListModel, QSortFilterProxyModel
 from PyQt5.QtWidgets import (QSplitter, QInputDialog, QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel,
                              QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox,
                              QGroupBox, QVBoxLayout, QHBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox,
@@ -102,8 +101,13 @@ class WaitCursor(object):
 from tor.base import DBManager
 from tor.base import NetworkUtils
 from tor.base.GUI import TORIcons
+from tor.server.GUI.ClientDetailViewCompact import ClientDetailViewCompact
+from tor.server.GUI.ClientDetailViewFull import ClientDetailViewFull
+from tor.server.GUI.TableModels import LogMessageTableModel, DiceResultTableModel, ResultStatisticsTableModel, LogMessageSortFilterProxyModel
 from tor.server.Job import Job
 from tor.server.Job import DefaultJobs
+from tor.server.TORCommands import TORCommands
+
 import tor.server.ServerSettings as ss
 import tor.TORSettingsLocal as tsl
 import tor.TORSettings as ts
@@ -141,30 +145,6 @@ def executeCommand(cmd, timeout=DEFAULT_TIMEOUT):
     val = p.returncode
     #print("val: {}".format(val))
     return val
-
-class TORCommands:
-    # r'ssh -i {0} pi@{1} "sudo rm -r tor; sudo rm -r scripts"'
-    SERVER_SSH_CONNECTION = "ssh -i \"{0}\" pi@{1}"
-    CLIENT_SSH_CONNECTION = "ssh -i \"{0}\" pi@{1}"
-    CLIENT_SSH_CONNECTION_X11ROOT = "ssh -X -i \"{0}\" root@{1}"
-
-    SERVER_SERVICE_START = "sudo systemctl daemon-reload; sudo systemctl restart TORServer"
-    SERVER_SERVICE_STOP = "sudo systemctl stop TORServer"
-
-    INTERACTIVE_START = "sudo systemctl daemon-reload; sudo systemctl restart TORInteractive"
-    INTERACTIVE_STOP = "sudo systemctl stop TORInteractive"
-
-    #CLIENT_PING = "ping -i 0.2 -c 1 {}"
-    #CLIENT_PING = "ping -c 1 {}"
-    CLIENT_PING = "ping -w 1000 -n 1 {}"
-
-    MSG_CLIENT_SERVICE_START = {"TORCLIENT": "START"}
-    MSG_CLIENT_SERVICE_STOP = {"TORCLIENT": "STOP"}
-
-    MSG_CLIENT_TURN_ON_LEDS = {"LED": "ON"}
-    MSG_CLIENT_TURN_OFF_LEDS = {"LED": "OFF"}
-
-    CLIENT_START_CALIBRATION = "cd /home/pi/; torenv/bin/python3 -m tor.client.GUI.calibrate"
 
 class ClientDetails:
     def __init__(self, data=None):
@@ -268,333 +248,6 @@ class ClientDetails:
             val = self.__executeSSH(cmd, timeout=timeout, asRoot=asRoot)
         return val
 
-class ClientDetailViewBase(QWidget):
-    def __init__(self):
-        super().__init__()
-
-        self.clientDetails = None
-
-        # Status
-        self.lblIsOnline = QLabel()
-        self.lblCurrentJob = QLabel()
-        self.lblResultAverage = QLabel()
-        self.lblResultStddev = QLabel()
-
-        # LEDs
-        self.btnTurnOnLEDs = QPushButton()
-        self.btnTurnOnLEDs.setText("ON")
-        self.btnTurnOnLEDs.clicked.connect(self.btnTurnOnLEDs_clicked)
-        self.btnTurnOffLEDs = QPushButton()
-        self.btnTurnOffLEDs.setText("OFF")
-        self.btnTurnOffLEDs.clicked.connect(self.btnTurnOffLEDs_clicked)
-
-        # Options
-        self.chkUserMode = QCheckBox()
-        self.chkUserMode.clicked.connect(self.chkUserMode_clicked)
-        self.chkIsActivated = QCheckBox()
-        self.chkIsActivated.clicked.connect(self.chkIsActivated_clicked)
-
-        # Client Service
-        self.btnStartClientService = QPushButton()
-        self.btnStartClientService.setText("Start")
-        self.btnStartClientService.clicked.connect(self.btnStartClientService_clicked)
-        self.btnStopClientService = QPushButton()
-        self.btnStopClientService.setText("Stop")
-        self.btnStopClientService.clicked.connect(self.btnStopClientService_clicked)
-
-    def btnTurnOnLEDs_clicked(self):
-        self.clientDetails.sendMsgToStatusManager(TORCommands.MSG_CLIENT_TURN_ON_LEDS, timeout=ts.STATUS_TIMEOUT_LED)
-
-    def btnTurnOffLEDs_clicked(self):
-        self.clientDetails.sendMsgToStatusManager(TORCommands.MSG_CLIENT_TURN_OFF_LEDS, timeout=ts.STATUS_TIMEOUT_LED)
-
-    def chkUserMode_clicked(self, checked):
-        self.clientDetails.AllowUserMode = checked
-        DBManager.setUserModeEnabled(self.clientDetails.Id, checked)
-
-    def chkIsActivated_clicked(self, checked):
-        self.clientDetails.IsActive = checked
-        DBManager.setClientIsActive(self.clientDetails.Id, checked)
-
-    def refreshClientStatus(self):
-        #to be implemented in subclasses
-        pass
-
-    def btnStartClientService_clicked(self):
-        self.clientDetails.sendMsgToStatusManager(TORCommands.MSG_CLIENT_SERVICE_START, ts.STATUS_TIMEOUT_SERVICE)
-        self.clientDetails.getClientStatus()
-        self.refreshClientStatus()
-
-    def btnStopClientService_clicked(self):
-        self.clientDetails.sendMsgToStatusManager(TORCommands.MSG_CLIENT_SERVICE_STOP, ts.STATUS_TIMEOUT_SERVICE)
-        self.clientDetails.getClientStatus()
-        self.refreshClientStatus()
-
-class ClientDetailViewFull(ClientDetailViewBase):
-    def __init__(self, position: int, changeClientCallback=None):
-        super().__init__()
-
-        self.position = position
-        self.changeClientCallback = changeClientCallback
-
-        self.lblTORVersion = QLabel()
-        self.lblTORVersionText = QLabel()
-        self.lblStatusServiceRunning = QLabel()
-        self.lblClientServiceRunning = QLabel()
-
-        self.btnX = QPushButton()
-        self.btnX.setText("X")
-        self.btnX.clicked.connect(self.btnX_clicked)
-        self.btnChange = QPushButton()
-        self.btnChange.setText("+")
-        self.btnChange.setFixedSize(50, 50)
-        self.btnChange.clicked.connect(self.btnChange_clicked)
-
-        self.wdgEmpty = QWidget()
-        layEmpty = QVBoxLayout(self.wdgEmpty)
-        layEmpty.addWidget(self.btnChange, alignment=Qt.AlignCenter)
-
-        self.wdgMain = QWidget()
-        layMain = QVBoxLayout(self.wdgMain)
-        layMain.addWidget(self.btnX, alignment=Qt.AlignRight)
-
-        layClientStatus = QGridLayout()
-        layClientStatus.setContentsMargins(0, 0, 0, 0)
-        row = 0
-        layClientStatus.addWidget(QLabel("online:"), row, 0)
-        layClientStatus.addWidget(self.lblIsOnline, row, 1)
-        row += 1
-        layClientStatus.addWidget(QLabel("Version:"), row, 0)
-        layClientStatus.addWidget(self.lblTORVersion, row, 1)
-        layClientStatus.addWidget(self.lblTORVersionText, row, 2)
-        row += 1
-        layClientStatus.addWidget(QLabel("responding:"), row, 0)
-        layClientStatus.addWidget(self.lblStatusServiceRunning, row, 1)
-        row += 1
-        layClientStatus.addWidget(QLabel("running:"), row, 0)
-        layClientStatus.addWidget(self.lblClientServiceRunning, row, 1)
-        row += 1
-        layClientStatus.addWidget(QLabel("current job:"), row, 0)
-        layClientStatus.addWidget(self.lblCurrentJob, row, 1)
-        row += 1
-        layClientStatus.addWidget(QLabel("avg result:"), row, 0)
-        layClientStatus.addWidget(self.lblResultAverage, row, 1)
-        #layClientStatus.addWidget(QLabel("stddev:"), 3, 0)
-        #layClientStatus.addWidget(self.lblResultStddev, 3, 1)
-
-        grpClientStatus = QGroupBox("Status")
-        grpClientStatus.setLayout(layClientStatus)
-
-        #LEDs
-        layLEDs = QHBoxLayout()
-        layLEDs.setContentsMargins(0, 0, 0, 0)
-        self.btnTurnOnLEDs.setFixedSize(30, 18)
-        self.btnTurnOffLEDs.setFixedSize(30, 18)
-        layLEDs.addWidget(self.btnTurnOnLEDs)
-        layLEDs.addWidget(self.btnTurnOffLEDs)
-        grpLEDs = QGroupBox("LEDs")
-        grpLEDs.setLayout(layLEDs)
-
-        #Options
-        layClientOptions = QGridLayout()
-        layClientOptions.setContentsMargins(0, 0, 0, 0)
-        layClientOptions.addWidget(QLabel("User mode enabled"), 0, 0)
-        layClientOptions.addWidget(self.chkUserMode, 0, 1)
-        layClientOptions.addWidget(QLabel("Client activated"), 1, 0)
-        layClientOptions.addWidget(self.chkIsActivated, 1, 1)
-        grpClientOptions = QGroupBox("Options")
-        grpClientOptions.setLayout(layClientOptions)
-
-        layMain.addWidget(grpClientStatus)
-        layMain.addWidget(grpLEDs)
-        layMain.addWidget(grpClientOptions)
-
-        self.layStack = QVBoxLayout()
-        self.layStack.addWidget(self.wdgEmpty)
-        self.layStack.addWidget(self.wdgMain)
-
-        self.grpMainGroup = QGroupBox()
-        self.grpMainGroup.setObjectName("ClientDetails")
-        self.grpMainGroup.setTitle("Client #")
-        self.grpMainGroup.setLayout(self.layStack)
-
-        layMainGroup = QVBoxLayout()
-        layMainGroup.setContentsMargins(0, 0, 0, 0)
-        layMainGroup.addWidget(self.grpMainGroup)
-        self.setLayout(layMainGroup)
-
-
-    def updateClient(self):
-        if self.clientDetails is None:
-            self.grpMainGroup.setTitle("No Box selected")
-            self.wdgEmpty.setVisible(True)
-            self.wdgMain.setVisible(False)
-        else:
-            self.grpMainGroup.setTitle("#{}: {}".format(self.clientDetails.Position, self.clientDetails.Latin))
-            self.wdgEmpty.setVisible(False)
-            self.wdgMain.setVisible(True)
-        app.processEvents()
-
-    def btnX_clicked(self):
-        DBManager.setClientPosition(self.clientDetails.Id, None)
-        self.clientDetails = None
-        self.changeClientCallback()
-
-    def btnChange_clicked(self):
-        clients = DBManager.getAllAvailableClients()
-        options = []
-        for c in clients:
-            options.append(f"\"{c.Latin}\" {f'(currently at pos. {c.Position})' if c.Position is not None else ''}")
-        selection, okPressed = QInputDialog.getItem(self, f"Choose Box for Position {self.position}:", "Box:", options, 0, False)
-        if okPressed and selection:
-            selectedIndex = 0
-            for c in options:
-                if selection == c:
-                    break
-                selectedIndex += 1
-            client = clients[selectedIndex]
-            DBManager.setClientPosition(client.Id, self.position)
-            self.changeClientCallback()
-
-    def refreshClientStatus(self):
-        if self.clientDetails is not None:
-            self.lblIsOnline.setPixmap(TORIcons.LED_GREEN if self.clientDetails.IsOnline else TORIcons.LED_RED)
-            self.lblTORVersion.setPixmap(TORIcons.LED_GREEN if self.clientDetails.VersionOkay else TORIcons.LED_RED)
-            self.lblTORVersionText.setText(self.clientDetails.Version)
-
-            self.lblStatusServiceRunning.setToolTip(self.clientDetails.StatusManagerServiceStatus)
-
-            if self.clientDetails.StatusManagerServiceStatus == "active":
-                self.lblStatusServiceRunning.setPixmap(TORIcons.LED_GREEN)
-            elif self.clientDetails.StatusManagerServiceStatus == "inactive":
-                self.lblStatusServiceRunning.setPixmap(TORIcons.LED_RED)
-            else:
-                self.lblStatusServiceRunning.setPixmap(TORIcons.LED_GRAY)
-
-            self.lblClientServiceRunning.setToolTip(self.clientDetails.ClientServiceStatus)
-            if self.clientDetails.ClientServiceStatus == "active":
-                self.lblClientServiceRunning.setPixmap(TORIcons.LED_GREEN)
-            elif self.clientDetails.ClientServiceStatus == "inactive":
-                self.lblClientServiceRunning.setPixmap(TORIcons.LED_RED)
-            else:
-                self.lblClientServiceRunning.setPixmap(TORIcons.LED_GRAY)
-
-            self.chkUserMode.setChecked(self.clientDetails.AllowUserMode)
-            self.chkIsActivated.setChecked(self.clientDetails.IsActive)
-
-        app.processEvents()
-
-class ClientDetailView(ClientDetailViewBase):
-    def __init__(self):
-        super().__init__()
-
-        layClientStatus = QGridLayout()
-        layClientStatus.setContentsMargins(0, 0, 0, 0)
-        layClientStatus.addWidget(QLabel("online:"), 0, 0)
-        layClientStatus.addWidget(self.lblIsOnline, 0, 1)
-        layClientStatus.addWidget(QLabel("current job:"), 1, 0)
-        layClientStatus.addWidget(self.lblCurrentJob, 1, 1)
-        layClientStatus.addWidget(QLabel("avg result:"), 2, 0)
-        layClientStatus.addWidget(self.lblResultAverage, 2, 1)
-        #layClientStatus.addWidget(QLabel("stddev:"), 3, 0)
-        #layClientStatus.addWidget(self.lblResultStddev, 3, 1)
-
-        grpClientStatus = QGroupBox("Status")
-        grpClientStatus.setLayout(layClientStatus)
-
-        layLEDs = QHBoxLayout()
-        layLEDs.setContentsMargins(0, 0, 0, 0)
-        self.btnTurnOnLEDs.setFixedSize(30, 18)
-        self.btnTurnOffLEDs.setFixedSize(30, 18)
-        layLEDs.addWidget(self.btnTurnOnLEDs)
-        layLEDs.addWidget(self.btnTurnOffLEDs)
-
-        grpLEDs = QGroupBox("LEDs")
-        grpLEDs.setLayout(layLEDs)
-
-        # Calibration
-        self.btnStartCalibration = QPushButton()
-        self.btnStartCalibration.setText("Start")
-        self.btnStartCalibration.setFixedSize(50, 18)
-        self.btnStartCalibration.clicked.connect(self.btnStartCalibration_clicked)
-
-        layCalibration = QHBoxLayout()
-        layCalibration.setContentsMargins(0, 0, 0, 0)
-        layCalibration.addWidget(self.btnStartCalibration)
-
-        grpCalibration = QGroupBox("Calibration")
-        grpCalibration.setLayout(layCalibration)
-
-        layClientOptions = QGridLayout()
-        layClientOptions.setContentsMargins(0, 0, 0, 0)
-        layClientOptions.addWidget(QLabel("User mode enabled"), 0, 0)
-        layClientOptions.addWidget(self.chkUserMode, 0, 1)
-        layClientOptions.addWidget(QLabel("Client activated"), 1, 0)
-        layClientOptions.addWidget(self.chkIsActivated, 1, 1)
-
-        grpClientOptions = QGroupBox("Options")
-        grpClientOptions.setLayout(layClientOptions)
-
-        # TORCLient Service
-        self.lblStatusClientService = QLabel()
-        self.lblStatusClientService.setPixmap(TORIcons.LED_RED)
-        self.lblStatusClientService.setToolTip("unknown")
-        #self.btnStartClientService.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        self.btnStartClientService.setFixedSize(45, 22)
-        self.btnStopClientService.setFixedSize(45, 22)
-
-        layClientService = QHBoxLayout()
-        layClientService.setContentsMargins(0, 0, 0, 0)
-        layClientService.addWidget(self.lblStatusClientService)
-        layClientService.addWidget(self.btnStartClientService)
-        layClientService.addWidget(self.btnStopClientService)
-
-        grpClientService = QGroupBox("TORClient service")
-        grpClientService.setLayout(layClientService)
-
-        # Main Layout
-        layMain = QVBoxLayout()
-        layMain.setContentsMargins(0, 0, 0, 0)
-        layMain.addWidget(grpClientStatus)
-        layMain.addWidget(grpClientService)
-        layMain.addWidget(grpClientOptions)
-        layMain.addWidget(grpLEDs)
-        layMain.addWidget(grpCalibration)
-        #layMain.addWidget(wdgLEDs)
-
-        self.grpMainGroup = QGroupBox()
-        self.grpMainGroup.setObjectName("ClientDetails")
-        self.grpMainGroup.setTitle("Client #")
-        self.grpMainGroup.setLayout(layMain)
-        layMainGroup = QVBoxLayout()
-        layMainGroup.setContentsMargins(0, 0, 0, 0)
-        layMainGroup.addWidget(self.grpMainGroup)
-        self.setLayout(layMainGroup)
-
-    def btnStartCalibration_clicked(self):
-        log.info(f"start calibration for client {self.clientDetails.Latin}.")
-        #TODO: set timeout to a proper value
-        self.clientDetails.executeSSH(TORCommands.CLIENT_START_CALIBRATION, timeout=7000, asRoot=True)
-
-    def refreshClientStatus(self):
-        if self.clientDetails is not None:
-            self.lblStatusClientService.setToolTip(self.clientDetails.ClientServiceStatus)
-            if self.clientDetails.ClientServiceStatus == "active":
-                self.lblStatusClientService.setPixmap(TORIcons.LED_GREEN)
-            else:
-                self.lblStatusClientService.setPixmap(TORIcons.LED_GRAY)
-            if self.clientDetails.IsOnline:
-                self.lblIsOnline.setPixmap(TORIcons.LED_GREEN)
-            else:
-                self.lblIsOnline.setPixmap(TORIcons.LED_RED)
-            if self.clientDetails.VersionOkay:
-                pass
-            else:
-                pass
-            self.chkUserMode.setChecked(self.clientDetails.AllowUserMode)
-            self.chkIsActivated.setChecked(self.clientDetails.IsActive)
-        app.processEvents()
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -630,7 +283,7 @@ class MainWindow(QMainWindow):
                 for j in range(3):
                     for k in range(3):
                         c = clients[i*9 + j*3 + k]
-                        cdv = ClientDetailView()
+                        cdv = ClientDetailViewCompact(app)
                         cd = ClientDetails(c)
                         cdv.clientDetails = cd
                         cdv.grpMainGroup.setTitle("#{}: {}...".format(cd.Position, cd.Latin[0:9]))
@@ -640,7 +293,7 @@ class MainWindow(QMainWindow):
                 layClientDetails.addWidget(grpClientDetailsRegions[i])
         elif ss.BOX_FORMATION == "3x3":
             for i in range(9):
-                cdv = ClientDetailViewFull(position=i + 1, changeClientCallback=self.reloadClients)
+                cdv = ClientDetailViewFull(app, position=i + 1, changeClientCallback=self.reloadClients)
                 for c in clients:
                     if c.Position == cdv.position:
                         cd = ClientDetails(c)
@@ -652,6 +305,7 @@ class MainWindow(QMainWindow):
             for i in range(3):
                 for j in range(3):
                     layDashboardClientsGrid.addWidget(self.cdvs[i * 3 + j], i, j)
+                layDashboardClientsGrid.setColumnMinimumWidth(i, 300)
             layClientDetails.addLayout(layDashboardClientsGrid)
 
         wdgClientDetails = QWidget()
@@ -866,6 +520,7 @@ class MainWindow(QMainWindow):
         #layJobOverview.addWidget(QLabel("Job Overview"))
         layJobOverview.addWidget(wdgTourSelection)
         layJobOverview.addWidget(wdgJobListAndDescriptions)
+        layJobOverview.addStretch()
 
         wdgJobOverivew = QWidget()
         wdgJobOverivew.setLayout(layJobOverview)
@@ -1169,6 +824,7 @@ class MainWindow(QMainWindow):
                     break
         for cdv in self.cdvs:
             if cdv.clientDetails is not None:
+                #TODO: set current job in ClientDetailView UI elements
                 jobStr = "{} {}".format(cdv.clientDetails.CurrentJobCode, cdv.clientDetails.CurrentJobParameters)
                 cdv.lblCurrentJob.setText(jobStr[0:9])
                 cdv.lblCurrentJob.setToolTip(jobStr)
@@ -1486,11 +1142,13 @@ class MainWindow(QMainWindow):
             maxPos = 9
         query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, Time AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId WHERE DATE(Time) >= \"" + dateStartStr + "\" AND DATE(Time) <= \"" + dateEndStr + "\" AND c.Position >=1 AND c.Position <= " + str(maxPos) + " ORDER BY d.Id DESC"
         data = DBManager.executeQuery(query)
+        if len(data) == 0:
+            return
         positions = [d.Position for d in data]
         times = [d.Time.timestamp() for d in data]
         clientNames = [c.Material for c in self.cds]
 
-        bins = [240, 27]
+        bins = [240, len(clientNames)]
         # compute the 2D histogram using numpy
         H, xedges, yedges = np.histogram2d(times, positions, bins=bins)
         # convert the x-edges into datetime format
@@ -1520,7 +1178,7 @@ class MainWindow(QMainWindow):
         ax.xaxis.set_major_locator(loc)
         ax.xaxis.set_major_formatter(fmt)
 
-        ax.set_yticks(np.arange(1, maxPos+1, 1))
+        ax.set_yticks(np.arange(1, len(clientNames)+1, 1))
         ax.set_yticklabels(clientNames)
 
         fig.autofmt_xdate()
@@ -1533,114 +1191,6 @@ class MplCanvas(FigureCanvasQTAgg):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
         super(MplCanvas, self).__init__(fig)
-
-class DbTableModel(QAbstractTableModel):
-    def __init__(self, data, parent=None):
-        super(DbTableModel, self).__init__(parent)
-        self.data = data
-        if len(data) > 0:
-            self.headers = data[0]._fields
-        else:
-            self.headers = []
-
-    def rowCount(self, index):
-        return len(self.data)
-
-    def columnCount(self, index):
-        return len(self.data[0])
-
-    def data(self, QModelIndex, role=None):
-        row = QModelIndex.row()
-        column = QModelIndex.column()
-        if role == Qt.DisplayRole:
-            text = str(self.data[row][column])
-            return text
-
-    def headerData(self, section, orientation, role):
-        # section is the index of the column/row.
-        if role == Qt.DisplayRole:
-            if orientation == Qt.Horizontal:
-                return str(self.headers[section])
-            if orientation == Qt.Vertical:
-                return str(section+1)
-
-class LogMessageTableModel(DbTableModel):
-    def __init__(self, data, parent=None):
-        super(LogMessageTableModel, self).__init__(data, parent)
-
-    def data(self, QModelIndex, role=None):
-        row = QModelIndex.row()
-        column = QModelIndex.column()
-        if role == Qt.DisplayRole:
-            text = str(self.data[row][column])
-            return text
-        if role == Qt.BackgroundColorRole:
-            if self.data[row].Type == "ERROR":
-                return QVariant(QColor(255, 210, 210))
-            elif self.data[row].Type == "WARNING":
-                return QVariant(QColor(254, 219, 187))
-
-class DiceResultTableModel(DbTableModel):
-    def __init__(self, data, parent=None):
-        super(DiceResultTableModel, self).__init__(data, parent)
-
-    def data(self, QModelIndex, role=None):
-        row = QModelIndex.row()
-        column = QModelIndex.column()
-        if role == Qt.DisplayRole:
-            text = str(self.data[row][column])
-            return text
-        if role == Qt.BackgroundColorRole:
-            if self.data[row].UserGenerated == 1:
-                return QVariant(QColor(210, 255, 210))
-
-class ResultStatisticsTableModel(DbTableModel):
-    def __init__(self, data, parent=None):
-        super(ResultStatisticsTableModel, self).__init__(data, parent)
-        self.headers = ["Position", "Name", "# 2 h", "avg 2 h", "# 4 h", "avg 4 h", "# today", "avg today", "#", "avg"]
-
-    def data(self, QModelIndex, role=None):
-        row = QModelIndex.row()
-        column = QModelIndex.column()
-        if role == Qt.DisplayRole:
-            if (column == 1):
-                text = str(self.data[row][column])
-            else:
-                text = self.data[row][column]
-            return text
-
-class LogMessageSortFilterProxyModel(QSortFilterProxyModel):
-    def __init__(self, clientId):
-        super().__init__()
-        self.clientId = clientId
-        self.chkErrorStatus = True
-        self.chkWarningStatus = True
-        self.chkInfoStatus = True
-
-    def chkErrorChanged(self, status=True):
-        self.chkErrorStatus = status
-        self.invalidateFilter()
-
-    def chkWarningChanged(self, status=True):
-        self.chkWarningStatus = status
-        self.invalidateFilter()
-
-    def chkInfoChanged(self, status=True):
-        self.chkInfoStatus = status
-        self.invalidateFilter()
-
-    def filterAcceptsRow(self, source_row, source_parent):
-        src = self.sourceModel()
-        if src is None:
-            return False
-        val = src.data[source_row].Type
-        if val == "ERROR":
-            return self.chkErrorStatus
-        if val == "WARNING":
-            return self.chkWarningStatus
-        if val == "INFO":
-            return self.chkInfoStatus
-        return True
 
 ###################
 ### application ###

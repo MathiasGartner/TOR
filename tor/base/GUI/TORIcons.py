@@ -7,3 +7,5 @@ APP_ICON = QIcon(os.path.join(os.path.dirname(__file__), "..", "..", "resources"
 LED_RED = QPixmap(os.path.join(os.path.dirname(__file__), "..", "..", "resources", "led-red.svg")).scaled(16, 16)
 LED_GREEN = QPixmap(os.path.join(os.path.dirname(__file__), "..", "..", "resources", "led-green.svg")).scaled(16, 16)
 LED_GRAY = QPixmap(os.path.join(os.path.dirname(__file__), "..", "..", "resources", "led-gray.svg")).scaled(16, 16)
+
+ICON_INFO = QPixmap(os.path.join(os.path.dirname(__file__), "..", "..", "resources", "icon-info.svg")).scaled(16, 16)
