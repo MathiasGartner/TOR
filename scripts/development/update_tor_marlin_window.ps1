@@ -1,12 +1,12 @@
-marlin_win_1.ps1
+marlin_win_32.ps1
 marlin_win_17.ps1
 marlin_win_18.ps1
 marlin_win_19.ps1
-marlin_win_20.ps1
 marlin_win_21.ps1
 marlin_win_22.ps1
 marlin_win_23.ps1
 marlin_win_24.ps1
+marlin_win_25.ps1
 marlin_win_26.ps1
 marlin_win_27.ps1
 marlin_win_28.ps1
@@ -14,6 +14,7 @@ marlin_win_29.ps1
 marlin_win_30.ps1
 marlin_win_16.ps1
 marlin_win_15.ps1
+marlin_win_2.ps1
 marlin_win_3.ps1
 marlin_win_4.ps1
 marlin_win_5.ps1
@@ -26,6 +27,5 @@ marlin_win_11.ps1
 marlin_win_12.ps1
 marlin_win_13.ps1
 marlin_win_14.ps1
-marlin_win_32.ps1
-marlin_win_2.ps1
-marlin_win_25.ps1
+marlin_win_20.ps1
+marlin_win_1.ps1

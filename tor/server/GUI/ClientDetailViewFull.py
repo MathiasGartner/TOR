@@ -24,10 +24,10 @@ class ClientDetailViewFull(ClientDetailViewBase):
         self.lblClientServiceRunning = QLabel()
 
         self.btnX = QPushButton()
-        self.btnX.setText("X")
+        self.btnX.setIcon(TORIcons.ICON_CLOSE_BTN)
         self.btnX.clicked.connect(self.btnX_clicked)
         self.btnChange = QPushButton()
-        self.btnChange.setText("+")
+        self.btnChange.setIcon(TORIcons.ICON_ADD_BTN)
         self.btnChange.setFixedSize(50, 50)
         self.btnChange.clicked.connect(self.btnChange_clicked)
 
@@ -131,7 +131,7 @@ class ClientDetailViewFull(ClientDetailViewBase):
         self.setLayout(layMainGroup)
 
 
-    def updateClient(self):
+    def updateClientArea(self):
         if self.clientDetails is None:
             self.grpMainGroup.setTitle("No Box selected")
             self.wdgEmpty.setVisible(True)

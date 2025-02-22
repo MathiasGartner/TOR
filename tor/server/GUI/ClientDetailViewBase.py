@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import QCheckBox, QLabel, QPushButton, QWidget
 from tor.base import DBManager
 from tor.server.TORCommands import TORCommands
 
+import tor.TORSettings as ts
+
 class ClientDetailViewBase(QWidget):
     def __init__(self):
         super().__init__()

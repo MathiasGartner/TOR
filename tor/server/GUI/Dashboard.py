@@ -299,7 +299,7 @@ class MainWindow(QMainWindow):
                         cd = ClientDetails(c)
                         cdv.clientDetails = cd
                         self.cds.append(cd)
-                cdv.updateClient()
+                cdv.updateClientArea()
                 self.cdvs.append(cdv)
             layDashboardClientsGrid = QGridLayout()
             for i in range(3):
@@ -310,6 +310,25 @@ class MainWindow(QMainWindow):
 
         wdgClientDetails = QWidget()
         wdgClientDetails.setLayout(layClientDetails)
+
+        #QuickJobs
+        programNames = DBManager.getAllJobProgramNames()
+        self.quickTourNames = [pn.Name for pn in programNames if pn.Name.startswith("MSI - ")]
+        self.cmbQuickTour = QComboBox()
+        for i in range(len(self.quickTourNames)):
+            self.cmbQuickTour.insertItem(i, self.quickTourNames[i], self.quickTourNames[i])
+        self.btnStartQuickTour = QPushButton()
+        self.btnStartQuickTour.setIcon(TORIcons.ICON_START_BTN)
+        self.btnStartQuickTour.clicked.connect(self.btnStartQuickTour_clicked)
+
+        layDashboardQuickTour = QHBoxLayout()
+        layDashboardQuickTour.addWidget(QLabel("Job:"))
+        layDashboardQuickTour.addWidget(self.cmbQuickTour)
+        layDashboardQuickTour.addWidget(self.btnStartQuickTour)
+
+        wdgDashboardQuickTour = QWidget()
+        wdgDashboardQuickTour.setLayout(layDashboardQuickTour)
+
 
         self.btnStartAllTORPrograms = QPushButton()
         self.btnStartAllTORPrograms.setText("START")
@@ -373,6 +392,9 @@ class MainWindow(QMainWindow):
 
         spacerSize = 30
         layDashboardButtons = QVBoxLayout()
+        layDashboardButtons.addSpacing(spacerSize)
+        layDashboardButtons.addWidget(wdgDashboardQuickTour)
+        layDashboardButtons.addSpacing(spacerSize)
         layDashboardButtons.addSpacing(spacerSize)
         layDashboardButtons.addWidget(QLabel("<h3>The Transparency of Randomness</h3>"))
         layDashboardButtons.addWidget(self.btnStartAllTORPrograms)
@@ -536,14 +558,14 @@ class MainWindow(QMainWindow):
             self.cmbClient.insertItem(c.Position, "#{}: {}".format(c.Position, c.Latin), c.Position)
         self.cmbClient.currentIndexChanged.connect(self.cmbClient_currentIndexChanged)
 
-        self.btnRereshClientDetails = QPushButton("Refresh")
-        self.btnRereshClientDetails.clicked.connect(self.btnRereshClientDetails_clicked)
+        self.btnRefreshClientDetails = QPushButton("Refresh")
+        self.btnRefreshClientDetails.clicked.connect(self.btnRefreshClientDetails_clicked)
 
         layClientSelection = QHBoxLayout()
         layClientSelection.addWidget(QLabel("Box: "))
         layClientSelection.addWidget(self.cmbClient)
         layClientSelection.addSpacing(100)
-        layClientSelection.addWidget(self.btnRereshClientDetails)
+        layClientSelection.addWidget(self.btnRefreshClientDetails)
         layClientSelection.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Fixed))
 
         wdgClientSelection = QWidget()
@@ -743,7 +765,7 @@ class MainWindow(QMainWindow):
                         cd = ClientDetails(c)
                         cdv.clientDetails = cd
                         self.cds.append(cd)
-                cdv.updateClient()
+                cdv.updateClientArea()
             self.reloadAllClientStatus()
             for cdv in self.cdvs:
                 cdv.refreshClientStatus()
@@ -825,9 +847,15 @@ class MainWindow(QMainWindow):
         for cdv in self.cdvs:
             if cdv.clientDetails is not None:
                 #TODO: set current job in ClientDetailView UI elements
-                jobStr = "{} {}".format(cdv.clientDetails.CurrentJobCode, cdv.clientDetails.CurrentJobParameters)
-                cdv.lblCurrentJob.setText(jobStr[0:9])
-                cdv.lblCurrentJob.setToolTip(jobStr)
+                if isinstance(cdv, ClientDetailViewFull):
+                    index = cdv.cmbCurrentJob.findText(f"{cdv.clientDetails.CurrentJobCode} - ", Qt.MatchStartsWith)
+                    if index != -1:
+                        cdv.cmbCurrentJob.setCurrentIndex(index)
+                    cdv.txtJobParams.setText(cdv.clientDetails.CurrentJobParameters)
+                else:
+                    jobStr = "{} {}".format(cdv.clientDetails.CurrentJobCode, cdv.clientDetails.CurrentJobParameters)
+                    cdv.lblCurrentJob.setText(jobStr[0:9])
+                    cdv.lblCurrentJob.setToolTip(jobStr)
                 cdv.lblResultAverage.setText("{:.2f}±{:.2f}".format(cdv.clientDetails.ResultAverage, cdv.clientDetails.ResultStddev))
                 cdv.lblResultStddev.setText("+-{}".format(cdv.clientDetails.ResultStddev))
                 if cdv.clientDetails.IsBadStatistics():
@@ -860,6 +888,13 @@ class MainWindow(QMainWindow):
             self.addSpacerLineToStatusText()
         self.txtStatus.moveCursor(QTextCursor.End)
         app.processEvents()
+
+    def btnStartQuickTour_clicked(self):
+        with WaitCursor():
+            jobProgramName = self.cmbQuickTour.currentData()
+            if jobProgramName is not None and jobProgramName != "":
+                DBManager.setJobsByJobProgram(jobProgramName)
+                self.updateDashboard()
 
     def btnStartAllTORPrograms_clicked(self):
         with WaitCursor():
@@ -1033,7 +1068,10 @@ class MainWindow(QMainWindow):
     ###############
 
     def getClientDetailsByPosition(self, position):
-        return self.cds[position - 1]
+        for cd in self.cds:
+            if cd.Position == position:
+                return cd
+        return None
 
     def showDataInTable(self, data, table, tableModel):
         model = tableModel(data)
@@ -1115,7 +1153,7 @@ class MainWindow(QMainWindow):
     def cmbClient_currentIndexChanged(self, index):
         self.reloadClientDetailsBySelectedIndex(index)
 
-    def btnRereshClientDetails_clicked(self):
+    def btnRefreshClientDetails_clicked(self):
         index = self.cmbClient.currentIndex()
         self.reloadClientDetailsBySelectedIndex(index)
 
