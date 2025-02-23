@@ -222,12 +222,14 @@ class ClientDetailViewFull(ClientDetailViewBase):
                 self.lblErrorLogMessage.setText(f"{self.ErrorMessage.Message}\nTime: {self.ErrorMessage.Time}\nCode: {self.ErrorMessage.MessageCode}")
                 self.btnErrorLogAcknowledge.setVisible(True)
                 self.btnErrorLogGoToDetails.setVisible(True)
+                self.grpMainGroup.setStyleSheet("QGroupBox#ClientDetails {border-color: #FF0000} QGroupBox:title#ClientDetails { background-color: #FF0000 }")
             else:
                 self.ErrorMessage = None
                 self.lblErrorLogIcon.setPixmap(TORIcons.LED_GREEN)
-                self.lblErrorLogMessage.setText("")
+                self.lblErrorLogMessage.setText("---")
                 self.btnErrorLogAcknowledge.setVisible(False)
                 self.btnErrorLogGoToDetails.setVisible(False)
+                self.grpMainGroup.setStyleSheet("")
         self.app.processEvents()
 
     def refreshClientStatus(self):

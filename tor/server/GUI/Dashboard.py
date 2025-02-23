@@ -45,7 +45,7 @@ app.setStyleSheet("""
         { 
             font-size: 13px;            
             border: 1px solid gray;
-            border-color: #FF17365D;
+            border-color: #17365D;
             margin-top: 20px;
         }
 
@@ -54,7 +54,7 @@ app.setStyleSheet("""
             subcontrol-origin: margin;
             subcontrol-position: top center;
             padding: 2px 50px;
-            background-color: #FF17365D;
+            background-color: #17365D;
             color: rgb(255, 255, 255);
         }
 
@@ -559,9 +559,9 @@ class MainWindow(QMainWindow):
         availableClients = DBManager.getAllAvailableClients()
         self.cmbClient = QComboBox()
         self.cmbClient.setFixedWidth(180)
-        self.cmbClient.insertItem(-1, "All", -1)
-        for c in availableClients:
-            self.cmbClient.insertItem(c.Id, f"{f'#{c.Position}' if c.Position is not None else '  '}: {c.Latin}", c)
+        self.cmbClient.insertItem(0, "All", 0)
+        for i, c in enumerate(availableClients):
+            self.cmbClient.insertItem(i+1, f"{f'#{c.Position}:' if c.Position is not None else '        '} {c.Latin}", c)
         self.cmbClient.currentIndexChanged.connect(self.cmbClient_currentIndexChanged)
 
         self.btnRefreshClientDetails = QPushButton("Refresh")
@@ -778,6 +778,14 @@ class MainWindow(QMainWindow):
 
     def openClientDetailTab(self, clientId):
         self.tabDashboard.setCurrentIndex(self.clientDetailsTabIndex)
+        for i in range(self.cmbClient.count()):
+            c = self.cmbClient.itemData(i)
+            if c is not None and c != 0 and c.Id == clientId:
+                self.cmbClient.setCurrentIndex(i)
+                break
+        self.chkLogMessagesError.setChecked(True)
+        self.chkLogMessagesWarning.setChecked(False)
+        self.chkLogMessagesInfo.setChecked(False)
 
     def tabDashboard_currentChanged(self, index):
         if index == self.clientJobsTabIndex:
