@@ -16,20 +16,25 @@ class ClientManager:
         else:
             self.clientIdentity = { "Id": -1, "IP": -1, "Material": "vacuum", "Position": -1, "Latin": "vacuum", "IsActive": 0 }
         self.clientId = self.clientIdentity["Id"]
-        p = int(self.clientIdentity["Position"])
-        if (p - 1) % 9 < 3:
+        if self.clientIdentity["Position"] is not None:
+            p = int(self.clientIdentity["Position"])
+            if (p - 1) % 9 < 3:
+                self.x = 0
+            elif (p - 1) % 9 < 6:
+                self.x = 1
+            else:
+                self.x = 2
+            if p < 10:
+                self.y = 0
+            elif p < 19:
+                self.y = 1
+            else:
+                self.y = 2
+            self.z = (p - 1) % 3
+        else:
             self.x = 0
-        elif (p - 1) % 9 < 6:
-            self.x = 1
-        else:
-            self.x = 2
-        if p < 10:
             self.y = 0
-        elif p < 19:
-            self.y = 1
-        else:
-            self.y = 2
-        self.z = (p - 1) % 3
+            self.z = 0
 
     def createConnection(self):
         conn = NetworkUtils.createServerConnection()

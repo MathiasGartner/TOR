@@ -319,7 +319,8 @@ def doJobs():
                 waitNSeconds = int(runWaitParams[2]) or 1
             if isFirstRWJob:
                 #waitNTimes = pow(math.sin(cm.clientIdentity.x + cm.clientIdentity.y + cm.clientIdentity.z)+ 1, 4) * 20
-                waitNTimes = pow(math.sin(int(cm.clientIdentity["Position"])) + 1.2, 4) / 25.0 * (waitNTimes * waitNSeconds / 3)
+                cipos = 0 if cm.clientIdentity["Position"] is None else int(cm.clientIdentity["Position"])
+                waitNTimes = pow(math.sin(cipos) + 1.2, 4) / 25.0 * (waitNTimes * waitNSeconds / 3)
             if finishedRWRuns < runNTimes:
                 log.info("perform run {}/{} ...".format(finishedRWRuns+1, runNTimes))
                 if steppersDisabled:

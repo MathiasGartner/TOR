@@ -730,6 +730,7 @@ class MainWindow(QMainWindow):
         wdgTORServer.setLayout(layTORServer)
 
 
+        self.dashboardTabIndex = 0
         self.clientJobsTabIndex = 1
         self.clientDetailsTabIndex = 2
         self.statisticsTabIndex = 3
@@ -796,13 +797,16 @@ class MainWindow(QMainWindow):
             self.chkLogMessagesInfo.setChecked(False)
 
     def tabDashboard_currentChanged(self, index):
-        if index == self.clientJobsTabIndex:
-            self.cmbTour.setCurrentText("JMAF2022")
-        elif index == self.clientDetailsTabIndex:
-            self.loadAllClientDetails()
-        elif index == self.statisticsTabIndex:
-            self.reloadStatistics()
-        self.currentSelectedTabIndex = index
+        with WaitCursor():
+            if index == self.dashboardTabIndex:
+                self.updateDashboard()
+            elif index == self.clientJobsTabIndex:
+                self.cmbTour.setCurrentText("JMAF2022")
+            elif index == self.clientDetailsTabIndex:
+                self.loadAllClientDetails()
+            elif index == self.statisticsTabIndex:
+                self.reloadStatistics()
+            self.currentSelectedTabIndex = index
 
     def sendMsgToTORServer(self, msg, timeout=ts.STATUS_TIMEOUT_TOR_SERVER):
         answer = None
