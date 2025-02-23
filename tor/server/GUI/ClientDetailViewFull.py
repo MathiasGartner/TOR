@@ -2,7 +2,7 @@ import logging
 log = logging.getLogger(__name__)
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QComboBox, QGridLayout, QLineEdit, QGroupBox, QHBoxLayout, QInputDialog, QLabel, QPushButton, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QApplication, QStyle, QComboBox, QGridLayout, QLineEdit, QGroupBox, QHBoxLayout, QInputDialog, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from tor.base import DBManager
 from tor.base.GUI import TORIcons
@@ -10,13 +10,14 @@ from tor.server.GUI.ClientDetailViewBase import ClientDetailViewBase
 from tor.server.Job import Job, DefaultJobs
 
 class ClientDetailViewFull(ClientDetailViewBase):
-    def __init__(self, app, position: int, changeClientCallback=None):
+    def __init__(self, app, position: int, changeClientCallback=None, openDetailTabCallback=None):
         super().__init__()
 
         self.app = app
 
         self.position = position
         self.changeClientCallback = changeClientCallback
+        self.openDetailTabCallback = openDetailTabCallback
 
         self.lblTORVersion = QLabel()
         self.lblTORVersionText = QLabel()
@@ -24,7 +25,8 @@ class ClientDetailViewFull(ClientDetailViewBase):
         self.lblClientServiceRunning = QLabel()
 
         self.btnX = QPushButton()
-        self.btnX.setIcon(TORIcons.ICON_CLOSE_BTN)
+        self.btnX.setIcon(QApplication.style().standardIcon(QStyle.SP_TrashIcon))
+        #self.btnX.setIcon(TORIcons.ICON_CLOSE_BTN)
         self.btnX.clicked.connect(self.btnX_clicked)
         self.btnChange = QPushButton()
         self.btnChange.setIcon(TORIcons.ICON_ADD_BTN)
@@ -65,6 +67,16 @@ class ClientDetailViewFull(ClientDetailViewBase):
 
         grpClientStatus = QGroupBox("Status")
         grpClientStatus.setLayout(layClientStatus)
+
+        #Client Service
+        layClientService = QHBoxLayout()
+        #layLEDs.setContentsMargins(0, 0, 0, 0)
+        self.btnStartClientService.setFixedSize(30, 18)
+        self.btnStopClientService.setFixedSize(30, 18)
+        layClientService.addWidget(self.btnStartClientService)
+        layClientService.addWidget(self.btnStopClientService)
+        grpClientService = QGroupBox("Client Service")
+        grpClientService.setLayout(layClientService)
 
         #LEDs
         layLEDs = QHBoxLayout()
@@ -111,10 +123,31 @@ class ClientDetailViewFull(ClientDetailViewBase):
         grpClientOptions = QGroupBox("Options")
         grpClientOptions.setLayout(layClientOptions)
 
+        #Error Log
+        layErrorLog = QGridLayout()
+        #layClientOptions.setContentsMargins(0, 0, 0, 0)
+        self.lblErrorLogIcon = QLabel()
+        layErrorLog.addWidget(self.lblErrorLogIcon, 0, 0)
+        self.lblErrorLogMessage = QLabel()
+        self.lblErrorLogMessage.setWordWrap(True);
+        layErrorLog.addWidget(self.lblErrorLogMessage, 0, 1)
+        self.btnErrorLogAcknowledge = QPushButton()
+        self.btnErrorLogAcknowledge.setIcon(QApplication.style().standardIcon(QStyle.SP_DialogApplyButton))
+        self.btnErrorLogAcknowledge.clicked.connect(self.btnErrorLogAcknowledge_clicked)
+        layErrorLog.addWidget(self.btnErrorLogAcknowledge, 0, 2)
+        self.btnErrorLogGoToDetails = QPushButton()
+        self.btnErrorLogGoToDetails.setIcon(QApplication.style().standardIcon(QStyle.SP_CommandLink))
+        self.btnErrorLogGoToDetails.clicked.connect(self.btnErrorLogGoToDetails_clicked)
+        layErrorLog.addWidget(self.btnErrorLogGoToDetails, 0, 3)
+        grpErrorLog = QGroupBox("Error Log")
+        grpErrorLog.setLayout(layErrorLog)
+
         layMain.addWidget(grpClientStatus)
+        layMain.addWidget(grpClientService)
         layMain.addWidget(grpLEDs)
         layMain.addWidget(grpJob)
         layMain.addWidget(grpClientOptions)
+        layMain.addWidget(grpErrorLog)
 
         self.layStack = QVBoxLayout()
         self.layStack.addWidget(self.wdgEmpty)
@@ -172,6 +205,30 @@ class ClientDetailViewFull(ClientDetailViewBase):
             selectedJob.ClientId = self.clientDetails.Id
             selectedJob.JobParameters = self.txtJobParams.text()
             DBManager.saveJobs(selectedJob)
+
+    def btnErrorLogAcknowledge_clicked(self):
+        if self.ErrorMessage is not None:
+            DBManager.acknowledgeErrorLog(self.ErrorMessage.Id)
+            self.refreshErrorLog()
+
+    def btnErrorLogGoToDetails_clicked(self):
+        self.openDetailTabCallback(self.clientDetails.Id)
+
+    def refreshErrorLog(self):
+        if self.clientDetails is not None:
+            self.ErrorMessage = DBManager.getRecentClientLogError(self.clientDetails.Id)
+            if self.ErrorMessage is not None:
+                self.lblErrorLogIcon.setPixmap(TORIcons.LED_RED)
+                self.lblErrorLogMessage.setText(f"{self.ErrorMessage.Message}\nTime: {self.ErrorMessage.Time}\nCode: {self.ErrorMessage.MessageCode}")
+                self.btnErrorLogAcknowledge.setVisible(True)
+                self.btnErrorLogGoToDetails.setVisible(True)
+            else:
+                self.ErrorMessage = None
+                self.lblErrorLogIcon.setPixmap(TORIcons.LED_GREEN)
+                self.lblErrorLogMessage.setText("")
+                self.btnErrorLogAcknowledge.setVisible(False)
+                self.btnErrorLogGoToDetails.setVisible(False)
+        self.app.processEvents()
 
     def refreshClientStatus(self):
         if self.clientDetails is not None:

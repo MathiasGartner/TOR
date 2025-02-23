@@ -219,10 +219,20 @@ def getClientLog():
     return data
 
 def getClientLogByClientId(clientId):
-    query = "SELECT MessageType AS Type, MessageCode, Message, DATE_ADD(Time, " + TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog WHERE ClientId = %(clientId)s ORDER BY Id DESC LIMIT 100"
+    query = "SELECT MessageType AS Type, MessageCode, Message, DATE_ADD(Time, " + TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog WHERE ClientId = %(clientId)s ORDER BY Id DESC LIMIT 1000"
     cursor.execute(query, {"clientId": clientId})
     data = cursor.fetchall()
     return data
+
+def getRecentClientLogError(clientId):
+    query = "SELECT Id, MessageCode, Message, Time FROM clientlog WHERE MessageType = 'ERROR' AND ClientId = %(clientId)s AND IsAcknowledged = 0 ORDER BY Time DESC LIMIT 1"
+    cursor.execute(query, {"clientId": clientId})
+    data = cursor.fetchone()
+    return data
+
+def acknowledgeErrorLog(logId):
+    query = "UPDATE clientlog SET IsAcknowledged = 1 WHERE Id = %(logId)s"
+    cursor.execute(query, {"logId": logId})
 
 def getResults():
     query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, DATE_ADD(Time, " + TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId ORDER BY d.Id DESC LIMIT 100"

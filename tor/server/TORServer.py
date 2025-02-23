@@ -139,8 +139,10 @@ def handleRequest(conn):
                                          "Latin": cId.Latin,
                                          "IsActive": cId.IsActive
                                          })
+        elif "DASH" in request: #status request from Dashboard UI
+            NetworkUtils.sendOK(conn)
         else:
-            log.warning("could not identify client.")
+            log.warning("could not identify sender.")
     else:
         log.warning("request not defined: {}".format(request))
 

@@ -293,7 +293,7 @@ class MainWindow(QMainWindow):
                 layClientDetails.addWidget(grpClientDetailsRegions[i])
         elif ss.BOX_FORMATION == "3x3":
             for i in range(9):
-                cdv = ClientDetailViewFull(app, position=i + 1, changeClientCallback=self.reloadClients)
+                cdv = ClientDetailViewFull(app, position=i + 1, changeClientCallback=self.reloadClients, openDetailTabCallback=self.openClientDetailTab)
                 for c in clients:
                     if c.Position == cdv.position:
                         cd = ClientDetails(c)
@@ -356,6 +356,8 @@ class MainWindow(QMainWindow):
         self.btnRestoreSettings.setText("Restore Settings")
         self.btnRestoreSettings.clicked.connect(self.btnRestoreSettings_clicked)
 
+        self.lblStatusTORServer = QLabel()
+
         self.btnStartTORServer = QPushButton()
         self.btnStartTORServer.setText("Start TOR Server")
         self.btnStartTORServer.clicked.connect(self.btnStartTORServer_clicked)
@@ -408,7 +410,10 @@ class MainWindow(QMainWindow):
         layDashboardButtons.addWidget(self.btnTurnOnLEDs)
         layDashboardButtons.addWidget(self.btnTurnOffLEDs)
         layDashboardButtons.addSpacing(spacerSize)
-        layDashboardButtons.addWidget(QLabel("Server"))
+        layTmp = QHBoxLayout()
+        layTmp.addWidget(QLabel("Server"))
+        layTmp.addWidget(self.lblStatusTORServer)
+        layDashboardButtons.addLayout(layTmp)
         layDashboardButtons.addWidget(self.btnStartTORServer)
         layDashboardButtons.addWidget(self.btnStopTORServer)
         layDashboardButtons.addSpacing(spacerSize)
@@ -551,11 +556,12 @@ class MainWindow(QMainWindow):
 
         tblRowHeight = 12
 
+        availableClients = DBManager.getAllAvailableClients()
         self.cmbClient = QComboBox()
         self.cmbClient.setFixedWidth(180)
         self.cmbClient.insertItem(-1, "All", -1)
-        for c in self.cds:
-            self.cmbClient.insertItem(c.Position, "#{}: {}".format(c.Position, c.Latin), c.Position)
+        for c in availableClients:
+            self.cmbClient.insertItem(c.Id, f"{f'#{c.Position}' if c.Position is not None else '  '}: {c.Latin}", c)
         self.cmbClient.currentIndexChanged.connect(self.cmbClient_currentIndexChanged)
 
         self.btnRefreshClientDetails = QPushButton("Refresh")
@@ -770,6 +776,9 @@ class MainWindow(QMainWindow):
             for cdv in self.cdvs:
                 cdv.refreshClientStatus()
 
+    def openClientDetailTab(self, clientId):
+        self.tabDashboard.setCurrentIndex(self.clientDetailsTabIndex)
+
     def tabDashboard_currentChanged(self, index):
         if index == self.clientJobsTabIndex:
             self.cmbTour.setCurrentText("JMAF2022")
@@ -778,6 +787,28 @@ class MainWindow(QMainWindow):
         elif index == self.statisticsTabIndex:
             self.reloadStatistics()
         self.currentSelectedTabIndex = index
+
+    def sendMsgToTORServer(self, msg, timeout=ts.STATUS_TIMEOUT_TOR_SERVER):
+        answer = None
+        try:
+            conn = NetworkUtils.createConnection(ts.SERVER_IP, ts.SERVER_PORT, timeout, verbose=False)
+            NetworkUtils.sendData(conn, msg)
+            answer = NetworkUtils.recvData(conn)
+            conn.close()
+        except Exception as e:
+            log.error("Error connecting to TORServer:")
+            log.error("{}".format(repr(e)))
+        return answer
+
+    def checkStatusTORServer(self):
+        msg = { "DASH": "STATUS" }
+        answer = self.sendMsgToTORServer(msg)
+        if isinstance(answer, dict) and "STATUS" in answer and answer["STATUS"] == "OK":
+            self.lblStatusTORServer.setPixmap(TORIcons.LED_GREEN)
+            self.lblStatusTORServer.setToolTip("running")
+        else:
+            self.lblStatusTORServer.setPixmap(TORIcons.LED_RED)
+            self.lblStatusTORServer.setToolTip("not responding")
 
     def executeCommandOnTORServer(self, cmd, timeout=DEFAULT_TIMEOUT_SERVER):
         val = -1
@@ -846,7 +877,6 @@ class MainWindow(QMainWindow):
                     break
         for cdv in self.cdvs:
             if cdv.clientDetails is not None:
-                #TODO: set current job in ClientDetailView UI elements
                 if isinstance(cdv, ClientDetailViewFull):
                     index = cdv.cmbCurrentJob.findText(f"{cdv.clientDetails.CurrentJobCode} - ", Qt.MatchStartsWith)
                     if index != -1:
@@ -864,11 +894,16 @@ class MainWindow(QMainWindow):
                 else:
                     cdv.lblResultAverage.setStyleSheet("")
                     cdv.lblResultStddev.setStyleSheet("")
+                if isinstance(cdv, ClientDetailViewFull):
+                    cdv.refreshErrorLog()
 
         self.reloadAllClientStatus()
 
         for cdv in self.cdvs:
             cdv.refreshClientStatus()
+
+        self.checkStatusTORServer()
+
         self.lblLastUpdateTime.setText("last update: {}".format(datetime.now().strftime("%H:%M:%S")))
         log.info("updateDashboard finished")
         self.IsUpdating = False
@@ -962,12 +997,20 @@ class MainWindow(QMainWindow):
         log.info("restored")
 
     def btnStartTORServer_clicked(self):
+        self.lblStatusTORServer.setPixmap(TORIcons.LED_GRAY)
+        self.lblStatusTORServer.setToolTip("starting...")
+        app.processEvents()
         self.executeCommandOnTORServer(TORCommands.SERVER_SERVICE_START)
         log.info("start TORServer")
+        self.checkStatusTORServer()
 
     def btnStopTORServer_clicked(self):
+        self.lblStatusTORServer.setPixmap(TORIcons.LED_GRAY)
+        self.lblStatusTORServer.setToolTip("stopping...")
+        app.processEvents()
         self.executeCommandOnTORServer(TORCommands.SERVER_SERVICE_STOP)
         log.info("stop TORServer")
+        self.checkStatusTORServer()
 
     def btnStartTORInteractive_clicked(self):
         self.executeCommandOnTORServer(TORCommands.INTERACTIVE_START)
@@ -1141,13 +1184,12 @@ class MainWindow(QMainWindow):
                 break
 
     def reloadClientDetailsBySelectedIndex(self, index):
-        position = self.cmbClient.itemData(index)
-        if position == -1:
+        c = self.cmbClient.itemData(index)
+        if c == -1:
             self.addStatusText("show details for all clients")
             self.loadAllClientDetails()
         else:
-            c = self.getClientDetailsByPosition(position)
-            self.addStatusText("select client at position {}".format(c.Position))
+            self.addStatusText(f"select client {c.Id}")
             self.loadClientDetails(c)
 
     def cmbClient_currentIndexChanged(self, index):
