@@ -18,6 +18,7 @@ class ClientDetailViewFull(ClientDetailViewBase):
         self.position = position
         self.changeClientCallback = changeClientCallback
         self.openDetailTabCallback = openDetailTabCallback
+        self.inInstallation = self.position > 0
 
         self.lblTORVersion = QLabel()
         self.lblTORVersionText = QLabel()
@@ -107,9 +108,9 @@ class ClientDetailViewFull(ClientDetailViewBase):
         lblJobParamsInfo.setToolTip("<b>R:</b> no Job Parameters<br/><br/><b>W:</b> no Job Parameters<br/><br/><b>RW:</b> JobParameters: r w t<br/>run 'r' times, then wait 'w' times for 't' seconds")
         layJob.addWidget(lblJobParamsInfo, row, 2)
         row += 1
-        btnSaveJob = QPushButton("SAVE")
-        btnSaveJob.clicked.connect(self.btnSaveJob_clicked)
-        layJob.addWidget(btnSaveJob, row, 1)
+        self.btnSaveJob = QPushButton("SAVE")
+        self.btnSaveJob.clicked.connect(self.btnSaveJob_clicked)
+        layJob.addWidget(self.btnSaveJob, row, 1)
         grpJob = QGroupBox("Job")
         grpJob.setLayout(layJob)
 
@@ -215,22 +216,35 @@ class ClientDetailViewFull(ClientDetailViewBase):
         self.openDetailTabCallback(self.clientDetails.Id)
 
     def refreshErrorLog(self):
+        self.ErrorMessage = None
         if self.clientDetails is not None:
             self.ErrorMessage = DBManager.getRecentClientLogError(self.clientDetails.Id)
             if self.ErrorMessage is not None:
                 self.lblErrorLogIcon.setPixmap(TORIcons.LED_RED)
                 self.lblErrorLogMessage.setText(f"{self.ErrorMessage.Message}\nTime: {self.ErrorMessage.Time}\nCode: {self.ErrorMessage.MessageCode}")
                 self.btnErrorLogAcknowledge.setVisible(True)
-                self.btnErrorLogGoToDetails.setVisible(True)
+                if self.inInstallation:
+                    self.btnErrorLogGoToDetails.setVisible(True)
                 self.grpMainGroup.setStyleSheet("QGroupBox#ClientDetails {border-color: #FF0000} QGroupBox:title#ClientDetails { background-color: #FF0000 }")
-            else:
-                self.ErrorMessage = None
-                self.lblErrorLogIcon.setPixmap(TORIcons.LED_GREEN)
-                self.lblErrorLogMessage.setText("---")
-                self.btnErrorLogAcknowledge.setVisible(False)
-                self.btnErrorLogGoToDetails.setVisible(False)
-                self.grpMainGroup.setStyleSheet("")
+        if self.ErrorMessage is None:
+            self.lblErrorLogIcon.setPixmap(TORIcons.LED_GREEN)
+            self.lblErrorLogMessage.setText("---")
+            self.btnErrorLogAcknowledge.setVisible(False)
+            self.btnErrorLogGoToDetails.setVisible(False)
+            self.grpMainGroup.setStyleSheet("")
         self.app.processEvents()
+
+    def refreshJobDisplay(self):
+        if self.clientDetails is not None:
+            index = self.cmbCurrentJob.findText(f"{self.clientDetails.CurrentJobCode} - ", Qt.MatchStartsWith)
+            if index != -1:
+                self.cmbCurrentJob.setCurrentIndex(index)
+            self.txtJobParams.setText(self.clientDetails.CurrentJobParameters)
+            self.btnSaveJob.setEnabled(True)
+        else:
+            self.cmbCurrentJob.setCurrentIndex(0)
+            self.txtJobParams.setText("")
+            self.btnSaveJob.setEnabled(False)
 
     def refreshClientStatus(self):
         if self.clientDetails is not None:

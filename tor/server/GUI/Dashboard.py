@@ -559,7 +559,7 @@ class MainWindow(QMainWindow):
         availableClients = DBManager.getAllAvailableClients()
         self.cmbClient = QComboBox()
         self.cmbClient.setFixedWidth(180)
-        self.cmbClient.insertItem(0, "All", 0)
+        self.cmbClient.insertItem(0, "All", None)
         for i, c in enumerate(availableClients):
             self.cmbClient.insertItem(i+1, f"{f'#{c.Position}:' if c.Position is not None else '        '} {c.Latin}", c)
         self.cmbClient.currentIndexChanged.connect(self.cmbClient_currentIndexChanged)
@@ -611,10 +611,17 @@ class MainWindow(QMainWindow):
         grpClientDetailInfos.setTitle("Details")
         grpClientDetailInfos.setLayout(layClientDetailInfos)
 
+        self.cdvDetails = ClientDetailViewFull(app, 0)
+        self.cdvDetails.btnErrorLogGoToDetails.setVisible(False)
+        self.cdvDetails.btnX.setVisible(False)
+        self.cdvDetails.btnChange.setVisible(False)
+
         layClientDetailsTop = QHBoxLayout()
         layClientDetailsTop.addWidget(self.tblResults)
         layClientDetailsTop.addSpacing(100)
         layClientDetailsTop.addWidget(grpClientDetailInfos)
+        layClientDetailsTop.addSpacing(100)
+        layClientDetailsTop.addWidget(self.cdvDetails)
         layClientDetailsTop.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Fixed))
 
         wdgClientDetailsTop = QWidget()
@@ -777,15 +784,16 @@ class MainWindow(QMainWindow):
                 cdv.refreshClientStatus()
 
     def openClientDetailTab(self, clientId):
-        self.tabDashboard.setCurrentIndex(self.clientDetailsTabIndex)
-        for i in range(self.cmbClient.count()):
-            c = self.cmbClient.itemData(i)
-            if c is not None and c != 0 and c.Id == clientId:
-                self.cmbClient.setCurrentIndex(i)
-                break
-        self.chkLogMessagesError.setChecked(True)
-        self.chkLogMessagesWarning.setChecked(False)
-        self.chkLogMessagesInfo.setChecked(False)
+        with WaitCursor():
+            self.tabDashboard.setCurrentIndex(self.clientDetailsTabIndex)
+            for i in range(self.cmbClient.count()):
+                c = self.cmbClient.itemData(i)
+                if c is not None and c != 0 and c.Id == clientId:
+                    self.cmbClient.setCurrentIndex(i)
+                    break
+            self.chkLogMessagesError.setChecked(True)
+            self.chkLogMessagesWarning.setChecked(False)
+            self.chkLogMessagesInfo.setChecked(False)
 
     def tabDashboard_currentChanged(self, index):
         if index == self.clientJobsTabIndex:
@@ -886,10 +894,7 @@ class MainWindow(QMainWindow):
         for cdv in self.cdvs:
             if cdv.clientDetails is not None:
                 if isinstance(cdv, ClientDetailViewFull):
-                    index = cdv.cmbCurrentJob.findText(f"{cdv.clientDetails.CurrentJobCode} - ", Qt.MatchStartsWith)
-                    if index != -1:
-                        cdv.cmbCurrentJob.setCurrentIndex(index)
-                    cdv.txtJobParams.setText(cdv.clientDetails.CurrentJobParameters)
+                    cdv.refreshJobDisplay()
                 else:
                     jobStr = "{} {}".format(cdv.clientDetails.CurrentJobCode, cdv.clientDetails.CurrentJobParameters)
                     cdv.lblCurrentJob.setText(jobStr[0:9])
@@ -1193,12 +1198,22 @@ class MainWindow(QMainWindow):
 
     def reloadClientDetailsBySelectedIndex(self, index):
         c = self.cmbClient.itemData(index)
-        if c == -1:
+        if c is None:
             self.addStatusText("show details for all clients")
             self.loadAllClientDetails()
+            self.cdvDetails.clientDetails = None
         else:
             self.addStatusText(f"select client {c.Id}")
             self.loadClientDetails(c)
+            self.cdvDetails.clientDetails = ClientDetails(c)
+            job = DBManager.getNextJobForClientId(c.Id)
+            self.cdvDetails.clientDetails.CurrentJobCode = job.JobCode
+            self.cdvDetails.clientDetails.CurrentJobParameters = job.JobParameters
+            self.cdvDetails.clientDetails.getClientStatus()
+        self.cdvDetails.updateClientArea()
+        self.cdvDetails.refreshClientStatus()
+        self.cdvDetails.refreshJobDisplay()
+        self.cdvDetails.refreshErrorLog()
 
     def cmbClient_currentIndexChanged(self, index):
         self.reloadClientDetailsBySelectedIndex(index)
