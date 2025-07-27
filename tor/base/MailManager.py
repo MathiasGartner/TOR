@@ -11,16 +11,18 @@ try:
     yag = yagmail.SMTP(ts.MAIL_USERNAME, oauth2_file=ts.MAIL_OAUTH_FILE)
 except Exception as e:
     log.warning("could not initialize MailManager")
-    log.warning("{}".format(repr(e)))
+    log.warning(f"{repr(e)}")
 
 def trySendMessage(to, subject, contents, description):
+    log.info("will send mail")
     if yag is not None:
         if ts.SEND_MAIL:
             try:
                 yag.send(to=to, subject=subject, contents=contents)
+                log.info(f"Mail \"{subject}\" sent to \"{to}\".")
             except Exception as e:
-                log.warning("could not send message \"{}\"".format(description))
-                log.warning("{}".format(repr(e)))
+                log.warning(f"Could not send message \"{subject}\" to \"{to}\". Message: \"{contents}\"")
+                log.warning(f"{repr(e)}")
         else:
             log.warning("Sending Mail Messages is disabled (SEND_MAIL = False)")
     else:
@@ -32,12 +34,29 @@ def sendTestMessage(to=ts.MAIL_RECIPIENTS):
     trySendMessage(to, s, b, "Test message")
 
 def sendDeactiveClient(clientIdentity, to=ts.MAIL_RECIPIENTS):
-    s = "TOR: deactivate client {} ({})".format(clientIdentity.Id, clientIdentity.Material)
-    b = "<h3>The Transparency of Randomness has deactivated a client</h3>" \
-        "<p><b>Client details:</b><br>Id: {}<br>Position: {}<br>IP: {}<br>Material: {}<br>Latin: {} </p>"\
-        .format(clientIdentity.Id, clientIdentity.Position, clientIdentity.IP, clientIdentity.Material, clientIdentity.Latin)
+    s = f"TOR: deactivate client {clientIdentity.Id} ({clientIdentity.Material})"
+    b = (f"<h3>The Transparency of Randomness has deactivated a client</h3>"
+         f"<p>"
+         f"<b>Client details:</b><br />"
+         f"Id: {clientIdentity.Id}<br />"
+         f"Position: {clientIdentity.Position}<br />"
+         f"IP: {clientIdentity.IP}<br />"
+         f"Material: {clientIdentity.Material}<br />"
+         f"Latin: {clientIdentity.Latin}"
+         f"</p>"
+        )
     #TODO: add error log to message
     trySendMessage(to, s, b, "deactivate client")
+
+def sendTestDeactiveClient(to=ts.MAIL_RECIPIENTS):
+    cid = Utils.EmptyObject()
+    setattr(cid, "Id", 11)
+    setattr(cid, "IP", "192.134.34.23")
+    setattr(cid, "Material", "Pfeffer")
+    setattr(cid, "Position", 15)
+    setattr(cid, "Latin", "Schinus")
+    setattr(cid, "Id", 11)
+    sendDeactiveClient(cid, to)
 
 def sendStatisticMail(data, to=ts.MAIL_RECIPIENTS):
     s = "TOR: status report"
@@ -50,12 +69,3 @@ def sendStatisticMail(data, to=ts.MAIL_RECIPIENTS):
         b = b + "</tr>"
     b = b + "</table>"
     trySendMessage(to, s, b, "status report")
-
-cid = Utils.EmptyObject()
-setattr(cid, "Id", 11)
-setattr(cid, "IP", "192.134.34.23")
-setattr(cid, "Material", "Pfeffer")
-setattr(cid, "Position", 15)
-setattr(cid, "Latin", "Schinus")
-setattr(cid, "Id", 11)
-#sendDeactiveClient(cid)
