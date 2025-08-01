@@ -16,6 +16,8 @@ class InaManager:
         if cs.USE_INA:
             try:
                 self.__ina = INA219(cs.INA_SHUNT_OHMS)
+                self.__ina.logger = logging.getLogger("ina")
+                self.__ina._i2c._logger = logging.getLogger("ina")
                 self.__ina.configure()
                 log.info("INA initialized")
             except Exception as e:

@@ -17,8 +17,10 @@ else:
 TOR_MARLIN_VERSION = "1.5"
 
 #logging
-LOG_LEVEL = logging.INFO
-#LOG_LEVEL = logging.DEBUG
+#LOG_LEVEL = logging.INFO
+LOG_LEVEL = logging.DEBUG
+LOG_LEVEL_SERIAL = logging.INFO
+LOG_LEVEL_INA = logging.INFO
 LOG_LEVEL_STATUS = logging.INFO
 
 L_X_RAW = 290

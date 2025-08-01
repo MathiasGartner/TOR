@@ -1,5 +1,6 @@
 import logging
 log = logging.getLogger(__name__)
+logSerial = logging.getLogger("serial")
 
 import serial
 import sys
@@ -27,9 +28,10 @@ class Communicator:
 
     def send(self, message):
         if self.useSerial:
+            logSerial.debug(f"SEND: {message}")
             self.ser.write((message + "\n").encode())
         else:
-            log.debug(message)
+            logSerial.debug(message)
 
     def recv(self):
         if self.useSerial:
@@ -47,5 +49,5 @@ class Communicator:
                 msgs.append(msg)
             else:
                 msg = "ok\n"
-            log.debug("RECV: {}".format(msg))
+            logSerial.debug(f"RECV: {msg}")
         return msgs
