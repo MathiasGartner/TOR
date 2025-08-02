@@ -1,7 +1,7 @@
 import logging
 log = logging.getLogger(__name__)
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtWidgets import QApplication, QStyle, QComboBox, QGridLayout, QLineEdit, QGroupBox, QHBoxLayout, QInputDialog, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from tor.base import DBManager
@@ -63,10 +63,10 @@ class ClientDetailViewFull(ClientDetailViewBase):
         #row += 1
         #layClientStatus.addWidget(QLabel("current job:"), row, 0)
         #layClientStatus.addWidget(self.lblCurrentJob, row, 1)
-        row += 1
-        layClientStatus.addWidget(QLabel("avg result:"), row, 0)
-        layClientStatus.addWidget(self.lblResultAverageStatus, row, 1)
-        layClientStatus.addWidget(self.lblResultAverage, row, 2)
+        #row += 1
+        #layClientStatus.addWidget(QLabel("avg result:"), row, 0)
+        #layClientStatus.addWidget(self.lblResultAverageStatus, row, 1)
+        #layClientStatus.addWidget(self.lblResultAverage, row, 2)
         #layClientStatus.addWidget(QLabel("stddev:"), 3, 0)
         #layClientStatus.addWidget(self.lblResultStddev, 3, 1)
 
@@ -197,11 +197,12 @@ class ClientDetailViewFull(ClientDetailViewBase):
             self.layStack.setContentsMargins(0, 0, 0, 0)
             layMainGroup.setContentsMargins(0, 0, 0, 0)
 
-            for lbl in [self.lblIsOnline, self.lblTORVersion, self.lblClientServiceRunning, self.lblStatusServiceRunning, self.lblResultAverageStatus, self.lblErrorLogIcon]:
+            for lbl in [self.lblIsOnline, self.lblTORVersion, self.lblClientServiceRunning, self.lblStatusServiceRunning, self.lblResultAverageStatus, self.lblErrorLogIcon, lblJobParamsInfo]:
                 lbl.setFixedSize(8, 8)
                 lbl.setScaledContents(True)
-
-            self.btnX.setFixedSize(8, 8)
+            for btn in [self.btnX, self.btnSaveJob]:
+                btn.setFixedSize(8, 8)
+                btn.setIconSize(QSize(8, 8))
 
 
 

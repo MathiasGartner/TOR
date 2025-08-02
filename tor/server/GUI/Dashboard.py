@@ -61,7 +61,7 @@ app.setStyleSheet("""
         QGroupBox#ClientGroup 
         { 
             font-weight: bold; 
-            font-size: 12px;
+            font-size: 10px;
         }
 
         *[styleClass~="group-box-compact"] 
