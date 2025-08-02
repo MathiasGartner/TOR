@@ -27,8 +27,8 @@ class ClientDetailViewFull(ClientDetailViewBase):
         self.lblResultAverageStatus = QLabel()
 
         self.btnX = QPushButton()
-        self.btnX.setIcon(QApplication.style().standardIcon(QStyle.SP_DialogCancelButton))
-        #self.btnX.setIcon(TORIcons.ICON_CLOSE_BTN)
+        #self.btnX.setIcon(QApplication.style().standardIcon(QStyle.SP_DialogCancelButton))
+        self.btnX.setIcon(TORIcons.ICON_CLOSE_BTN)
         self.btnX.setFixedSize(16, 16)
         self.btnX.clicked.connect(self.btnX_clicked)
         self.btnChange = QPushButton()
@@ -45,10 +45,11 @@ class ClientDetailViewFull(ClientDetailViewBase):
         #layMain.addWidget(self.btnX, alignment=Qt.AlignRight)
 
         layClientStatus = QGridLayout()
+        h = 12
         row = 0
         layClientStatus.addWidget(QLabel("online:"), row, 0)
         layClientStatus.addWidget(self.lblIsOnline, row, 1)
-        layClientStatus.addWidget(self.btnX, row, 1, alignment=Qt.AlignRight)
+        layClientStatus.addWidget(self.btnX, row, 2, alignment=Qt.AlignCenter)
         row += 1
         layClientStatus.addWidget(QLabel("Version:"), row, 0)
         layClientStatus.addWidget(self.lblTORVersion, row, 1)
@@ -104,7 +105,7 @@ class ClientDetailViewFull(ClientDetailViewBase):
         #Job
         layJob = QGridLayout()
         w = 90
-        h = 20
+        h = 16
         row = 0
         layJob.addWidget(QLabel("Name:"), row, 0)
         self.cmbCurrentJob = QComboBox()
@@ -113,6 +114,11 @@ class ClientDetailViewFull(ClientDetailViewBase):
         self.cmbCurrentJob.currentIndexChanged.connect(self.cmbCurrentJob_currentIndexChanged)
         self.cmbCurrentJob.setFixedSize(w, h)
         layJob.addWidget(self.cmbCurrentJob, row, 1)
+        self.btnSaveJob = QPushButton()
+        self.btnSaveJob.setIcon(TORIcons.ICON_START_BTN)
+        self.btnSaveJob.setFixedSize(h, h)
+        self.btnSaveJob.clicked.connect(self.btnSaveJob_clicked)
+        layJob.addWidget(self.btnSaveJob, row, 2)
         row += 1
         layJob.addWidget(QLabel("Parameters:"), row, 0)
         self.txtJobParams = QLineEdit()
@@ -122,11 +128,6 @@ class ClientDetailViewFull(ClientDetailViewBase):
         lblJobParamsInfo.setPixmap(TORIcons.ICON_INFO)
         lblJobParamsInfo.setToolTip("<b>R:</b> no Job Parameters<br/><br/><b>W:</b> no Job Parameters<br/><br/><b>RW:</b> JobParameters: r w t<br/>run 'r' times, then wait 'w' times for 't' seconds")
         layJob.addWidget(lblJobParamsInfo, row, 2)
-        row += 1
-        self.btnSaveJob = QPushButton("SAVE")
-        self.btnSaveJob.setFixedSize(w, h)
-        self.btnSaveJob.clicked.connect(self.btnSaveJob_clicked)
-        layJob.addWidget(self.btnSaveJob, row, 1)
         grpJob = QGroupBox("Job")
         grpJob.setProperty("styleClass", "group-box-compact")
         grpJob.setLayout(layJob)
@@ -190,10 +191,18 @@ class ClientDetailViewFull(ClientDetailViewBase):
             layClientStatus.setContentsMargins(0, 0, 0, 0)
             layClientService.setContentsMargins(0, 0, 0, 0)
             layLEDs.setContentsMargins(0, 0, 0, 0)
+            layJob.setContentsMargins(0, 0, 0, 0)
             layClientOptions.setContentsMargins(0, 0, 0, 0)
-            layClientOptions.setContentsMargins(0, 0, 0, 0)
+            layErrorLog.setContentsMargins(0, 0, 0, 0)
             self.layStack.setContentsMargins(0, 0, 0, 0)
             layMainGroup.setContentsMargins(0, 0, 0, 0)
+
+            for lbl in [self.lblIsOnline, self.lblTORVersion, self.lblClientServiceRunning, self.lblStatusServiceRunning, self.lblResultAverageStatus, self.lblErrorLogIcon]:
+                lbl.setFixedSize(8, 8)
+                lbl.setScaledContents(True)
+
+            self.btnX.setFixedSize(8, 8)
+
 
 
     def updateClientArea(self):

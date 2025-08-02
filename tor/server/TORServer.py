@@ -132,13 +132,17 @@ def handleRequest(conn):
                 NetworkUtils.sendOK(conn)
         elif "MAC" in request:
             cId = DBManager.getClientIdentity(request["MAC"])
-            NetworkUtils.sendData(conn, {"Id": cId.Id,
-                                         "IP": cId.IP,
-                                         "Material": cId.Material,
-                                         "Position": cId.Position,
-                                         "Latin": cId.Latin,
-                                         "IsActive": cId.IsActive
-                                         })
+            if cId is not None:
+                NetworkUtils.sendData(conn, {"Id": cId.Id,
+                                             "IP": cId.IP,
+                                             "Material": cId.Material,
+                                             "Position": cId.Position,
+                                             "Latin": cId.Latin,
+                                             "IsActive": cId.IsActive
+                                             })
+            else:
+                #TODO: send NOT_OK
+                NetworkUtils.sendOK()
         elif "DASH" in request: #status request from Dashboard UI
             NetworkUtils.sendOK(conn)
         else:
