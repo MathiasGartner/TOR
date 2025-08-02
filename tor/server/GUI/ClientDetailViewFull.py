@@ -10,7 +10,7 @@ from tor.server.GUI.ClientDetailViewBase import ClientDetailViewBase
 from tor.server.Job import Job, DefaultJobs
 
 class ClientDetailViewFull(ClientDetailViewBase):
-    def __init__(self, app, position: int, changeClientCallback=None, openDetailTabCallback=None):
+    def __init__(self, app, position: int, changeClientCallback=None, openDetailTabCallback=None, compact=False):
         super().__init__()
 
         self.app = app
@@ -43,7 +43,6 @@ class ClientDetailViewFull(ClientDetailViewBase):
         layMain.addWidget(self.btnX, alignment=Qt.AlignRight)
 
         layClientStatus = QGridLayout()
-        #layClientStatus.setContentsMargins(0, 0, 0, 0)
         row = 0
         layClientStatus.addWidget(QLabel("online:"), row, 0)
         layClientStatus.addWidget(self.lblIsOnline, row, 1)
@@ -67,26 +66,31 @@ class ClientDetailViewFull(ClientDetailViewBase):
         #layClientStatus.addWidget(self.lblResultStddev, 3, 1)
 
         grpClientStatus = QGroupBox("Status")
+        grpClientStatus.setProperty("styleClass", "group-box-compact")
         grpClientStatus.setLayout(layClientStatus)
 
         #Client Service
         layClientService = QHBoxLayout()
-        #layLEDs.setContentsMargins(0, 0, 0, 0)
-        self.btnStartClientService.setFixedSize(30, 18)
-        self.btnStopClientService.setFixedSize(30, 18)
+        self.btnStartClientService.setFixedSize(30, 14)
+        self.btnStartClientService.setProperty("styleClass", "button-compact")
+        self.btnStopClientService.setFixedSize(30, 14)
+        self.btnStopClientService.setProperty("styleClass", "button-compact")
         layClientService.addWidget(self.btnStartClientService)
         layClientService.addWidget(self.btnStopClientService)
         grpClientService = QGroupBox("Client Service")
+        grpClientService.setProperty("styleClass", "group-box-compact")
         grpClientService.setLayout(layClientService)
 
         #LEDs
         layLEDs = QHBoxLayout()
-        #layLEDs.setContentsMargins(0, 0, 0, 0)
-        self.btnTurnOnLEDs.setFixedSize(30, 18)
-        self.btnTurnOffLEDs.setFixedSize(30, 18)
+        self.btnTurnOnLEDs.setFixedSize(30, 14)
+        self.btnTurnOnLEDs.setProperty("styleClass", "button-compact")
+        self.btnTurnOffLEDs.setFixedSize(30, 14)
+        self.btnTurnOffLEDs.setProperty("styleClass", "button-compact")
         layLEDs.addWidget(self.btnTurnOnLEDs)
         layLEDs.addWidget(self.btnTurnOffLEDs)
         grpLEDs = QGroupBox("LEDs")
+        grpLEDs.setProperty("styleClass", "group-box-compact")
         grpLEDs.setLayout(layLEDs)
 
         #Job
@@ -112,21 +116,21 @@ class ClientDetailViewFull(ClientDetailViewBase):
         self.btnSaveJob.clicked.connect(self.btnSaveJob_clicked)
         layJob.addWidget(self.btnSaveJob, row, 1)
         grpJob = QGroupBox("Job")
+        grpJob.setProperty("styleClass", "group-box-compact")
         grpJob.setLayout(layJob)
 
         #Options
         layClientOptions = QGridLayout()
-        #layClientOptions.setContentsMargins(0, 0, 0, 0)
         layClientOptions.addWidget(QLabel("User mode enabled"), 0, 0)
         layClientOptions.addWidget(self.chkUserMode, 0, 1)
         layClientOptions.addWidget(QLabel("Client activated"), 1, 0)
         layClientOptions.addWidget(self.chkIsActivated, 1, 1)
         grpClientOptions = QGroupBox("Options")
+        grpClientOptions.setProperty("styleClass", "group-box-compact")
         grpClientOptions.setLayout(layClientOptions)
 
         #Error Log
         layErrorLog = QGridLayout()
-        #layClientOptions.setContentsMargins(0, 0, 0, 0)
         self.lblErrorLogIcon = QLabel()
         layErrorLog.addWidget(self.lblErrorLogIcon, 0, 0)
         self.lblErrorLogMessage = QLabel()
@@ -141,11 +145,18 @@ class ClientDetailViewFull(ClientDetailViewBase):
         self.btnErrorLogGoToDetails.clicked.connect(self.btnErrorLogGoToDetails_clicked)
         layErrorLog.addWidget(self.btnErrorLogGoToDetails, 0, 3)
         grpErrorLog = QGroupBox("Error Log")
+        grpErrorLog.setProperty("styleClass", "group-box-compact")
         grpErrorLog.setLayout(layErrorLog)
 
         layMain.addWidget(grpClientStatus)
-        layMain.addWidget(grpClientService)
-        layMain.addWidget(grpLEDs)
+        if compact:
+            layClientServiceAndLEDs = QHBoxLayout()
+            layClientServiceAndLEDs.addWidget(grpClientService)
+            layClientServiceAndLEDs.addWidget(grpLEDs)
+            layMain.addLayout(layClientServiceAndLEDs)
+        else:
+            layMain.addWidget(grpClientService)
+            layMain.addWidget(grpLEDs)
         layMain.addWidget(grpJob)
         layMain.addWidget(grpClientOptions)
         layMain.addWidget(grpErrorLog)
@@ -160,9 +171,16 @@ class ClientDetailViewFull(ClientDetailViewBase):
         self.grpMainGroup.setLayout(self.layStack)
 
         layMainGroup = QVBoxLayout()
-        #layMainGroup.setContentsMargins(0, 0, 0, 0)
         layMainGroup.addWidget(self.grpMainGroup)
         self.setLayout(layMainGroup)
+
+        if compact:
+            layClientStatus.setContentsMargins(0, 0, 0, 0)
+            layClientService.setContentsMargins(0, 0, 0, 0)
+            layLEDs.setContentsMargins(0, 0, 0, 0)
+            layClientOptions.setContentsMargins(0, 0, 0, 0)
+            layClientOptions.setContentsMargins(0, 0, 0, 0)
+            layMainGroup.setContentsMargins(0, 0, 0, 0)
 
 
     def updateClientArea(self):

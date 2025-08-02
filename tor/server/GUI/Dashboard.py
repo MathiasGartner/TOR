@@ -26,8 +26,8 @@ from PyQt5.QtWidgets import (QSplitter, QInputDialog, QSizePolicy, QApplication,
                              QCheckBox, QSpacerItem, QFrame, QLineEdit, QTableView, QTableWidgetItem, QDateEdit)
 from PyQt5.QtGui import QPixmap, QIcon, QPainter, QTextCursor, QColor
 
-QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+#QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+#QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
 
 app = QApplication(sys.argv)
 app.setStyleSheet("""
@@ -60,9 +60,24 @@ app.setStyleSheet("""
 
         QGroupBox#ClientGroup 
         { 
-            font-weight: bold; font-size: 16px; 
+            font-weight: bold; 
+            font-size: 16px; 
         }
 
+        *[styleClass~="group-box-compact"] 
+        { 
+            font-size: 8pt; 
+        }
+
+        *[styleClass~="group-box-compact"] * 
+        { 
+            font-size: 8pt; 
+        }
+        
+        *[styleClass~="button-compact"] 
+        { 
+            padding: 25px;
+        }
     """)
 window = None
 
@@ -266,8 +281,6 @@ class MainWindow(QMainWindow):
         layClientDetails.setContentsMargins(0, 0, 0, 0)
 
         if ss.BOX_FORMATION == "3x3x3":
-            if len(clients) != 27:
-                log.error("Positions are not set for all 27 boxes.")
             grpClientDetailsRegions = [QGroupBox() for i in range(3)]
             for g in grpClientDetailsRegions:
                 g.setObjectName("ClientGroup")
@@ -275,22 +288,40 @@ class MainWindow(QMainWindow):
             grpClientDetailsRegions[1].setTitle("Middle")
             grpClientDetailsRegions[2].setTitle("Back")
             layClientDetailsRegions = [QGridLayout() for i in range(3)]
-            for i in range(3):
-                #layClientDetailsRegions[i].setContentsMargins(0, 0, 0, 0)
-                #layClientDetailsRegions[i].setSpacing(0)
-                grpClientDetailsRegions[i].setLayout(layClientDetailsRegions[i])
-                #grpClientDetailsRegions[i].setContentsMargins(0, 0, 0, 0)
-                for j in range(3):
-                    for k in range(3):
-                        c = clients[i*9 + j*3 + k]
-                        cdv = ClientDetailViewCompact(app)
-                        cd = ClientDetails(c)
-                        cdv.clientDetails = cd
-                        cdv.grpMainGroup.setTitle("#{}: {}...".format(cd.Position, cd.Latin[0:9]))
-                        layClientDetailsRegions[i].addWidget(cdv, k, 3*i + j)
-                        self.cdvs.append(cdv)
-                        self.cds.append(cd)
-                layClientDetails.addWidget(grpClientDetailsRegions[i])
+            if ss.BOX_VIEW_COMPACT == True:
+                if len(clients) != 27:
+                    log.error("Positions are not set for all 27 boxes.")
+                for i in range(3):
+                    #layClientDetailsRegions[i].setContentsMargins(0, 0, 0, 0)
+                    #layClientDetailsRegions[i].setSpacing(0)
+                    grpClientDetailsRegions[i].setLayout(layClientDetailsRegions[i])
+                    #grpClientDetailsRegions[i].setContentsMargins(0, 0, 0, 0)
+                    for j in range(3):
+                        for k in range(3):
+                            c = clients[i*9 + j*3 + k]
+                            cdv = ClientDetailViewCompact(app)
+                            cd = ClientDetails(c)
+                            cdv.clientDetails = cd
+                            cdv.grpMainGroup.setTitle("#{}: {}...".format(cd.Position, cd.Latin[0:9]))
+                            layClientDetailsRegions[i].addWidget(cdv, k, 3*i + j)
+                            self.cdvs.append(cdv)
+                            self.cds.append(cd)
+                    layClientDetails.addWidget(grpClientDetailsRegions[i])
+            else:
+                for i in range(3):
+                    grpClientDetailsRegions[i].setLayout(layClientDetailsRegions[i])
+                    for j in range(3):
+                        for k in range(3):
+                            cdv = ClientDetailViewFull(app, position=9*i + 3*j + k + 1, changeClientCallback=self.reloadClients, openDetailTabCallback=self.openClientDetailTab, compact=True)
+                            for c in clients:
+                                if c.Position == cdv.position:
+                                    cd = ClientDetails(c)
+                                    cdv.clientDetails = cd
+                                    self.cds.append(cd)
+                            cdv.updateClientArea()
+                            self.cdvs.append(cdv)
+                            layClientDetailsRegions[i].addWidget(cdv, k, 3*i + j)
+                    layClientDetails.addWidget(grpClientDetailsRegions[i])
         elif ss.BOX_FORMATION == "3x3":
             for i in range(9):
                 cdv = ClientDetailViewFull(app, position=i + 1, changeClientCallback=self.reloadClients, openDetailTabCallback=self.openClientDetailTab)
