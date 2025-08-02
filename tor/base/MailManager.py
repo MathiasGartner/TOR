@@ -81,15 +81,50 @@ def sendDeactiveClient(clientIdentity, msg, errorLog=None, to=ts.MAIL_RECIPIENTS
     b = b.replace("\n", "")
     trySendMessage(to, s, b)
 
-def sendStatisticMail(data, to=ts.MAIL_RECIPIENTS):
+def sendStatisticMail(statisticData, errorLog, to=ts.MAIL_RECIPIENTS):
     tdstyle = 'style="padding: 12px 15px;"'
     tdstyleBold = 'style="padding: 12px 15px; font-weight: bold;"'
     tdstyleRightAlign = 'style="padding: 12px 15px; text-align: right;"'
 
     s = "Status Report"
-    b = f'''
+    b = "<h2>The Transparency of Randomness Status Report</h2>"
+
+    b = b + "<h3>Error Log</h3>"
+    b = b + f'''
         <table>
-            <thead style="background-color: #288C78; color: #FFFFFF; text-align: left;">
+            <thead>
+                <tr style="background-color: #5A3C78; color: #FFFFFF; text-align: left;">
+                    <td {tdstyle}>Time</td>
+                    <td {tdstyle}>Code</td>
+                    <td {tdstyle}>Type</td>
+                    <td {tdstyle}>Box</td>
+                    <td {tdstyle}>Message</td>
+                </tr>
+            </thead>
+            <tbody>
+    '''
+    i = 0
+    for log in errorLog:
+        col = "#F1F1F1" if (i % 2 == 0) else "#FCFCFC"
+        b = b + f'''
+            <tr  style="border-bottom: 2px solid #009879; background-color: {col};">
+                <td {tdstyle}>{log.Time}</td>
+                <td {tdstyle}>{log.MessageCode}</td>
+                <td {tdstyle}>{log.Type}</td>
+                <td {tdstyle}>{log.ClientName}</td>
+                <td {tdstyle}>{log.Message}</td>
+            </tr>
+        '''
+        i += 1
+    b = b + '''
+            </tbody>
+        </table>
+    '''
+    
+    b = b + "<h3>Statistics</h3>"
+    b = b + f'''
+        <table>
+            <thead">
                 <tr style="background-color: #288C78; color: #FFFFFF; text-align: left;">
                     <td {tdstyle}>Position</td>
                     <td {tdstyle}>Name</td>
@@ -106,7 +141,7 @@ def sendStatisticMail(data, to=ts.MAIL_RECIPIENTS):
             <tbody>
     '''
     i = 0
-    for d in data:
+    for d in statisticData:
         b = b + f'''
             <tr  style="border-bottom: 2px solid #009879; background-color: {"#F1F1F1" if (i % 2 == 0) else "#FCFCFC"};">
                 <td {tdstyleBold}>{str(d[0])}</td>

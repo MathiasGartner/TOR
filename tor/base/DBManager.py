@@ -222,10 +222,16 @@ def getClientLogByClientId(clientId, maxEntries=1000):
     data = cursor.fetchall()
     return data
 
-def getRecentClientLogError(clientId):
+def getRecentClientLogErrorByClientId(clientId):
     query = "SELECT Id, MessageCode, Message, Time FROM clientlog WHERE MessageType = 'ERROR' AND ClientId = %(clientId)s AND IsAcknowledged = 0 ORDER BY Time DESC LIMIT 1"
     cursor.execute(query, {"clientId": clientId})
     data = cursor.fetchone()
+    return data
+
+def getRecentClientLogErrors(maxEntries=10):
+    query = "SELECT l.MessageType AS Type, l.MessageCode, c.Material AS ClientName, l.Message, DATE_ADD(Time, " + TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog l LEFT JOIN client c ON c.Id = l.ClientId WHERE MessageType = 'ERROR' ORDER BY l.Id DESC LIMIT %(maxEntries)s"
+    cursor.execute(query, {"maxEntries": maxEntries})
+    data = cursor.fetchall()
     return data
 
 def acknowledgeErrorLog(logId):

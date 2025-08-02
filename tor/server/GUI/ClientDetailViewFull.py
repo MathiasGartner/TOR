@@ -259,7 +259,7 @@ class ClientDetailViewFull(ClientDetailViewBase):
     def refreshErrorLog(self):
         self.ErrorMessage = None
         if self.clientDetails is not None:
-            self.ErrorMessage = DBManager.getRecentClientLogError(self.clientDetails.Id)
+            self.ErrorMessage = DBManager.getRecentClientLogErrorByClientId(self.clientDetails.Id)
             if self.ErrorMessage is not None:
                 self.lblErrorLogIcon.setPixmap(TORIcons.LED_RED)
                 self.lblErrorLogMessage.setText(f"{self.ErrorMessage.Message}\nTime: {self.ErrorMessage.Time}\nCode: {self.ErrorMessage.MessageCode}")
