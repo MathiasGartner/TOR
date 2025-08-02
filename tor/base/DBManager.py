@@ -218,9 +218,9 @@ def getClientLog():
     data = cursor.fetchall()
     return data
 
-def getClientLogByClientId(clientId):
-    query = "SELECT MessageType AS Type, MessageCode, Message, DATE_ADD(Time, " + TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog WHERE ClientId = %(clientId)s ORDER BY Id DESC LIMIT 1000"
-    cursor.execute(query, {"clientId": clientId})
+def getClientLogByClientId(clientId, maxEntries=1000):
+    query = "SELECT MessageType AS Type, MessageCode, Message, DATE_ADD(Time, " + TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog WHERE ClientId = %(clientId)s ORDER BY Id DESC LIMIT %(maxEntries)s"
+    cursor.execute(query, {"clientId": clientId, "maxEntries": maxEntries})
     data = cursor.fetchall()
     return data
 

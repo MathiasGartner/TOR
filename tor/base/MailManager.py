@@ -13,7 +13,7 @@ except Exception as e:
     log.warning("could not initialize MailManager")
     log.warning(f"{repr(e)}")
 
-def trySendMessage(to, subject, contents, description):
+def trySendMessage(to, subject, contents):
     log.info("will send mail")
     if yag is not None:
         if ts.SEND_MAIL:
@@ -28,27 +28,114 @@ def trySendMessage(to, subject, contents, description):
     else:
         log.warning("MailManager not initialized")
 
-def sendTestMessage(to=ts.MAIL_RECIPIENTS):
-    s = "TOR: test"
-    b = "This is a test message from The Transparency of Randomness."
-    trySendMessage(to, s, b, "Test message")
+def sendDeactiveClient(clientIdentity, msg, errorLog=None, to=ts.MAIL_RECIPIENTS):
+    tdstyle = 'style="padding: 12px 15px;"'
+    tdstyleRightAlign = 'style="padding: 12px 15px; text-align: right;"'
 
-def sendDeactiveClient(clientIdentity, to=ts.MAIL_RECIPIENTS):
-    s = f"TOR: deactivate client {clientIdentity.Id} ({clientIdentity.Material})"
-    b = (f"<h3>The Transparency of Randomness has deactivated a client</h3>"
-         f"<p>"
-         f"<b>Client details:</b><br />"
-         f"Id: {clientIdentity.Id}<br />"
-         f"Position: {clientIdentity.Position}<br />"
-         f"IP: {clientIdentity.IP}<br />"
-         f"Material: {clientIdentity.Material}<br />"
-         f"Latin: {clientIdentity.Latin}"
-         f"</p>"
-        )
-    #TODO: add error log to message
-    trySendMessage(to, s, b, "deactivate client")
+    s = f"Client Deactivated: {clientIdentity.Material} ({clientIdentity.Id})"
+    b = f'''
+        <h3>The Transparency of Randomness has deactivated a client</h3>
+        <p style="color: #5A3C78;">
+            Stop message: {msg}
+        </p>
+        <p>
+            <b>Client details:</b><br />
+            Id: {clientIdentity.Id}<br />
+            Position: {clientIdentity.Position}<br />
+            IP: {clientIdentity.IP}<br />
+            Material: {clientIdentity.Material}<br />
+            Latin: {clientIdentity.Latin}
+        </p>
+    '''
+    if errorLog is not None:
+        b = b + f'''
+            <table>
+                <thead>
+                    <tr style="background-color: #288C78; color: #FFFFFF; text-align: left;">
+                        <td {tdstyle}>Time</td>
+                        <td {tdstyle}>Code</td>
+                        <td {tdstyle}>Type</td>
+                        <td {tdstyle}>Message</td>
+                    </tr>
+                </thead>
+                <tbody>
+        '''
+        i = 0
+        for log in errorLog:
+            col = "#F1F1F1" if (i % 2 == 0) else "#FCFCFC"
+            if log.Type == "ERROR":
+                col = "#5A3C78"
+            b = b + f'''
+                <tr  style="border-bottom: 2px solid #009879; background-color: {col};">
+                    <td {tdstyle}>{log.Time}</td>
+                    <td {tdstyle}>{log.MessageCode}</td>
+                    <td {tdstyle}>{log.Type}</td>
+                    <td {tdstyle}>{log.Message}</td>
+                </tr>
+            '''
+            i += 1
+    b = b + '''
+            </tbody>
+        </table>
+    '''
+    b = b.replace("\n", "")
+    trySendMessage(to, s, b)
+
+def sendStatisticMail(data, to=ts.MAIL_RECIPIENTS):
+    tdstyle = 'style="padding: 12px 15px;"'
+    tdstyleBold = 'style="padding: 12px 15px; font-weight: bold;"'
+    tdstyleRightAlign = 'style="padding: 12px 15px; text-align: right;"'
+
+    s = "Status Report"
+    b = f'''
+        <table>
+            <thead style="background-color: #288C78; color: #FFFFFF; text-align: left;">
+                <tr style="background-color: #288C78; color: #FFFFFF; text-align: left;">
+                    <td {tdstyle}>Position</td>
+                    <td {tdstyle}>Name</td>
+                    <td {tdstyle}>2 Hour</td>
+                    <td {tdstyle}>avg.</td>
+                    <td {tdstyle}>4 Hour</td>
+                    <td {tdstyle}>avg.</td>
+                    <td {tdstyle}>Day</td>
+                    <td {tdstyle}>avg.</td>
+                    <td {tdstyle}>Event</td>
+                    <td {tdstyle}>avg.</td>
+                </tr>
+            </thead>
+            <tbody>
+    '''
+    i = 0
+    for d in data:
+        b = b + f'''
+            <tr  style="border-bottom: 2px solid #009879; background-color: {"#F1F1F1" if (i % 2 == 0) else "#FCFCFC"};">
+                <td {tdstyleBold}>{str(d[0])}</td>
+                <td {tdstyleBold}>{str(d[1])}</td>
+                <td {tdstyleRightAlign}>{d[2]}</td>
+                <td {tdstyleRightAlign}>{float(d[3]):.2f}</td>
+                <td {tdstyleRightAlign}>{d[4]}</td>
+                <td {tdstyleRightAlign}>{float(d[5]):.2f}</td>
+                <td {tdstyleRightAlign}>{d[6]}</td>
+                <td {tdstyleRightAlign}>{float(d[7]):.2f}</td>
+                <td {tdstyleRightAlign}>{d[8]}</td>
+                <td {tdstyleRightAlign}>{float(d[9]):.2f}</td>
+            </tr>
+        '''
+        i += 1
+    b = b + '''
+            </tbody>
+        </table>
+    '''
+    b = b.replace("\n", "")
+    trySendMessage(to, s, b)
+
+def sendTestMessage(to=ts.MAIL_RECIPIENTS):
+    s = "Test message"
+    b = "This is a test message from The Transparency of Randomness."
+    trySendMessage(to, s, b)
 
 def sendTestDeactiveClient(to=ts.MAIL_RECIPIENTS):
+    from tor.base import DBManager
     cid = Utils.EmptyObject()
     setattr(cid, "Id", 11)
     setattr(cid, "IP", "192.134.34.23")
@@ -56,45 +143,5 @@ def sendTestDeactiveClient(to=ts.MAIL_RECIPIENTS):
     setattr(cid, "Position", 15)
     setattr(cid, "Latin", "Schinus")
     setattr(cid, "Id", 11)
-    sendDeactiveClient(cid, to)
-
-def sendStatisticMail(data, to=ts.MAIL_RECIPIENTS):
-    s = "TOR: status report"
-
-    tdstyle = 'style="padding: 12px 15px;"'
-    tdstyleBold = 'style="padding: 12px 15px; font-weight: bold;"'
-    tdstyleRightAlign = 'style="padding: 12px 15px; text-align: right;"'
-    b = '<table>'
-    b = b + '<thead style="background-color: #009879; color: #ffffff; text-align: left;">'
-    b = b + f'<tr style="background-color: #009879; color: #ffffff; text-align: left;">'
-    b = b + f'<td {tdstyle}>Position</td>'
-    b = b + f'<td {tdstyle}>Name</td>'
-    b = b + f'<td {tdstyle}>2 Hour</td>'
-    b = b + f'<td {tdstyle}>avg.</td>'
-    b = b + f'<td {tdstyle}>4 Hour</td>'
-    b = b + f'<td {tdstyle}>avg.</td>'
-    b = b + f'<td {tdstyle}>Day</td>'
-    b = b + f'<td {tdstyle}>avg.</td>'
-    b = b + f'<td {tdstyle}>Event</td>'
-    b = b + f'<td {tdstyle}>avg.</td>'
-    b = b + f'</tr>'
-    b = b + f'</thead>'
-    b = b + f'<tbody>'
-    i = 0
-    for d in data:
-        b = b + f'<tr  style="border-bottom: 2px solid #009879; background-color: {"#f3f3f3" if (i % 2 == 0) else "#fcfcfc"};">'
-        b = b + f'<td {tdstyleBold}>{str(d[0])}</td>'
-        b = b + f'<td {tdstyleBold}>{str(d[1])}</td>'
-        b = b + f'<td {tdstyleRightAlign}>{d[2]}</td>'
-        b = b + f'<td {tdstyleRightAlign}>{float(d[3]):.2f}</td>'
-        b = b + f'<td {tdstyleRightAlign}>{d[4]}</td>'
-        b = b + f'<td {tdstyleRightAlign}>{float(d[5]):.2f}</td>'
-        b = b + f'<td {tdstyleRightAlign}>{d[6]}</td>'
-        b = b + f'<td {tdstyleRightAlign}>{float(d[7]):.2f}</td>'
-        b = b + f'<td {tdstyleRightAlign}>{d[8]}</td>'
-        b = b + f'<td {tdstyleRightAlign}>{float(d[9]):.2f}</td>'
-        b = b + '</tr>'
-        i += 1
-    b = b + '</tbody>'
-    b = b + '</table>'
-    trySendMessage(to, s, b, "status report")
+    errorLog = DBManager.getClientLogByClientId(cid.Id, 20)
+    sendDeactiveClient(cid, "Test message", errorLog, to)

@@ -128,7 +128,8 @@ def handleRequest(conn):
                 jW.ClientId = clientId
                 DBManager.saveJobs(jW)
                 cId = DBManager.getClientIdentityByClientId(clientId)
-                MailManager.sendDeactiveClient(cId)
+                errorLog = DBManager.getClientLogByClientId(clientId, 20)
+                MailManager.sendDeactiveClient(cId, request["STOP"], errorLog)
                 NetworkUtils.sendOK(conn)
         elif "MAC" in request:
             cId = DBManager.getClientIdentity(request["MAC"])
