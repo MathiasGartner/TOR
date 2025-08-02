@@ -60,12 +60,41 @@ def sendTestDeactiveClient(to=ts.MAIL_RECIPIENTS):
 
 def sendStatisticMail(data, to=ts.MAIL_RECIPIENTS):
     s = "TOR: status report"
-    b = "<table>"
-    b = b + "<th><td>Position</td><td>Name</td><td>2 Hour</td><td></td><td>4 Hour</td><td></td><td>Day</td><td></td><td>Event</td><td></td></th>"
+
+    tdstyle = 'style="padding: 12px 15px;"'
+    tdstyleBold = 'style="padding: 12px 15px; font-weight: bold;"'
+    tdstyleRightAlign = 'style="padding: 12px 15px; text-align: right;"'
+    b = '<table>'
+    b = b + '<thead style="background-color: #009879; color: #ffffff; text-align: left;">'
+    b = b + f'<tr style="background-color: #009879; color: #ffffff; text-align: left;">'
+    b = b + f'<td {tdstyle}>Position</td>'
+    b = b + f'<td {tdstyle}>Name</td>'
+    b = b + f'<td {tdstyle}>2 Hour</td>'
+    b = b + f'<td {tdstyle}>avg.</td>'
+    b = b + f'<td {tdstyle}>4 Hour</td>'
+    b = b + f'<td {tdstyle}>avg.</td>'
+    b = b + f'<td {tdstyle}>Day</td>'
+    b = b + f'<td {tdstyle}>avg.</td>'
+    b = b + f'<td {tdstyle}>Event</td>'
+    b = b + f'<td {tdstyle}>avg.</td>'
+    b = b + f'</tr>'
+    b = b + f'</thead>'
+    b = b + f'<tbody>'
+    i = 0
     for d in data:
-        b = b + "<tr>"
-        for text in d:
-            b = b + "<td>" + str(text) + "</td>"
-        b = b + "</tr>"
-    b = b + "</table>"
+        b = b + f'<tr  style="border-bottom: 2px solid #009879; background-color: {"#f3f3f3" if (i % 2 == 0) else "#fcfcfc"};">'
+        b = b + f'<td {tdstyleBold}>{str(d[0])}</td>'
+        b = b + f'<td {tdstyleBold}>{str(d[1])}</td>'
+        b = b + f'<td {tdstyleRightAlign}>{d[2]}</td>'
+        b = b + f'<td {tdstyleRightAlign}>{float(d[3]):.2f}</td>'
+        b = b + f'<td {tdstyleRightAlign}>{d[4]}</td>'
+        b = b + f'<td {tdstyleRightAlign}>{float(d[5]):.2f}</td>'
+        b = b + f'<td {tdstyleRightAlign}>{d[6]}</td>'
+        b = b + f'<td {tdstyleRightAlign}>{float(d[7]):.2f}</td>'
+        b = b + f'<td {tdstyleRightAlign}>{d[8]}</td>'
+        b = b + f'<td {tdstyleRightAlign}>{float(d[9]):.2f}</td>'
+        b = b + '</tr>'
+        i += 1
+    b = b + '</tbody>'
+    b = b + '</table>'
     trySendMessage(to, s, b, "status report")
