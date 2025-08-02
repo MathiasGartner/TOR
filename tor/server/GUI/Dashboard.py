@@ -43,10 +43,10 @@ app.setStyleSheet("""
 
         QGroupBox#ClientDetails 
         { 
-            font-size: 13px;            
+            font-size: 11px;            
             border: 1px solid gray;
             border-color: #17365D;
-            margin-top: 20px;
+            margin-top: 7px;
         }
 
         QGroupBox::title#ClientDetails 
@@ -61,12 +61,12 @@ app.setStyleSheet("""
         QGroupBox#ClientGroup 
         { 
             font-weight: bold; 
-            font-size: 16px; 
+            font-size: 12px;
         }
 
         *[styleClass~="group-box-compact"] 
         { 
-            font-size: 11px; 
+            font-size: 10px; 
         }
 
         *[styleClass~="group-box-compact"] * 
@@ -347,6 +347,7 @@ class MainWindow(QMainWindow):
         programNames = DBManager.getAllJobProgramNames()
         self.quickTourNames = [pn.Name for pn in programNames if pn.Name.startswith("MSI - ")]
         self.cmbQuickTour = QComboBox()
+        self.cmbQuickTour.setMaximumWidth(100)
         for i in range(len(self.quickTourNames)):
             self.cmbQuickTour.insertItem(i, self.quickTourNames[i], self.quickTourNames[i])
         self.btnStartQuickTour = QPushButton()
@@ -354,7 +355,6 @@ class MainWindow(QMainWindow):
         self.btnStartQuickTour.clicked.connect(self.btnStartQuickTour_clicked)
 
         layDashboardQuickTour = QHBoxLayout()
-        layDashboardQuickTour.addWidget(QLabel("Job:"))
         layDashboardQuickTour.addWidget(self.cmbQuickTour)
         layDashboardQuickTour.addWidget(self.btnStartQuickTour)
 
@@ -427,10 +427,11 @@ class MainWindow(QMainWindow):
         spacerSize = 30
         layDashboardButtons = QVBoxLayout()
         layDashboardButtons.addSpacing(spacerSize)
+        layDashboardButtons.addWidget(QLabel("Job"))
         layDashboardButtons.addWidget(wdgDashboardQuickTour)
         layDashboardButtons.addSpacing(spacerSize)
         layDashboardButtons.addSpacing(spacerSize)
-        layDashboardButtons.addWidget(QLabel("<h3>The Transparency of Randomness</h3>"))
+        layDashboardButtons.addWidget(QLabel("<h3>The Transparency<br/>of Randomness</h3>"))
         layDashboardButtons.addWidget(self.btnStartAllTORPrograms)
         layDashboardButtons.addWidget(self.btnStopAllTORPrograms)
         layDashboardButtons.addSpacing(spacerSize)

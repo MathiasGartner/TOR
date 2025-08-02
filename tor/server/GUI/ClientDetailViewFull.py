@@ -75,7 +75,7 @@ class ClientDetailViewFull(ClientDetailViewBase):
         grpClientStatus.setLayout(layClientStatus)
 
         #Client Service
-        w = 40
+        w = 30
         h = 16
         layClientService = QHBoxLayout()
         self.btnStartClientService.setFixedSize(w, h)
@@ -89,7 +89,7 @@ class ClientDetailViewFull(ClientDetailViewBase):
         grpClientService.setLayout(layClientService)
 
         #LEDs
-        w = 40
+        w = 30
         h = 16
         layLEDs = QHBoxLayout()
         self.btnTurnOnLEDs.setFixedSize(w, h)
@@ -104,7 +104,7 @@ class ClientDetailViewFull(ClientDetailViewBase):
 
         #Job
         layJob = QGridLayout()
-        w = 90
+        w = 70
         h = 16
         row = 0
         layJob.addWidget(QLabel("Name:"), row, 0)
