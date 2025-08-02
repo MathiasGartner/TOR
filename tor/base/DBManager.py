@@ -51,7 +51,6 @@ def getClientIdentity(clientMAC):
     cursor.execute(query, { "clientMAC" : clientMAC })
     data = cursor.fetchone()
     if data is None:
-        #raise Exception("Could not read client identity for: ", clientMAC)
         log.warning("Could not read client identity for: {}".format(clientMAC))
     return data
 
@@ -60,7 +59,6 @@ def getClientIdentityByClientId(clientId):
     cursor.execute(query, { "id" : clientId })
     data = cursor.fetchone()
     if data is None:
-        #raise Exception("Could not read client identity for: ", clientMAC)
         log.warning("Could not read client identity for Id: {}".format(clientId))
     return data
 

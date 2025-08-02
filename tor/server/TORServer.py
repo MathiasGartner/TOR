@@ -142,8 +142,8 @@ def handleRequest(conn):
                                              "IsActive": cId.IsActive
                                              })
             else:
-                #TODO: send NOT_OK
-                NetworkUtils.sendOK()
+                log.warning(f"Could not load Client Identity for {request['MAC']}.")
+                NetworkUtils.sendNotOK(conn)
         elif "DASH" in request: #status request from Dashboard UI
             NetworkUtils.sendOK(conn)
         else:

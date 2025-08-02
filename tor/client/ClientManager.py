@@ -15,6 +15,8 @@ class ClientManager:
             self.clientIdentity = self.askForClientIdentity(self.clientMacAddress)
         else:
             self.clientIdentity = { "Id": -1, "IP": -1, "Material": "vacuum", "Position": -1, "Latin": "vacuum", "IsActive": 0 }
+        if self.clientIdentity is None or "Id" not in self.clientIdentity:
+            raise Exception(f"Could not load Client Identity. MacAddress {self.clientMacAddress} is not registered.")
         self.clientId = self.clientIdentity["Id"]
         if self.clientIdentity["Position"] is not None:
             p = int(self.clientIdentity["Position"])
@@ -49,7 +51,7 @@ class ClientManager:
 
     def askForClientIdentity(self, macAddress):
         msg = {"MAC": macAddress}
-        answer = self.sendAndGetAnswer(msg);
+        answer = self.sendAndGetAnswer(msg)
         return answer
 
     def updateClientIsActive(self):

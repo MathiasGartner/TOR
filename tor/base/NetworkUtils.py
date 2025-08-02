@@ -106,3 +106,7 @@ def sendData(conn, data):
 def sendOK(conn):
     msgOK = json.dumps({"STATUS" : "OK"})
     conn.send(msgOK.encode())
+
+def sendNotOK(conn):
+    msgNotOK = json.dumps({"STATUS" : "NOT OK"})
+    conn.send(msgNotOK.encode())
