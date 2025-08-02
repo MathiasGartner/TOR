@@ -26,8 +26,8 @@ from PyQt5.QtWidgets import (QSplitter, QInputDialog, QSizePolicy, QApplication,
                              QCheckBox, QSpacerItem, QFrame, QLineEdit, QTableView, QTableWidgetItem, QDateEdit)
 from PyQt5.QtGui import QPixmap, QIcon, QPainter, QTextCursor, QColor
 
-#QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-#QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
 
 app = QApplication(sys.argv)
 app.setStyleSheet("""
@@ -66,17 +66,16 @@ app.setStyleSheet("""
 
         *[styleClass~="group-box-compact"] 
         { 
-            font-size: 8pt; 
+            font-size: 11px; 
         }
 
         *[styleClass~="group-box-compact"] * 
         { 
-            font-size: 8pt; 
+            font-size: 9px; 
         }
         
         *[styleClass~="button-compact"] 
         { 
-            padding: 25px;
         }
     """)
 window = None
@@ -198,7 +197,9 @@ class ClientDetails:
 
     def IsBadStatistics(self):
         maxStddevResult = 0.17
-        return self.ResultAverage < (3.5-maxStddevResult) or self.ResultAverage > (3.5+maxStddevResult) or self.ResultStddev > 1.77
+        avgResultOptimal = 3.5
+        maxStddev = 1.77
+        return self.ResultAverage < (avgResultOptimal - maxStddevResult) or self.ResultAverage > (avgResultOptimal + maxStddevResult) or self.ResultStddev > maxStddev
 
     def getClientStatus(self):
         answer = None
@@ -937,11 +938,9 @@ class MainWindow(QMainWindow):
                 cdv.lblResultAverage.setText("{:.2f}±{:.2f}".format(cdv.clientDetails.ResultAverage, cdv.clientDetails.ResultStddev))
                 cdv.lblResultStddev.setText("+-{}".format(cdv.clientDetails.ResultStddev))
                 if cdv.clientDetails.IsBadStatistics():
-                    cdv.lblResultAverage.setStyleSheet("QLabel { color: \"red\"; }")
-                    cdv.lblResultStddev.setStyleSheet("QLabel { color: \"red\"; }")
+                    cdv.lblResultAverageStatus.setPixmap(TORIcons.LED_RED)
                 else:
-                    cdv.lblResultAverage.setStyleSheet("")
-                    cdv.lblResultStddev.setStyleSheet("")
+                    cdv.lblResultAverageStatus.setPixmap(TORIcons.LED_GREEN)
                 if isinstance(cdv, ClientDetailViewFull):
                     cdv.refreshErrorLog()
 
