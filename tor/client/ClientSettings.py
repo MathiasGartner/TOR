@@ -14,7 +14,7 @@ if sys.platform == "linux" and platform.platform() == "Linux-4.19.118+-armv6l-wi
 else:
     ON_RASPI = False
 
-TOR_MARLIN_VERSION = "1.5"
+TOR_MARLIN_VERSION = "1.4"
 
 #logging
 #LOG_LEVEL = logging.INFO
