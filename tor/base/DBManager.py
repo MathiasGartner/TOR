@@ -1,17 +1,18 @@
 import logging
 log = logging.getLogger(__name__)
 
+import copy
 import mysql.connector as mysql
 
 import tor.TORSettings as ts
-from tor.server.Job import Job
+from tor.server.Job import Job, DefaultJobs
 
 db = mysql.connect(
-    host = ts.DB_HOST,
-    user = ts.DB_USER,
-    passwd = ts.DB_PASSWORD,
-    database = "tor",
-    autocommit = True
+    host=ts.DB_HOST,
+    user=ts.DB_USER,
+    passwd=ts.DB_PASSWORD,
+    database="tor",
+    autocommit=True
 )
 
 TIME_OFFSET_FOR_DISPLAY = "interval 2 hour"
@@ -67,11 +68,28 @@ def getNextJobForClientId(clientId):
     cursor.execute(query, { "clientId" : clientId })
     data = cursor.fetchone()
     if data is None:
-        data = Job()
+        data = copy.deepcopy(DefaultJobs.WAIT)
         data.ClientId = clientId
-        data.JobCode = "W"
-        data.JobParameters = 5
-        data.ExecuteAt = None
+    return data
+
+def getNextJobForClientIdOnSchedule(clientId):
+    query = """
+                SELECT j.ClientId, j.JobCode, j.JobParameters, j.ExecuteAt FROM jobqueue j
+                LEFT JOIN client c ON c.Id = j.ClientId
+                WHERE j.ClientId = 1
+                AND 
+                (
+                    NOT c.UseSchedule 
+                    OR   
+                    EXISTS(SELECT 1 FROM schedule s WHERE NOW() >= s.StartTime AND NOW() <= s.EndTime)
+                )
+                ORDER BY j.Id DESC LIMIT 1
+            """
+    cursor.execute(query, { "clientId" : clientId })
+    data = cursor.fetchone()
+    if data is None:
+        data = copy.deepcopy(DefaultJobs.WAIT)
+        data.ClientId = clientId
     return data
 
 def getCurrentJobs():
@@ -153,7 +171,7 @@ def setJobsByJobProgram(programName, startInNMinutes=0):
     cursor.execute(query, { "programName": programName, "minutes": startInNMinutes })
 
 def getAllClients(includeWihtoutPosition=False):
-    query = "SELECT Id, IP, Material, Position, Latin, AllowUserMode, IsActive FROM client WHERE Position IS NOT NULL ORDER BY Position"
+    query = "SELECT Id, IP, Material, Position, Latin, AllowUserMode, IsActive, UseSchedule FROM client WHERE Position IS NOT NULL ORDER BY Position"
     cursor.execute(query)
     data = cursor.fetchall()
     return data
@@ -187,6 +205,10 @@ def setUserModeEnabled(clientId, enabled):
 def setClientIsActive(clientId, active):
     query = "UPDATE client SET IsActive = %(active)s WHERE Id = %(clientId)s"
     cursor.execute(query, {"active": active, "clientId": clientId})
+
+def setClientUseSchedule(clientId, useSchedule):
+    query = "UPDATE client SET UseSchedule = %(useSchedule)s WHERE Id = %(clientId)s"
+    cursor.execute(query, {"useSchedule": useSchedule, "clientId": clientId})
 
 def setClientPosition(clientId, position=None):
     query = "UPDATE client SET Position = %(position)s WHERE Id = %(clientId)s"
@@ -299,3 +321,8 @@ def getResultStatistics(event):
     data = cursor.fetchall()
     return data
 
+def insertScheduleInterval(start, end):
+    query = "INSERT INTO schedule (StartTime, EndTime) VALUES (%s, %s)"
+    data = (start, end)
+    cursor.execute(query, data)
+    db.commit()

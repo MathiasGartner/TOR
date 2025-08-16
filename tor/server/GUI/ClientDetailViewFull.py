@@ -138,6 +138,8 @@ class ClientDetailViewFull(ClientDetailViewBase):
         layClientOptions.addWidget(self.chkUserMode, 0, 1)
         layClientOptions.addWidget(QLabel("Client activated"), 1, 0)
         layClientOptions.addWidget(self.chkIsActivated, 1, 1)
+        layClientOptions.addWidget(QLabel("Use schedule"), 2, 0)
+        layClientOptions.addWidget(self.chkUseSchedule, 2, 1)
         grpClientOptions = QGroupBox("Options")
         grpClientOptions.setProperty("styleClass", "group-box-compact")
         grpClientOptions.setLayout(layClientOptions)
@@ -312,6 +314,7 @@ class ClientDetailViewFull(ClientDetailViewBase):
 
             self.chkUserMode.setChecked(self.clientDetails.AllowUserMode)
             self.chkIsActivated.setChecked(self.clientDetails.IsActive)
+            self.chkUseSchedule.setChecked(self.clientDetails.UseSchedule)
 
         self.app.processEvents()
 

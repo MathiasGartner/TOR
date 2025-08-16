@@ -170,6 +170,7 @@ class ClientDetails:
             self.Latin = None
             self.AllowUserMode = False
             self.IsActive = False
+            self.UseSchedule = False
         else:
             self.Id = data.Id
             self.IP = data.IP
@@ -178,6 +179,7 @@ class ClientDetails:
             self.Latin = data.Latin
             self.AllowUserMode = data.AllowUserMode
             self.IsActive = data.IsActive
+            self.UseSchedule = data.UseSchedule
         self.ClientServiceStatus = "unknown"
         self.StatusManagerServiceStatus = "unknown"
         self.CurrentJobCode = None
@@ -927,6 +929,7 @@ class MainWindow(QMainWindow):
                     c.Latin = d.Latin
                     c.AllowUserMode = d.AllowUserMode
                     c.IsActive = d.IsActive
+                    c.UseSchedule = d.UseSchedule
                     break
         for cdv in self.cdvs:
             if cdv.clientDetails is not None:
@@ -1222,6 +1225,7 @@ class MainWindow(QMainWindow):
         self.setClientDetailInfoListText(4, "")
         self.setClientDetailInfoListText(5, "YES" if client.AllowUserMode else "NO")
         self.setClientDetailInfoListText(6, "YES" if client.IsActive else "NO")
+        self.setClientDetailInfoListText(6, "YES" if client.UseSchedule else "NO")
         self.setClientDetailInfoListText(7, client.Position)
 
         clientContributions = DBManager.getAllClientResultContribution(TAKE_N_RESULTS_FOR_RECENT_CONTRIBUTIONS)

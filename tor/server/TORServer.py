@@ -71,7 +71,7 @@ def handleRequest(conn):
                 DBManager.logClientAction(clientId, "INFO", request["MSG"], request["MESSAGE"])
                 NetworkUtils.sendOK(conn)
             elif "J" in request: #client asks for job
-                job = DBManager.getNextJobForClientId(clientId)
+                job = DBManager.getNextJobForClientIdOnSchedule(clientId)
                 log.debug("client {} asks for job, send {}".format(clientId, job))
                 NetworkUtils.sendData(conn, {
                     job.JobCode: job.JobParameters,

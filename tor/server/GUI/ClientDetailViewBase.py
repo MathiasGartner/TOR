@@ -31,6 +31,8 @@ class ClientDetailViewBase(QWidget):
         self.chkUserMode.clicked.connect(self.chkUserMode_clicked)
         self.chkIsActivated = QCheckBox()
         self.chkIsActivated.clicked.connect(self.chkIsActivated_clicked)
+        self.chkUseSchedule = QCheckBox()
+        self.chkUseSchedule.clicked.connect(self.chkUseSchedule_clicked)
 
         # Client Service
         self.btnStartClientService = QPushButton()
@@ -53,6 +55,10 @@ class ClientDetailViewBase(QWidget):
     def chkIsActivated_clicked(self, checked):
         self.clientDetails.IsActive = checked
         DBManager.setClientIsActive(self.clientDetails.Id, checked)
+
+    def chkUseSchedule_clicked(self, checked):
+        self.clientDetails.UseSchedule = checked
+        DBManager.setClientUseSchedule(self.clientDetails.Id, checked)
 
     def refreshClientStatus(self):
         #to be implemented in subclasses
