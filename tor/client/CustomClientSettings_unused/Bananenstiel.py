@@ -1,2 +1,2 @@
 import tor.client.ClientSettings as cs
-cs.RAMP_MATERIAL = "Chilis"
+cs.RAMP_MATERIAL = "Bananenstiel"
