@@ -60,7 +60,7 @@ def handleRequest(conn):
                 log.warning(request["MESSAGE"])
                 DBManager.logClientAction(clientId, "ERROR", request["E"], request["MESSAGE"])
                 NetworkUtils.sendOK(conn)
-            elif "WARN" in request: #warning on clien
+            elif "WARN" in request: #warning on client
                 log.warning("Warning {} @ Client {}".format(request["WARN"], clientId))
                 log.warning(request["MESSAGE"])
                 DBManager.logClientAction(clientId, "WARNING", request["WARN"], request["MESSAGE"])
