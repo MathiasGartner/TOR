@@ -115,7 +115,7 @@ def run():
     # roll
     currentState = "ROLL"
     magnetHadContact = False
-    while not magnetHadContact and countNoMagnetContact <= cs.MAX_COUNT_NO_MAGNET_CONTACT:
+    while not magnetHadContact and countNoMagnetContact < cs.MAX_COUNT_NO_MAGNET_CONTACT:
         if countNoMagnetContact > 0:
             log.info(f"try roll count: {countNoMagnetContact + 1}")
         dropoffPos = mr.run(lastPickupX, numFailedTries=countNoMagnetContact)
