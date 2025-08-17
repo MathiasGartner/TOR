@@ -282,10 +282,16 @@ class MovementRoutines:
         percent = x / cs.LX
         return self.getDropoffPosByPercent(percent, invert)
 
-    def run(self, lastPickupX, onSendResult=None):
-        # move to dropoff position
-        dropoffPos = self.getDropoffPosByPercent(lastPickupX, invert=True)
+    def run(self, lastPickupX, numFailedTries=0):
+        # calculate dropoff position
+        # on every second try the position is not inverted
+        invert = (numFailedTries % 2) == 0
+        # if the frist two tries fail, the position is altered
+        if numFailedTries >= 2:
+            lastPickupX = lastPickupX / (numFailedTries // 2)
+        dropoffPos = self.getDropoffPosByPercent(lastPickupX, invert=invert)
 
+        # move to dropoff position
         self.moveToDropoffPosition(dropoffPos)
 
         #TODO: why is this not working?

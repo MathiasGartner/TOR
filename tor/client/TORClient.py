@@ -108,98 +108,115 @@ def run():
 
     lm.setAllLeds()
 
-    if not cm.clientIsActive():
+    # check early exit
+    if not cm.clientIsActive() or userModeRequested:
         return
-    if not userModeRequested:
-        # roll
-        currentState = "ROLL"
-        dropoffPos = mr.run(lastPickupX)
+
+    # roll
+    currentState = "ROLL"
+    magnetHadContact = False
+    while not magnetHadContact and countNoMagnetContact <= cs.MAX_COUNT_NO_MAGNET_CONTACT:
+        if countNoMagnetContact > 0:
+            log.info(f"try roll count: {countNoMagnetContact + 1}")
+        dropoffPos = mr.run(lastPickupX, numFailedTries=countNoMagnetContact)
         magnetHadContact = mr.getLastMagnetContactStatus()
         if magnetHadContact:
             countNoMagnetContact = 0
         else:
             countNoMagnetContact += 1
 
-    checkFunctionality()
-    if not cm.clientIsActive():
+        # check early exit
+        checkFunctionality()
+        if not cm.clientIsActive():
+            return
+        if userModeRequested:
+            mm.waitForMovementFinished()
+            return
+
+    if magnetHadContact:
+        # pickup die - take image (no movement)
+        currentState = "PICKUP_TAKEIMAGE"
+        dieRollResult = mr.pickupDie_takeImage()
+
+    # check early exit
+    if userModeRequested:
+        mm.waitForMovementFinished()
         return
-    if not userModeRequested:
-        if magnetHadContact:
-            # pickup die - take image
-            currentState = "PICKUP_TAKEIMAGE"
-            dieRollResult = mr.pickupDie_takeImage()
 
-    if not userModeRequested:
-        if magnetHadContact:
-            # pickup die - pickup
-            currentState = "PICKUP_PICKUP"
-            mr.pickupDie_pickup(dieRollResult, cm.sendDieRollResult)
+    if magnetHadContact:
+        # pickup die - pickup
+        currentState = "PICKUP_PICKUP"
+        mr.pickupDie_pickup(dieRollResult, cm.sendDieRollResult)
 
-            if dieRollResult.found:
-                isNearOldPickupPosition = abs(lastPickupX - dieRollResult.position.x) < cs.SAME_RESULT_NEAR_THRESHOLD_X
-                lastPickupX = dieRollResult.position.x
-                if lastResult == dieRollResult.result and isNearOldPickupPosition:
-                    countSameResult += 1
-                else:
-                    countSameResult = 0
-                lastResult = dieRollResult.result
-                countNotFound = 0
+        if dieRollResult.found:
+            isNearOldPickupPosition = abs(lastPickupX - dieRollResult.position.x) < cs.SAME_RESULT_NEAR_THRESHOLD_X
+            lastPickupX = dieRollResult.position.x
+            if lastResult == dieRollResult.result and isNearOldPickupPosition:
+                countSameResult += 1
             else:
-                lastPickupX = Utils.clamp(cs.LX - lastPickupX, 0, cs.LX)
-                cm.sendDieResultNotRecognized()
-                countNotFound += 1
-
-    checkFunctionality()
-    if not cm.clientIsActive():
-        return
-    if not userModeRequested:
-        #check if homing is needed
-        runsSinceLastHoming += 1
-        homeEveryNRuns = cs.HOME_EVERY_N_RUNS
-        if "R" in nextJob and nextJob["R"] is not None:
-            runParams = nextJob["R"].split()
-            for rp in runParams:
-                if rp[0] == "H":
-                    homeEveryNRuns = int(rp[1:]) or homeEveryNRuns
-                    break
-        if not magnetHadContact: #todo: do this everytime or only if countNoMagnetContact > ...?
-            log.info("magnet had no contact")
-            cm.sendNoMagnetContact(dropoffPos)
-            mm.doHoming()
-            doHomingCheck()
-            countNoMagnetContact = 0
-            runsSinceLastHoming = 0
-        elif runsSinceLastHoming >= homeEveryNRuns:
-            cm.sendHomeAfterNSuccessfulRuns(homeEveryNRuns)
-            mr.pickupDieWhileHoming()
-            doHomingCheck()
-            runsSinceLastHoming = 0
-        elif countNotFound >= cs.HOME_AFTER_N_FAILS:
-            log.info("count not found: {} -> do homing...".format(countNotFound))
-            cm.sendDieResultNotFoundNTimes(cs.HOME_AFTER_N_FAILS)
-            mm.doHoming()
-            doHomingCheck()
-            mm.moveToPosAfterHoming(cs.BEFORE_PICKUP_POSITION, True)
-            mr.searchForDie()
-            mm.moveToPos(cs.CENTER_TOP, True)
+                countSameResult = 0
+            lastResult = dieRollResult.result
             countNotFound = 0
-            runsSinceLastHoming = 0
-        elif countSameResult >= cs.HOME_AFTER_N_SAME_RESULTS:
-            log.info("count same result: {} -> do homing...".format(countSameResult))
-            cm.sendSameDieResultNTimes(cs.HOME_AFTER_N_SAME_RESULTS, dieRollResult.result)
-            dieRollResult = mr.pickupDieWhileHoming()
-            doHomingCheck()
-            if not dieRollResult.found:
-                mr.searchForDie()
-            else:
-                mm.moveToPos(cs.CENTER_TOP, True)
-                mm.waitForMovementFinished()
-                dieRollResult = mr.pickupDie_takeImage()
-                if dieRollResult.found:
-                    mr.searchForDie()
+        else:
+            lastPickupX = Utils.clamp(cs.LX - lastPickupX, 0, cs.LX)
+            cm.sendDieResultNotRecognized()
+            countNotFound += 1
+
+    # check early exit
+    checkFunctionality()
+    if not cm.clientIsActive():
+        return
+    if userModeRequested:
+        mm.waitForMovementFinished()
+        return
+
+    #check if homing is needed
+    runsSinceLastHoming += 1
+    homeEveryNRuns = cs.HOME_EVERY_N_RUNS
+    if "R" in nextJob and nextJob["R"] is not None:
+        runParams = nextJob["R"].split()
+        for rp in runParams:
+            if rp[0] == "H":
+                homeEveryNRuns = int(rp[1:]) or homeEveryNRuns
+                break
+    if countNoMagnetContact >= cs.MAX_COUNT_NO_MAGNET_CONTACT:
+        log.info(f"magnet had no contact {cs.MAX_COUNT_NO_MAGNET_CONTACT} times.")
+        cm.sendNoMagnetContact(dropoffPos)
+        mm.doHoming()
+        doHomingCheck()
+        countNoMagnetContact = 0
+        runsSinceLastHoming = 0
+    elif countNotFound >= cs.HOME_AFTER_N_FAILS:
+        log.info("count not found: {} -> do homing...".format(countNotFound))
+        cm.sendDieResultNotFoundNTimes(cs.HOME_AFTER_N_FAILS)
+        mm.doHoming()
+        doHomingCheck()
+        mm.moveToPosAfterHoming(cs.BEFORE_PICKUP_POSITION, True)
+        mr.searchForDie()
+        mm.moveToPos(cs.CENTER_TOP, True)
+        countNotFound = 0
+        runsSinceLastHoming = 0
+    elif countSameResult >= cs.HOME_AFTER_N_SAME_RESULTS:
+        log.info("count same result: {} -> do homing...".format(countSameResult))
+        cm.sendSameDieResultNTimes(cs.HOME_AFTER_N_SAME_RESULTS, dieRollResult.result)
+        dieRollResult = mr.pickupDieWhileHoming()
+        doHomingCheck()
+        if not dieRollResult.found:
+            mr.searchForDie()
+        else:
             mm.moveToPos(cs.CENTER_TOP, True)
-            countSameResult = 0
-            runsSinceLastHoming = 0
+            mm.waitForMovementFinished()
+            dieRollResult = mr.pickupDie_takeImage()
+            if dieRollResult.found:
+                mr.searchForDie()
+        mm.moveToPos(cs.CENTER_TOP, True)
+        countSameResult = 0
+        runsSinceLastHoming = 0
+    elif runsSinceLastHoming >= homeEveryNRuns:
+        cm.sendHomeAfterNSuccessfulRuns(homeEveryNRuns)
+        mr.pickupDieWhileHoming()
+        doHomingCheck()
+        runsSinceLastHoming = 0
 
     mm.waitForMovementFinished()
 

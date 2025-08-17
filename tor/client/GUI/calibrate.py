@@ -131,6 +131,10 @@ MANUAL_MOVEMENT_Z_MAX = cs.LX + 15
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=cs.LOG_LEVEL)
 log = logging.getLogger(__name__)
+logSerial = logging.getLogger("serial")
+logSerial.setLevel(cs.LOG_LEVEL_SERIAL)
+logIna = logging.getLogger("ina")
+logIna.setLevel(cs.LOG_LEVEL_INA)
 
 ###########################
 ### get client identity ###
