@@ -57,7 +57,7 @@ filename = "../../scripts/development/update_tor_marlin.cmd"
 cmd_delete = r'ssh -i {0} pi@{1} "sudo rm -r /home/pi/tormarlin"'
 cmd_mkdir = r'ssh -i {0} pi@{1} "mkdir /home/pi/tormarlin"'
 cmd_copy = r"scp -i {0} " + tsl.PATH_TO_TOR_MARLIN_FIRMWARE + r" pi@{1}:/home/pi/tormarlin/"
-cmd_flash = r'ssh -i {0} pi@{1} "sudo ./scripts/flashTORMarlin.sh"'
+cmd_flash = r'ssh -i {0} pi@{1} "sudo /home/pi/scripts/flashTORMarlin.sh"'
 
 with open(filename, 'w') as fAll:
     for c in clients:
