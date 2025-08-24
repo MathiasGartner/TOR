@@ -145,6 +145,7 @@ class ClientManager:
         }
         answer = self.sendAndGetAnswer(msg)
 
+    # TODO: when is this used? "USERMODE_READY" seems to be unused?
     def sendUserModeReady(self):
         msg = {
             "C": self.clientId,

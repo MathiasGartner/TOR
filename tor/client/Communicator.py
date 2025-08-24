@@ -26,6 +26,10 @@ class Communicator:
                 timeout=1
             )
 
+    def close(self):
+        if self.useSerial:
+            self.ser.close()
+
     def send(self, message):
         if self.useSerial:
             logSerial.debug(f"SEND: {message}")

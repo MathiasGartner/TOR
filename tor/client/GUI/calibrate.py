@@ -775,8 +775,10 @@ class MainWindow(QMainWindow):
             mm.rollDie()
             if mm.magnetHadContact:
                 self.lblMagnetContact.setPixmap(TORIcons.LED_GREEN)
+                self.addStatusText("Contact OK")
             else:
                 self.lblMagnetContact.setPixmap(TORIcons.LED_RED)
+                self.addStatusText("No Contact")
             time.sleep(0.1)
         else:
             time.sleep(2)
