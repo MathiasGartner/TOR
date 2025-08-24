@@ -83,7 +83,7 @@ with open(filename, 'w') as fAll:
 
 #### TOR-Marlin ####
 
-filename = os.path.join(tsl.PATH_TO_TOR_SCRIPTS, "development", "update_tor_marlin_window.ps1")
+filename = os.path.join(tsl.PATH_TO_TOR_SCRIPTS, "development", "update_tor_marlin_windows.ps1")
 with open(filename, 'w') as fAll:
     for c in clients:
         clientfilename = f"marlin_win_{c.Id}.ps1"

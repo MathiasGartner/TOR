@@ -158,3 +158,6 @@ dmypy.json
 /scratches/copy_images_dice.cmd
 /scratches/copy_images_magnet.cmd
 /.idea/other.xml
+/scripts/development/update_tor.cmd
+/scripts/development/update_tor_marlin.cmd
+/scripts/development/update_tor_marlin_windows.ps1
