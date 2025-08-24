@@ -19,11 +19,12 @@ import matplotlib.colors as colors
 
 from functools import partial
 
-from PyQt5.QtCore import Qt, QTimer, QRect, QThread, QAbstractListModel, QSortFilterProxyModel
+from PyQt5.QtCore import Qt, QTimer, QRect, QThread, QAbstractListModel, QSortFilterProxyModel, QDateTime
 from PyQt5.QtWidgets import (QSplitter, QInputDialog, QSizePolicy, QApplication, QMainWindow, QPushButton, QLabel,
                              QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox,
                              QGroupBox, QVBoxLayout, QHBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox,
-                             QCheckBox, QSpacerItem, QFrame, QLineEdit, QTableView, QTableWidgetItem, QDateEdit)
+                             QCheckBox, QSpacerItem, QFrame, QLineEdit, QTableView, QTableWidgetItem, QDateEdit,
+                             QDateTimeEdit)
 from PyQt5.QtGui import QPixmap, QIcon, QPainter, QTextCursor, QColor
 
 QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
@@ -117,6 +118,7 @@ from tor.base import NetworkUtils
 from tor.base.GUI import TORIcons
 from tor.server.GUI.ClientDetailViewCompact import ClientDetailViewCompact
 from tor.server.GUI.ClientDetailViewFull import ClientDetailViewFull
+from tor.server.GUI.plots.RollWarnings import RollWarnings
 from tor.server.GUI.TableModels import LogMessageTableModel, DiceResultTableModel, ResultStatisticsTableModel, LogMessageSortFilterProxyModel
 from tor.server.Job import Job
 from tor.server.Job import DefaultJobs
@@ -752,18 +754,55 @@ class MainWindow(QMainWindow):
         layStatistics.addWidget(wdgStatSettings)
         layStatistics.addWidget(wdgStatPlot)
 
+
         wdgStatistics = QWidget()
         wdgStatistics.setLayout(layStatistics)
 
         self.statColorBar = None
 
 
+        wdgRollWarnings = QWidget()
+        layRollWarnings = QVBoxLayout()
+
+        grpRollWarningsTime = QGroupBox("Select Time Range")
+        layRollWarningsTime = QHBoxLayout()
+
+        self.timRollWarningsStart = QDateTimeEdit(self)
+        self.timRollWarningsStart.setCalendarPopup(True)
+        self.timRollWarningsStart.setDateTime(QDateTime.currentDateTime().addSecs(-2 * 3600*100*5))
+        self.timRollWarningsEnd = QDateTimeEdit(self)
+        self.timRollWarningsEnd.setCalendarPopup(True)
+        self.timRollWarningsEnd.setDateTime(QDateTime.currentDateTime().addSecs(3600))
+        self.btnRollWarningsUpdate = QPushButton("Update Plot")
+        self.btnRollWarningsUpdate.clicked.connect(self.btnRollWarningsUpdate_clicked)
+
+        layRollWarningsTime.addWidget(QLabel("Start:"))
+        layRollWarningsTime.addWidget(self.timRollWarningsStart)
+        layRollWarningsTime.addWidget(QLabel("End:"))
+        layRollWarningsTime.addWidget(self.timRollWarningsEnd)
+        layRollWarningsTime.addWidget(self.btnRollWarningsUpdate)
+        layRollWarningsTime.addStretch(1)
+
+        grpRollWarningsTime.setLayout(layRollWarningsTime)
+
+        self.pltRollWarnings = RollWarnings()
+
+        layRollWarnings.addWidget(grpRollWarningsTime)
+        layRollWarnings.addWidget(self.pltRollWarnings.canvas)
+        layRollWarnings.addWidget(QWidget())
+        layRollWarnings.addStretch(1)
+
+        wdgRollWarnings.setLayout(layRollWarnings)
+
+        tabStatistics = QTabWidget()
+        tabStatistics.addTab(wdgStatistics, "Overview")
+        tabStatistics.addTab(wdgRollWarnings, "Roll Warnings")
+
         layTORServer = QVBoxLayout()
         layTORServer.addWidget(QLabel("TOR server"))
 
         wdgTORServer = QWidget()
         wdgTORServer.setLayout(layTORServer)
-
 
         self.dashboardTabIndex = 0
         self.clientJobsTabIndex = 1
@@ -775,7 +814,7 @@ class MainWindow(QMainWindow):
         #self.tabDashboard.addTab(wdgTORServer, "TORServer")
         self.tabDashboard.addTab(wdgJobOverivew, "Jobs")
         self.tabDashboard.addTab(wdgDetails, "Detail View")
-        self.tabDashboard.addTab(wdgStatistics, "Statistics")
+        self.tabDashboard.addTab(tabStatistics, "Statistics")
         self.dashboardTabIndex = 0
         self.tabDashboard.currentChanged.connect(self.tabDashboard_currentChanged)
 
@@ -1327,6 +1366,12 @@ class MainWindow(QMainWindow):
         fig.tight_layout()
 
         self.statCanvas.draw()
+
+    def btnRollWarningsUpdate_clicked(self):
+        start = self.timRollWarningsStart.dateTime().toString(Qt.ISODate)
+        end = self.timRollWarningsEnd.dateTime().toString(Qt.ISODate)
+        self.pltRollWarnings.updatePlot(start, end)
+        self.pltRollWarnings.canvas.draw()
 
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
