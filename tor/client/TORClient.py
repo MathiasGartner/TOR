@@ -72,12 +72,16 @@ def updateClientIsActiveState():
         doHomingCheck()
 
 def checkFunctionality():
-    if cm.clientIsActive():
-        if mm.checkOTPW():
-            log.warning("OTPW triggered, client will be stopped")
-            cm.sendStopClient("OTPW Triggered")
-            cm.sendOTPWTriggered()
-            updateClientIsActiveState()
+    global lastFunctionalityCheckAtTime
+
+    if lastFunctionalityCheckAtTime is None or datetime.now() > (lastFunctionalityCheckAtTime + timedelta(seconds=cs.MIN_TIME_BETWEEN_FUNCTIONALITY_CHECKS_S)):
+        if cm.clientIsActive():
+            if mm.checkOTPW():
+                log.warning("OTPW triggered, client will be stopped")
+                cm.sendStopClient("OTPW Triggered")
+                cm.sendOTPWTriggered()
+                updateClientIsActiveState()
+            lastFunctionalityCheckAtTime = datetime.now()
 
 def doHomingCheck():
     checkFunctionality()
@@ -124,6 +128,7 @@ def run():
             countNoMagnetContact = 0
         else:
             countNoMagnetContact += 1
+            cm.sendNoMagnetContact(dropoffPos)
 
         # check early exit
         checkFunctionality()
@@ -181,7 +186,6 @@ def run():
                 break
     if countNoMagnetContact >= cs.MAX_COUNT_NO_MAGNET_CONTACT:
         log.info(f"magnet had no contact {cs.MAX_COUNT_NO_MAGNET_CONTACT} times.")
-        cm.sendNoMagnetContact(dropoffPos)
         mm.doHoming()
         doHomingCheck()
         countNoMagnetContact = 0
@@ -260,7 +264,6 @@ def doJobs():
     global currentState
     global exitUserModeAtTime
 
-    homingSuccessful = False
     if not cm.clientIsActive():
         log.warning("client is not active")
     else:
@@ -286,6 +289,7 @@ def doJobs():
     finishedRWRuns = 0
     finishedRWWaits = 0
     isFirstRWJob = True
+    imagesTaken = 0
     inParkingPosition = False
     steppersDisabled = False
     done = False
@@ -312,6 +316,8 @@ def doJobs():
             finishedRWRuns = 0
             finishedRWWaits = 0
             isFirstRWJob = True
+        if not "TAKE_IMAGE" in nextJob:
+            imagesTaken = 0
         if not "W" in nextJob and not "RW" in nextJob:
             if steppersDisabled:
                 mm.enableSteppers()
@@ -448,6 +454,12 @@ def doJobs():
                     exitUserModeAtTime = datetime.now() + timedelta(seconds=cs.EXIT_USER_MODE_AFTER_N_SECONDS)
         elif "TAKE_IMAGE" in nextJob: # take test images
             imageType = nextJob["TAKE_IMAGE"]
+            if imagesTaken > cs.HOME_AFTER_N_IMAGES_TAKEN:
+                mr.pickupDieWhileHoming()
+                mm.waitForMovementFinished()
+                mm.moveToPosAfterHoming(cs.CENTER_TOP, True)
+                mm.waitForMovementFinished()
+                imagesTaken = 0
             if imageType == "MAGNET_POS_TRUE" or imageType == "MAGNET_POS_FALSE" or imageType == "MAGNET_POS_TEST":
                 go = True
                 prefix = ""
@@ -472,6 +484,7 @@ def doJobs():
                 if go:
                     im = mr.moveToPosAndTakeMagnetVerificationImage(pos)
                     dr.writeImage(im, "{}_id={}_{}.png".format(prefix, cm.clientId, Utils.getFilenameTimestamp()), cs.IMAGE_DIRECTORY_POSITION, doCreateDirectory=True)
+                    imagesTaken += 1
 
 
     if cm.clientIsActive():
@@ -559,6 +572,7 @@ userModeRequested = False
 currentState = ""
 inUserMode = False
 exitUserModeAtTime = None
+lastFunctionalityCheckAtTime = None
 
 jobScheduler = threading.Thread(target=keepAskingForNextJob)
 jobScheduler.start()
