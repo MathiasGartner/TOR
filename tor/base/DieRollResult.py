@@ -1,11 +1,13 @@
 
 import json
 
+from tor.base.utils.Point2D import Point2D
+
 class DieRollResult:
     def __init__(self, found=False, result=-1, position=None):
         self.found = found
         self.result = result
-        self.position = position
+        self.position: Point2D = position
 
     def __str__(self):
         return f"<DieRollResult: (found={self.found}, result={self.result}, position={self.position})>"

@@ -17,8 +17,8 @@ class Point2D:
         return self.__str__()
 
     def length(self):
-        return math.hypot(self.x, self.y)
+        return math.sqrt(self.x * self.x + self.y * self.y)
 
     def distance(self, other):
         p = self - other
-        return p.norm()
+        return p.length()

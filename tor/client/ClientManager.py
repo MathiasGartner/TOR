@@ -74,14 +74,6 @@ class ClientManager:
         if "STATUS" in answer:
             log.debug("server response: {}".format(answer["STATUS"]))
 
-    def sendDieNotFound(self):
-        msg = {
-            "C": self.clientId,
-            "WARN": "NOT_LOC",
-            "MESSAGE": "Could not locate die."
-        }
-        answer = self.sendAndGetAnswer(msg)
-
     def sendDieResultNotRecognized(self):
         msg = {
             "C": self.clientId,
@@ -98,11 +90,11 @@ class ClientManager:
         }
         answer = self.sendAndGetAnswer(msg)
 
-    def sendSameDieResultNTimes(self, n, result):
+    def sendSameDieResultNTimes(self, n, result, x, y):
         msg = {
             "C": self.clientId,
             "WARN": "SAME_RESULT_N",
-            "MESSAGE": "Got the same results {} times in a row. Always find a {}".format(n, result)
+            "MESSAGE": f"Got the same results {n} times in a row. Always find a {result} at position [{x}, {y}]."
         }
         answer = self.sendAndGetAnswer(msg)
 
