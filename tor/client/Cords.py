@@ -15,6 +15,12 @@ class Cords:
     def __repr__(self):
         return self.__str__()
 
+    def __setitem__(self, i, data):
+        self.lengths[i] = data
+
+    def __getitem__(self, i):
+        return self.lengths[i]
+
     def toPosition(self):
         print("WARNING: cord modification will not be used!")
         print("   Cords: {}".format(self))
@@ -27,5 +33,5 @@ class Cords:
         return pos
 
     def isValid(self):
-        #TODO
+        #TODO:
         return True

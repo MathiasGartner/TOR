@@ -58,6 +58,7 @@ from tor.client.MovementManager import MovementManager
 if cs.ON_RASPI:
     from tor.client.MovementRoutines import MovementRoutines
 from tor.client.Position import Position
+from tor.client.Cords import Cords
 if cs.ON_RASPI:
     from tor.base.DieRecognizer import DieRecognizer
 if cs.ON_RASPI:
@@ -493,9 +494,76 @@ class MainWindow(QMainWindow):
         self.spnKeyboardStepsize.setValue(5)
         layMove.addWidget(self.spnKeyboardStepsize, 8, 1)
 
+        self.txtPosX = QDoubleSpinBox()
+        self.txtPosY = QDoubleSpinBox()
+        self.txtPosZ = QDoubleSpinBox()
+
+        self.txtCordX = QDoubleSpinBox()
+        self.txtCordY = QDoubleSpinBox()
+        self.txtCordZ = QDoubleSpinBox()
+        self.txtCordE = QDoubleSpinBox()
+
+        self.txtCordModX = QDoubleSpinBox()
+        self.txtCordModY = QDoubleSpinBox()
+        self.txtCordModZ = QDoubleSpinBox()
+        self.txtCordModE = QDoubleSpinBox()
+
+        self.txts = [
+                        [self.txtPosX, self.txtPosY, self.txtPosZ],
+                        [self.txtCordX, self.txtCordY, self.txtCordZ, self.txtCordE],
+                        [self.txtCordModX, self.txtCordModY, self.txtCordModZ, self.txtCordModE]
+                    ]
+        for txtGrp, grp in zip(self.txts, ["pos", "cord", "cordmod"]):
+            for txt in txtGrp:
+                txt.setMinimum(-50.0)
+                txt.setMaximum(600.0)
+                if grp == "cord":
+                    txt.setEnabled(False)
+                elif grp == "cordmod":
+                    txt.setEnabled(False)
+                else:
+                    txt.valueChanged.connect(partial(self.txtPosition_textChanged, grp))
+
+        self.btnMoveToPos = QPushButton("Move to Position")
+        self.btnMoveToPos.clicked.connect(self.btnMoveToPos_clicked)
+
+        layPosition = QGridLayout()
+        layPosition.addWidget(QLabel("Position"), 0, 0)
+        layPosition.addWidget(QLabel("x"), 0, 1)
+        layPosition.addWidget(self.txtPosX, 0, 2)
+        layPosition.addWidget(QLabel("y"), 0, 3)
+        layPosition.addWidget(self.txtPosY, 0, 4)
+        layPosition.addWidget(QLabel("z"), 0, 5)
+        layPosition.addWidget(self.txtPosZ, 0, 6)
+        layPosition.addWidget(QLabel("Cord length"), 1, 0)
+        layPosition.addWidget(QLabel("X"), 1, 1)
+        layPosition.addWidget(self.txtCordX, 1, 2)
+        layPosition.addWidget(QLabel("Y"), 1, 3)
+        layPosition.addWidget(self.txtCordY, 1, 4)
+        layPosition.addWidget(QLabel("Z"), 1, 5)
+        layPosition.addWidget(self.txtCordZ, 1, 6)
+        layPosition.addWidget(QLabel("E"), 1, 7)
+        layPosition.addWidget(self.txtCordE, 1, 8)
+        layPosition.addWidget(QLabel("Modified cord length"), 2, 0)
+        layPosition.addWidget(QLabel("X'"), 2, 1)
+        layPosition.addWidget(self.txtCordModX, 2, 2)
+        layPosition.addWidget(QLabel("Y'"), 2, 3)
+        layPosition.addWidget(self.txtCordModY, 2, 4)
+        layPosition.addWidget(QLabel("Z'"), 2, 5)
+        layPosition.addWidget(self.txtCordModZ, 2, 6)
+        layPosition.addWidget(QLabel("E'"), 2, 7)
+        layPosition.addWidget(self.txtCordModE, 2, 8)
+
+        layMoveMain = QVBoxLayout()
+        layMoveMain.addLayout(layMove)
+        layMoveMain.addSpacing(90)
+        layMoveMain.addLayout(layPosition)
+        layMoveMain.addSpacing(20)
+        layMoveMain.addWidget(self.btnMoveToPos)
+
         wdgMove = QWidget()
         layMove.setSizeConstraint(QLayout.SetFixedSize)
-        wdgMove.setLayout(layMove)
+        wdgMove.setLayout(layMoveMain)
 
         self.bedTabIndex = 0
         self.magnetTabIndex = 1
@@ -989,6 +1057,43 @@ class MainWindow(QMainWindow):
                 self.move(direction, steps)
             else:
                 time.sleep(abs(steps) * 0.2)
+
+    def txtPosition_textChanged(self, grp):
+        if grp == "pos":
+            pos = Position(self.txtPosX.value(), self.txtPosY.value(), self.txtPosZ.value())
+            cord = pos.toPlainCordLengths()
+            cordmod = pos.toCordLengths()
+        elif grp == "cord":
+            cord = Cords([self.txtCordX.value(), self.txtCordY.value(), self.txtCordZ.value(), self.txtCordE.value()])
+            pos = cord.toPosition()
+            cordmod = pos.toCordLengths()
+        elif grp == "cordmod":
+            pass
+        for grp in self.txts:
+            for txt in grp:
+                txt.blockSignals(True)
+        self.updatePositionsTxts(pos, cord, cordmod)
+        for grp in self.txts:
+            for txt in grp:
+                txt.blockSignals(False)
+
+    def updatePositionsTxts(self, pos, cord, cordmod):
+        self.txtPosX.setValue(pos.x)
+        self.txtPosY.setValue(pos.y)
+        self.txtPosZ.setValue(pos.z)
+        self.txtCordX.setValue(cord[0])
+        self.txtCordY.setValue(cord[1])
+        self.txtCordZ.setValue(cord[2])
+        self.txtCordE.setValue(cord[3])
+        self.txtCordModX.setValue(cordmod[0])
+        self.txtCordModY.setValue(cordmod[1])
+        self.txtCordModZ.setValue(cordmod[2])
+        self.txtCordModE.setValue(cordmod[3])
+
+    def btnMoveToPos_clicked(self):
+        pos = Position(self.txtPosX.value(), self.txtPosY.value(), self.txtPosZ.value())
+        mm.moveToPos(pos, True)
+        mm.waitForMovementFinished()
 
     ############
     ### main ###

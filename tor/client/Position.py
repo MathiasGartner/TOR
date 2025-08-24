@@ -1,3 +1,6 @@
+import logging
+log = logging.getLogger(__name__)
+
 import math
 
 import tor.client.ClientSettings as cs
@@ -49,12 +52,26 @@ class Position:
     def norm(self):
         return math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
 
+    #def fromModifiedCordLength(self, c):
+    #    tmp = cs.CORD_CORRECTION_INV_C0 + cs.CORD_CORRECTION_INV_C1 * c
+    #    cModified = cs.CORD_CORRECTION_INV_A * (cs.CORD_CORRECTION_INV_B + math.sqrt(tmp))
+
+        #cModified = c
+
+    #    return cModified
+
     def toModifiedCordLength(self, c):
         tmp = cs.PULLEY_RADIUS_OVER_CORD_THICKNESS_EFFECTIVE_SQR - c / cs.CORD_THICKNESS_EFFECTIVE_PI
         if tmp < 0:
             tmp = 0
         uw = cs.PULLEY_RADIUS_OVER_CORD_THICKNESS_EFFECTIVE - math.sqrt(tmp)
         cModified = cs.PULLEY_RADIUS_2PI * uw
+
+        #cModified = cs.CORD_CORRECTION_C * c + cs.CORD_CORRECTION_C2 * c * c
+
+        #cModified = c
+
+        #log.debug(f"c: {c}\t-->\tcModified: {cModified}")
         return cModified
 
     def toCordLengths(self):
@@ -69,6 +86,16 @@ class Position:
         c3 = self.toModifiedCordLength(c3)
         c4 = math.sqrt(self.x ** 2 + diffs.y ** 2 + self.z ** 2)
         c4 = self.toModifiedCordLength(c4)
+        return Cords([c1, c2, c3, c4])
+
+    def toPlainCordLengths(self):
+        import tor.client.ClientSettings as cs
+        from tor.client.Cords import Cords
+        diffs = cs.BOX_SIZE - self
+        c1 = math.sqrt(diffs.x ** 2 + diffs.y ** 2 + self.z ** 2)
+        c2 = math.sqrt(diffs.x ** 2 + self.y ** 2 + self.z ** 2)
+        c3 = math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
+        c4 = math.sqrt(self.x ** 2 + diffs.y ** 2 + self.z ** 2)
         return Cords([c1, c2, c3, c4])
 
     def isValid(self):
