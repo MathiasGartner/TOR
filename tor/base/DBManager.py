@@ -21,8 +21,8 @@ TIME_OFFSET_FOR_DISPLAY = "interval 2 hour"
 
 cursor = db.cursor(named_tuple=True)
 
-def executeQuery(query):
-    cursor.execute(query)
+def executeQuery(query, params=None):
+    cursor.execute(query, params)
     data = cursor.fetchall()
     return data
 
@@ -78,7 +78,7 @@ def getNextJobForClientIdOnSchedule(clientId):
     query = """
                 SELECT j.ClientId, j.JobCode, j.JobParameters, j.ExecuteAt FROM jobqueue j
                 LEFT JOIN client c ON c.Id = j.ClientId
-                WHERE j.ClientId = 1
+                WHERE j.ClientId = %(clientId)s
                 AND 
                 (
                     NOT c.UseSchedule 
@@ -172,7 +172,7 @@ def setJobsByJobProgram(programName, startInNMinutes=0):
     query = "INSERT INTO jobqueue (ClientId, JobCode, JobParameters, ExecuteAt) SELECT ClientId, JobCode, JobParameters, Date_ADD(NOW(), INTERVAL %(minutes)s MINUTE) FROM jobprogram WHERE Name = %(programName)s"
     cursor.execute(query, { "programName": programName, "minutes": startInNMinutes })
 
-def getAllClients(includeWihtoutPosition=False):
+def getAllClients():
     query = "SELECT Id, IP, Material, Position, Latin, AllowUserMode, IsActive, UseSchedule FROM client WHERE Position IS NOT NULL ORDER BY Position"
     cursor.execute(query)
     data = cursor.fetchall()
