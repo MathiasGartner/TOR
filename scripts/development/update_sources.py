@@ -23,6 +23,8 @@ cmd_copy_service = r"scp -i {0} -r " + tsl.PATH_TO_TOR_SCRIPTS + r"/client/* pi@
 cmd_install = r'ssh -i {0} pi@{1} "sudo cp /home/pi/scripts/TOR*.service /etc/systemd/system/; sudo chmod +x /home/pi/scripts/*.sh"'
 cmd_service = r'ssh -i {0} pi@{1} "sudo systemctl daemon-reload; sudo systemctl stop TORStatus; sudo systemctl enable TORStatus --now"'
 
+if not(os.path.exists(directoryClients) and os.path.isdir(directoryClients)):
+    os.mkdir(directoryClients)
 with (open(filename, 'w') as fAll):
     for c in clients:
         clientfilename = f"tor_{c.Id}.cmd"

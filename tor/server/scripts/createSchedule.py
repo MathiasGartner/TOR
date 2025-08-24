@@ -2,13 +2,15 @@ import datetime
 
 from tor.base import DBManager
 
-startDate = datetime.date(2025, 8, 15)
-endDate = datetime.date(2025, 8, 18)
+startDate = datetime.date(2025, 8, 24)
+endDate = datetime.date(2025, 8, 24)
 
-startTime = datetime.time(8, 0)
-endTime = datetime.time(19, 0)
-slotDuration = datetime.timedelta(minutes=15)
-pauseDuration = datetime.timedelta(minutes=30)
+# INFO: Database timezone is UTC
+#       Database 08:00 is Austria 10:00
+startTime = datetime.time(10, 25)
+endTime = datetime.time(10, 27)
+slotDuration = datetime.timedelta(minutes=2)
+pauseDuration = datetime.timedelta(minutes=10)
 
 day = startDate
 while day <= endDate:

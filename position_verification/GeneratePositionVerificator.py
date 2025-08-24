@@ -1,3 +1,14 @@
+# INFO: Generates models for position verification
+#       To take images of correct and wrong positions set the Job "TAKE_IMAGE" on the clients.
+#       Use "MAGNET_POS_TRUE" or "MAGNET_POS_FALSE" to create the respective training data.
+#       SQL queries for jobs:
+#           insert into jobqueue (ClientId, JobCode, JobParameters) select id, "TAKE_IMAGE", "MAGNET_POS_TRUE" from client;
+#           insert into jobqueue (ClientId, JobCode, JobParameters) select id, "TAKE_IMAGE", "MAGNET_POS_FALSE" from client;
+#       1) run the copy_images.py script to create copy scripts
+#       2) run copy_images_magnet to copy the images to a local machine (e.g. Yoga12)
+#       3) run this script to train and generate the models
+#       4) copy the *.tflite files to the machine hosting the TORServer
+
 import cv2
 import glob
 import matplotlib.pyplot as plt

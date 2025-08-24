@@ -15,6 +15,8 @@ db = mysql.connect(
     autocommit=True
 )
 
+# INFO: Database timezone is UTC
+#       Database 08:00 is Austria 10:00
 TIME_OFFSET_FOR_DISPLAY = "interval 2 hour"
 
 cursor = db.cursor(named_tuple=True)
