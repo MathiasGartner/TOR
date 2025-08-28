@@ -11,6 +11,7 @@ import tor.TORSettings as ts
 from tor.base.DieRecognizer import DieRecognizer
 from tor.base.DieRollResult import DieRollResult
 from tor.base.utils import Utils
+from tor.base.utils.Point2D import Point2D
 from tor.client.ClientManager import ClientManager
 import tor.client.ClientSettings as cs
 if cs.ON_RASPI:
@@ -102,7 +103,7 @@ def waitUntilJobStarts(job):
 
 def run():
     global runsSinceLastHoming
-    global lastPickupX
+    global lastPickupPos
     global countNoMagnetContact
     global countNotFound
     global countSameResult
@@ -122,7 +123,7 @@ def run():
     while not magnetHadContact and countNoMagnetContact < cs.MAX_COUNT_NO_MAGNET_CONTACT:
         if countNoMagnetContact > 0:
             log.info(f"try roll count: {countNoMagnetContact + 1}")
-        dropoffPos = mr.run(lastPickupX, numFailedTries=countNoMagnetContact)
+        dropoffPos = mr.run(lastPickupPos.x, numFailedTries=countNoMagnetContact)
         magnetHadContact = mr.getLastMagnetContactStatus()
         if magnetHadContact:
             countNoMagnetContact = 0
@@ -154,8 +155,9 @@ def run():
         mr.pickupDie_pickup(dieRollResult, cm.sendDieRollResult)
 
         if dieRollResult.found:
-            isNearOldPickupPosition = abs(lastPickupX - dieRollResult.position.x) < cs.SAME_RESULT_NEAR_THRESHOLD_X
-            lastPickupX = dieRollResult.position.x
+            distance = lastPickupPos.distance(dieRollResult.position)
+            isNearOldPickupPosition = distance < cs.SAME_RESULT_NEAR_THRESHOLD
+            lastPickupPos = dieRollResult.position
             if lastResult == dieRollResult.result and isNearOldPickupPosition:
                 countSameResult += 1
             else:
@@ -163,7 +165,7 @@ def run():
             lastResult = dieRollResult.result
             countNotFound = 0
         else:
-            lastPickupX = Utils.clamp(cs.LX - lastPickupX, 0, cs.LX)
+            lastPickupPos.x = Utils.clamp(cs.LX - lastPickupPos.x, 0, cs.LX)
             cm.sendDieResultNotRecognized()
             countNotFound += 1
 
@@ -202,7 +204,7 @@ def run():
         runsSinceLastHoming = 0
     elif countSameResult >= cs.HOME_AFTER_N_SAME_RESULTS:
         log.info("count same result: {} -> do homing...".format(countSameResult))
-        cm.sendSameDieResultNTimes(cs.HOME_AFTER_N_SAME_RESULTS, dieRollResult.result)
+        cm.sendSameDieResultNTimes(cs.HOME_AFTER_N_SAME_RESULTS, dieRollResult.result, dieRollResult.position.x, dieRollResult.position.y)
         dieRollResult = mr.pickupDieWhileHoming()
         doHomingCheck()
         if not dieRollResult.found:
@@ -578,7 +580,7 @@ jobScheduler = threading.Thread(target=keepAskingForNextJob)
 jobScheduler.start()
 
 runsSinceLastHoming = 0
-lastPickupX = cs.LX / 2.0
+lastPickupPos = Point2D(cs.LX / 2.0, cs.LY / 4.0 * 3.0)
 countNoMagnetContact = 0
 countNotFound = 0
 countSameResult = 0
