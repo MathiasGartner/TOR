@@ -22,9 +22,12 @@ if cs.ON_RASPI:
     from tor.client.Camera import Camera
 
 class MovementRoutines:
-    def __init__(self, cm = None):
+    def __init__(self, cm=None, mm=None):
         self.cm = cm
-        self.mm = MovementManager()
+        if mm is None:
+            self.mm = MovementManager()
+        else:
+            self.mm = mm
         self.dr = DieRecognizer()
 
     def loadPoints(self):
@@ -52,6 +55,9 @@ class MovementRoutines:
             y = 2 * (1 - px) * (p5[1] + py * (p2[1] - p5[1])) + (2 * px - 1) * (p6[1] + py * (p3[1] - p6[1]))
             z = 2 * (1 - px) * ((1 - py) * p5[2] + py * p2[2]) + (2 * px - 1) * ((1 - py) * p6[2] + py * p3[2])
         return Position(x, y, z)
+
+    def getSearchLines(self, points, mode):
+        pass
 
     def searchForDie(self):
         #starting position
@@ -136,26 +142,33 @@ class MovementRoutines:
         self.mm.moveToPos(cs.AFTER_PICKUP_POSITION, True)
         self.mm.waitForMovementFinished()
 
-    def pickupDieFromPosition(self, pos):
-        log.debug("die position: {}".format(pos))
+    def pickupDieFromPosition(self, pos, zOffset=0):
+        self.pickupWithMultiplePositions([pos], zOffset)
+
+    def pickupWithMultiplePositions(self, positions, zOffset=0):
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
         self.mm.moveToPos(cs.BEFORE_PICKUP_POSITION, True)
         self.mm.waitForMovementFinished()
 
-        pickupPos = self.relativeBedCoordinatesToPosition(pos.x, pos.y)
-        if pickupPos.y > cs.RAMP_CRITICAL_Y:
-            pickupPos.z += cs.EXTRA_Z_FOR_PICKUP
-        log.debug("pickupPos: {}".format(pickupPos))
-        #move to pick-up position
+        pickupPos = None
+        for pos in positions:
+            log.debug("attempt to pick up at: {}".format(pos))
+            pickupPos = self.relativeBedCoordinatesToPosition(pos.x, pos.y)
+            if pickupPos.y > cs.RAMP_CRITICAL_Y:
+                pickupPos.z += cs.EXTRA_Z_FOR_PICKUP
+            pickupPos.z += zOffset
+            log.debug("transformed pickupPos: {}".format(pickupPos))
+            # move to pick-up position
+            if pickupPos.y < cs.RAMP_CRITICAL_Y:
+                self.mm.moveCloseToRamp(pickupPos, segmented=True)
+            else:
+                self.mm.moveToPos(pickupPos, True)
+            self.mm.waitForMovementFinished()
+            time.sleep(cs.WAIT_ON_PICKUP_POS)
+
+        # move away from pick-up position
         if pickupPos.y < cs.RAMP_CRITICAL_Y:
-            self.mm.moveCloseToRamp(pickupPos, segmented=True)
-        else:
-            self.mm.moveToPos(pickupPos, True)
-        self.mm.waitForMovementFinished()
-        time.sleep(cs.WAIT_ON_PICKUP_POS)
-        #move away from pick-up position
-        if pickupPos.y < cs.RAMP_CRITICAL_Y:
-            self.mm.moveCloseToRamp(cs.AFTER_PICKUP_POSITION,segmented=True,moveto=False)
+            self.mm.moveCloseToRamp(cs.AFTER_PICKUP_POSITION, segmented=True, moveto=False)
         else:
             self.mm.moveToPos(cs.AFTER_PICKUP_POSITION, True)
         self.mm.waitForMovementFinished()
@@ -204,6 +217,7 @@ class MovementRoutines:
         self.mm.waitForMovementFinished()
         self.mm.moveToPosAfterHoming(cs.CENTER_TOP, True)
         if dieRollResult.found:
+            log.info("pickup after homing")
             self.pickupDieFromPosition(dieRollResult.position)
         return dieRollResult
 
@@ -211,12 +225,12 @@ class MovementRoutines:
         dieRollResult = DieRollResult()
         if cs.USE_IMAGE_RECOGNITION:
             dieRollResult, processedImages = self.findDie(cam)
-            log.info("result: {}".format(dieRollResult.result))
+            log.debug("result: {}".format(dieRollResult.result))
             if cs.STORE_IMAGES or (cs.STORE_IMAGES_NOT_FOUND and not dieRollResult.found):
                 self.dr.writeDiceImages(clientId=self.cm.clientId, images=processedImages, found=dieRollResult.found, timestamp=Utils.getFilenameTimestamp())
         return dieRollResult
 
-    def pickupDie_pickup(self, dieRollResult, onSendResult=None):
+    def pickupDie_pickup(self, dieRollResult, onSendResult=None, zOffset=0):
         if dieRollResult.found:
             log.info("dieRollResult: {}".format(dieRollResult))
             if cs.SHOW_DIE_RESULT_WITH_LEDS:
@@ -224,14 +238,28 @@ class MovementRoutines:
                 lm.showResult(dieRollResult.result)
             if onSendResult is not None:
                 onSendResult(dieRollResult)
-            self.pickupDieFromPosition(dieRollResult.position)
+            self.pickupDieFromPosition(dieRollResult.position, zOffset)
         else:
-            log.info('Die not found, now searching...')
-            self.searchForDie()
+            log.warning("Position for pickup not known.")
+
+    def pickupDie_sideways(self, dieRollResult):
+        if dieRollResult.found:
+            log.info("dieRollResult: {}".format(dieRollResult))
+            left = dieRollResult.position
+            left.y = Utils.clamp(left.y + cs.SIDEWAYS_PICKUP_Y_OFFSET, 0.0, 1.0)
+            right = dieRollResult.position
+            right.y -= Utils.clamp(right.y - cs.SIDEWAYS_PICKUP_Y_OFFSET, 0.0, 1.0)
+            self.pickupDieFromPosition([left, right])
+        else:
+            log.warning("Position for pickup not known.")
 
     def pickupDie(self, onSendResult=None, cam=None):
         dieRollResult = self.pickupDie_takeImage(cam)
-        self.pickupDie_pickup(dieRollResult, onSendResult)
+        if dieRollResult.found:
+            self.pickupDie_pickup(dieRollResult, onSendResult)
+        else:
+            log.info("Start search routine.")
+            self.searchForDie()
         return dieRollResult
 
     def getDropoffAdvancePosition(self, pos, stage=1):

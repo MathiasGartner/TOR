@@ -28,6 +28,25 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-nohome", dest='skipHomingOnStartup', action="store_true")
 args = parser.parse_args()
 
+class ClientState:
+    def __init__(self):
+        # counter
+        self.RunsSinceLastHoming = 0
+        self.NoMagnetContact = 0
+        self.NoMagnetContactGlobal = 0
+        self.SameResultRecognized = 0
+        self.NoResultRecognized = 0
+        # last pos and result
+        self.LastPickupPos = Point2D(0.5, 0.75)
+        self.LastResult = -1
+
+    def resetAllCounters(self):
+        self.RunsSinceLastHoming = 0
+        self.NoMagnetContact = 0
+        self.NoMagnetContactGlobal = 0
+        self.SameResultRecognized = 0
+        self.NoResultRecognized = 0
+
 def keepAskingForNextJob(askEveryNthSecond = None):
     global lock
     global exitTOR
@@ -102,129 +121,153 @@ def waitUntilJobStarts(job):
         Utils.sleepUntilTimestamp(startTimestamp)
 
 def run():
-    global runsSinceLastHoming
-    global lastPickupPos
-    global countNoMagnetContact
-    global countNotFound
-    global countSameResult
-    global lastResult
+    global state
     global userModeRequested
     global currentState
+
+    doContinue = True
+    doHoming = False
 
     lm.setAllLeds()
 
     # check early exit
     if not cm.clientIsActive() or userModeRequested:
-        return
+        doContinue = False
 
     # roll
     currentState = "ROLL"
     magnetHadContact = False
-    while not magnetHadContact and countNoMagnetContact < cs.MAX_COUNT_NO_MAGNET_CONTACT:
-        if countNoMagnetContact > 0:
-            log.info(f"try roll count: {countNoMagnetContact + 1}")
-        dropoffPos = mr.run(lastPickupPos.x, numFailedTries=countNoMagnetContact)
+    while doContinue and not magnetHadContact:
+        if state.NoMagnetContact > 0:
+            log.info(f"try roll count: {state.NoMagnetContact + 1}")
+        log.info(f"last pickup pos {state.LastPickupPos}")
+        dropoffPos = mr.run(state.LastPickupPos.x, numFailedTries=state.NoMagnetContact)
         magnetHadContact = mr.getLastMagnetContactStatus()
-        if magnetHadContact:
-            countNoMagnetContact = 0
-        else:
-            countNoMagnetContact += 1
-            cm.sendNoMagnetContact(dropoffPos)
+        if not magnetHadContact:
+            state.NoMagnetContact += 1
+            state.NoMagnetContactGlobal += 1
+            cm.sendNoMagnetContact(dropoffPos, state.NoMagnetContactGlobal)
+        if state.NoMagnetContactGlobal >= cs.MAX_COUNT_NO_MAGNET_CONTACT_GLOBAL:
+            # pause
+            log.warning("Reached maximum value for no magnet contact.")
+            cm.sendStopClient("Maximum fails for magnet contact reached")
+            cm.sendNoMagnetContactGlobal()
+            updateClientIsActiveState()
+            state.resetAllCounters()
+            doContinue = False
+        elif state.NoMagnetContact >= cs.MAX_COUNT_NO_MAGNET_CONTACT_RETRIES:
+            state.NoMagnetContact = 0
+            doHoming = True
+            doContinue = False
 
-        # check early exit
-        checkFunctionality()
-        if not cm.clientIsActive():
-            return
-        if userModeRequested:
-            mm.waitForMovementFinished()
-            return
+        if doContinue:
+            checkFunctionality()
+        if not cm.clientIsActive() or userModeRequested:
+            doContinue = False
 
-    if magnetHadContact:
-        # pickup die - take image (no movement)
+    if doContinue:
+        state.RunsSinceLastHoming += 1
+        state.NoMagnetContact = 0
+        state.NoMagnetContactGlobal = 0
+        if state.RunsSinceLastHoming >= cs.HOME_EVERY_N_RUNS:
+            cm.sendHomeAfterNSuccessfulRuns(state.RunsSinceLastHoming)
+            state.RunsSinceLastHoming = 0
+            doHoming = True
+            doContinue = False
+
+    if doContinue:
+        # take image
         currentState = "PICKUP_TAKEIMAGE"
         dieRollResult = mr.pickupDie_takeImage()
+        if userModeRequested:
+            doContinue = False
 
-    # check early exit
-    if userModeRequested:
-        mm.waitForMovementFinished()
-        return
+    if doContinue:
+        # pickup
+        currentState = "PICKUP_PICKUP"
+        if dieRollResult.found:
+            state.NoResultRecognized = 0
+        else:
+            log.info("No result recognized. Start search routine.")
+            cm.sendDieResultNotFoundNTimes(state.NoResultRecognized)
+            state.NoResultRecognized += 1
+            if state.NoResultRecognized < cs.HOME_AFTER_N_NOT_FOUND:
+                currentState = "PICKUP_PICKUP"
+                mr.searchForDie()
+            elif state.NoResultRecognized == cs.HOME_AFTER_N_NOT_FOUND:
+                doHoming = True
+            elif state.NoResultRecognized > cs.HOME_AFTER_N_NOT_FOUND:
+                # pause
+                log.warning("Reached maximum value for no die recognized.")
+                cm.sendStopClient("Maximum fails for die not recognized reached")
+                cm.sendDieResultNotFoundMaxTimes()
+                updateClientIsActiveState()
+                state.resetAllCounters()
+            doContinue = False
 
-    if magnetHadContact:
-        # pickup die - pickup
+    if doContinue:
+        # check if position is near old position
+        distance = state.LastPickupPos.distance(dieRollResult.position)
+        isNearOldPickupPosition = distance < cs.SAME_RESULT_NEAR_THRESHOLD
+        if state.LastResult == dieRollResult.result and isNearOldPickupPosition:
+            log.warning(f"Same position and result recognized again. Distance from last result is only {distance}")
+            state.SameResultRecognized += 1
+            cm.sendSameDieResultNTimes(state.SameResultRecognized + 1, dieRollResult.result, dieRollResult.position.x, dieRollResult.position.y)
+            if state.SameResultRecognized <= cs.PAUSE_AFTER_N_SAME_RESULTS:
+                # modified pickup
+                if dieRollResult.position.y < cs.NEAR_RAMP_Y or state.SameResultRecognized > 2:
+                    log.warning("Pickup sideways")
+                    mr.pickupDie_sideways(dieRollResult)
+                else:
+                    log.warning("Pickup with extra z offset")
+                    mr.pickupDie_pickup(dieRollResult, zOffset=cs.LOW_PICKUP_Z_OFFSET)
+                checkFunctionality()
+                if cm.clientIsActive():
+                    # check if picked up
+                    mm.moveToPos(cs.CENTER_TOP, True)
+                    newDieRollResult = mr.pickupDie_takeImage()
+                    if newDieRollResult.found:
+                        distance = state.LastPickupPos.distance(newDieRollResult.position)
+                        isNearOldPickupPosition = distance < cs.SAME_RESULT_NEAR_THRESHOLD
+                        if state.LastResult == newDieRollResult.result and isNearOldPickupPosition:
+                            # still on same position
+                            log.info("still on same position, do homing")
+                            doHoming = True
+                            doContinue = False
+                        else:
+                            # on new position -> continue with normal pickup
+                            dieRollResult = newDieRollResult
+                    else:
+                        # picked up
+                        doContinue = False
+                else:
+                    doContinue = False
+            else:
+                # pause
+                log.warning("Reached maximum value for same result recognized.")
+                cm.sendStopClient("Maximum value for same result recognized reached")
+                cm.sendSameResultMaxTimes()
+                updateClientIsActiveState()
+                state.resetAllCounters()
+                doContinue = False
+        else:
+            state.SameResultRecognized = 0
+
+    if doContinue:
         currentState = "PICKUP_PICKUP"
         mr.pickupDie_pickup(dieRollResult, cm.sendDieRollResult)
+        state.LastPickupPos = dieRollResult.position
+        state.LastResult = dieRollResult.result
+        checkFunctionality()
 
-        if dieRollResult.found:
-            distance = lastPickupPos.distance(dieRollResult.position)
-            isNearOldPickupPosition = distance < cs.SAME_RESULT_NEAR_THRESHOLD
-            lastPickupPos = dieRollResult.position
-            if lastResult == dieRollResult.result and isNearOldPickupPosition:
-                countSameResult += 1
-            else:
-                countSameResult = 0
-            lastResult = dieRollResult.result
-            countNotFound = 0
-        else:
-            lastPickupPos.x = Utils.clamp(cs.LX - lastPickupPos.x, 0, cs.LX)
-            cm.sendDieResultNotRecognized()
-            countNotFound += 1
-
-    # check early exit
-    checkFunctionality()
-    if not cm.clientIsActive():
-        return
-    if userModeRequested:
-        mm.waitForMovementFinished()
-        return
-
-    #check if homing is needed
-    runsSinceLastHoming += 1
-    homeEveryNRuns = cs.HOME_EVERY_N_RUNS
-    if "R" in nextJob and nextJob["R"] is not None:
-        runParams = nextJob["R"].split()
-        for rp in runParams:
-            if rp[0] == "H":
-                homeEveryNRuns = int(rp[1:]) or homeEveryNRuns
-                break
-    if countNoMagnetContact >= cs.MAX_COUNT_NO_MAGNET_CONTACT:
-        log.info(f"magnet had no contact {cs.MAX_COUNT_NO_MAGNET_CONTACT} times.")
-        mm.doHoming()
-        doHomingCheck()
-        countNoMagnetContact = 0
-        runsSinceLastHoming = 0
-    elif countNotFound >= cs.HOME_AFTER_N_FAILS:
-        log.info("count not found: {} -> do homing...".format(countNotFound))
-        cm.sendDieResultNotFoundNTimes(cs.HOME_AFTER_N_FAILS)
-        mm.doHoming()
-        doHomingCheck()
-        mm.moveToPosAfterHoming(cs.BEFORE_PICKUP_POSITION, True)
-        mr.searchForDie()
-        mm.moveToPos(cs.CENTER_TOP, True)
-        countNotFound = 0
-        runsSinceLastHoming = 0
-    elif countSameResult >= cs.HOME_AFTER_N_SAME_RESULTS:
-        log.info("count same result: {} -> do homing...".format(countSameResult))
-        cm.sendSameDieResultNTimes(cs.HOME_AFTER_N_SAME_RESULTS, dieRollResult.result, dieRollResult.position.x, dieRollResult.position.y)
-        dieRollResult = mr.pickupDieWhileHoming()
-        doHomingCheck()
-        if not dieRollResult.found:
-            mr.searchForDie()
-        else:
-            mm.moveToPos(cs.CENTER_TOP, True)
-            mm.waitForMovementFinished()
-            dieRollResult = mr.pickupDie_takeImage()
-            if dieRollResult.found:
-                mr.searchForDie()
-        mm.moveToPos(cs.CENTER_TOP, True)
-        countSameResult = 0
-        runsSinceLastHoming = 0
-    elif runsSinceLastHoming >= homeEveryNRuns:
-        cm.sendHomeAfterNSuccessfulRuns(homeEveryNRuns)
+    if doHoming and cm.clientIsActive():
         mr.pickupDieWhileHoming()
         doHomingCheck()
-        runsSinceLastHoming = 0
+        checkFunctionality()
 
-    mm.waitForMovementFinished()
+    # this is always the last step if client is still active
+    if cm.clientIsActive():
+        mm.waitForMovementFinished()
 
 def exitUserMode():
     global userModeRequested
@@ -296,9 +339,9 @@ def doJobs():
     steppersDisabled = False
     done = False
     while not done:
-        log.info("doJobs loop")
+        log.debug("doJobs loop")
         checkFunctionality()
-        log.info(f"client is active: {cm.clientIsActive()}")
+        log.debug(f"client is active: {cm.clientIsActive()}")
         if "Q" in nextJob: # Q...quit
             done = True
             continue
@@ -555,7 +598,7 @@ mm = MovementManager()
 if not mm.hasCorrectVersion:
     log.warning("Incompatible version of TOR-Marlin installed. TORClient will now quit.")
     exit(0)
-mr = MovementRoutines(cm)
+mr = MovementRoutines(cm, mm)
 
 if cs.ON_RASPI:
     try:
@@ -579,12 +622,8 @@ lastFunctionalityCheckAtTime = None
 jobScheduler = threading.Thread(target=keepAskingForNextJob)
 jobScheduler.start()
 
-runsSinceLastHoming = 0
-lastPickupPos = Point2D(cs.LX / 2.0, cs.LY / 4.0 * 3.0)
-countNoMagnetContact = 0
-countNotFound = 0
-countSameResult = 0
-lastResult = -1
+state = ClientState()
+
 if cs.ON_RASPI:
     worker = threading.Thread(target=doJobs)
 else:
@@ -594,7 +633,9 @@ worker.start()
 worker.join()
 exitTOR = True # worker quitted accidentally
 
+time.sleep(5)
 if cm.clientIsActive():
+    mm.waitForMovementFinished()
     mm.moveToParkingPosition(True)
 
 jobScheduler.join()

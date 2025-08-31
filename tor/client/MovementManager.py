@@ -51,13 +51,17 @@ class MovementManager:
         return msgs
 
     def resetBoard(self):
-        log.warning("Reset Board")
-        self.sendGCode("M997", recvAnswer=False)
-        #self.com.close()
-        del self.com
-        time.sleep(20)
-        self.com = Communicator()
-        self.__initBoard()
+        doReset = False
+        if doReset:
+            log.warning("Reset Board")
+            self.sendGCode("M997", recvAnswer=False)
+            #self.com.close()
+            del self.com
+            time.sleep(20)
+            self.com = Communicator()
+            self.__initBoard()
+        else:
+            time.sleep(3)
 
     def setFeedratePercentage(self, fr):
         self.sendGCode("M220 S{}".format(fr))
@@ -114,7 +118,7 @@ class MovementManager:
             if self.torMarlinVersion == "X":
                 log.error("Could not read TOR-Marlin version.")
             else:
-                log.error("TOR-Marlin v{} installed, but v{} required.".format(self.torMarlinVersion, cs.TOR_MARLIN_VERSION))
+                log.error(f"TOR-Marlin v{self.torMarlinVersion} installed, but v{cs.TOR_MARLIN_VERSION} required.")
         return versionOkay
 
     def clearOTPW(self):

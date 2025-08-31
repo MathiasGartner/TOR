@@ -11,7 +11,7 @@ if cs.ON_RASPI:
 
 class LedManager:
     def __init__(self, brightness=None):
-        if brightness == None:
+        if brightness is None:
             brightness = cs.LED_STRIP_BRIGHTNESS
         if brightness < 0:
             brightness = 0

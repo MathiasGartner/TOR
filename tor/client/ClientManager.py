@@ -94,7 +94,7 @@ class ClientManager:
         msg = {
             "C": self.clientId,
             "WARN": "SAME_RESULT_N",
-            "MESSAGE": f"Got the same results {n} times in a row. Always find a {result} at position [{x}, {y}]."
+            "MESSAGE": f"Got the same results {n} times in a row. Always find a {result} at position [{x:.3f}, {y:.3f}]."
         }
         answer = self.sendAndGetAnswer(msg)
 
@@ -125,15 +125,39 @@ class ClientManager:
         msg = {
             "C": self.clientId,
             "MSG": "HOME_N_SUCCESS",
-            "MESSAGE": "YEAH! I am now homing after {} successful runs in a row.".format(n)
+            "MESSAGE": f"YEAH! I am now homing after {n} successful runs in a row."
         }
         answer = self.sendAndGetAnswer(msg)
 
-    def sendNoMagnetContact(self, dropoffPos):
+    def sendNoMagnetContact(self, dropoffPos, globalCounter):
         msg = {
             "C": self.clientId,
             "WARN": "NO_MAGNET_CONTACT",
-            "MESSAGE": f"No contact for magnet at position [{dropoffPos[0]:.2f}, {dropoffPos[1]:.2f}, {dropoffPos[2]:.2f}]."
+            "MESSAGE": f"No contact for magnet at position [{dropoffPos[0]:.2f}, {dropoffPos[1]:.2f}, {dropoffPos[2]:.2f}]. Global counter is at {globalCounter}."
+        }
+        answer = self.sendAndGetAnswer(msg)
+
+    def sendNoMagnetContactGlobal(self):
+        msg = {
+            "C": self.clientId,
+            "E": "NO_MAGNET_CONTACT_GLOBAL",
+            "MESSAGE": "No magnet contact possible."
+        }
+        answer = self.sendAndGetAnswer(msg)
+
+    def sendDieResultNotFoundMaxTimes(self):
+        msg = {
+            "C": self.clientId,
+            "E": "NOT_FOUND_MAX",
+            "MESSAGE": "No die recognition possible."
+        }
+        answer = self.sendAndGetAnswer(msg)
+
+    def sendSameResultMaxTimes(self):
+        msg = {
+            "C": self.clientId,
+            "E": "SAME_RESULT_MAX",
+            "MESSAGE": "Always same result."
         }
         answer = self.sendAndGetAnswer(msg)
 
@@ -234,7 +258,7 @@ class ClientManager:
                     log.info("Set {}={}".format(name, value))
                     setattr(cs, name, value)
                 else:
-                    log.warning("Failed setting {}={}".format(name, raw_value))
+                    log.warning(f"Failed setting {name}={raw_value}")
 
     def saveDropoffPointSettings(self):
         msg = {
