@@ -9,6 +9,10 @@ DB_HOST = tsp.DB_HOST
 DB_USER = tsp.DB_USER
 DB_PASSWORD = tsp.DB_PASSWORD
 
+# INFO: Database timezone is UTC
+#       Database 08:00 is Austria 10:00
+TIME_OFFSET_FOR_DISPLAY = "interval 2 hour"
+
 SEND_MAIL = True
 MAIL_USERNAME = "thetransparencyofrandomness@gmail.com"
 MAIL_OAUTH_FILE = os.path.join(tsl.TOR_PROGRAM_DIRECTORY_SERVER, "resources", "gmail_oauth2.json")

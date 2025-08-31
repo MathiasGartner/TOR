@@ -15,10 +15,6 @@ db = mysql.connect(
     autocommit=True
 )
 
-# INFO: Database timezone is UTC
-#       Database 08:00 is Austria 10:00
-TIME_OFFSET_FOR_DISPLAY = "interval 2 hour"
-
 cursor = db.cursor(named_tuple=True)
 
 def executeQuery(query, params=None):
@@ -235,13 +231,13 @@ def getJobsByProgramName(name):
     return data
 
 def getClientLog():
-    query = "SELECT c.Position, c.Latin, l.MessageType AS Type, l.MessageCode, l.Message, DATE_ADD(Time, " + TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog l LEFT JOIN client c ON c.Id = l.ClientId ORDER BY l.Id DESC LIMIT 100"
+    query = "SELECT c.Position, c.Latin, l.MessageType AS Type, l.MessageCode, l.Message, DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog l LEFT JOIN client c ON c.Id = l.ClientId ORDER BY l.Id DESC LIMIT 100"
     cursor.execute(query)
     data = cursor.fetchall()
     return data
 
 def getClientLogByClientId(clientId, maxEntries=1000):
-    query = "SELECT MessageType AS Type, MessageCode, Message, DATE_ADD(Time, " + TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog WHERE ClientId = %(clientId)s ORDER BY Id DESC LIMIT %(maxEntries)s"
+    query = "SELECT MessageType AS Type, MessageCode, Message, DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog WHERE ClientId = %(clientId)s ORDER BY Id DESC LIMIT %(maxEntries)s"
     cursor.execute(query, {"clientId": clientId, "maxEntries": maxEntries})
     data = cursor.fetchall()
     return data
@@ -253,7 +249,7 @@ def getRecentClientLogErrorByClientId(clientId):
     return data
 
 def getRecentClientLogErrors(maxEntries=10):
-    query = "SELECT l.MessageType AS Type, l.MessageCode, c.Material AS ClientName, l.Message, DATE_ADD(Time, " + TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog l LEFT JOIN client c ON c.Id = l.ClientId WHERE MessageType = 'ERROR' ORDER BY l.Id DESC LIMIT %(maxEntries)s"
+    query = "SELECT l.MessageType AS Type, l.MessageCode, c.Material AS ClientName, l.Message, DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog l LEFT JOIN client c ON c.Id = l.ClientId WHERE MessageType = 'ERROR' ORDER BY l.Id DESC LIMIT %(maxEntries)s"
     cursor.execute(query, {"maxEntries": maxEntries})
     data = cursor.fetchall()
     return data
@@ -262,20 +258,38 @@ def acknowledgeErrorLog(logId):
     query = "UPDATE clientlog SET IsAcknowledged = 1 WHERE Id = %(logId)s"
     cursor.execute(query, {"logId": logId})
 
+def getEventSources():
+    query = "SELECT DISTINCT Source FROM diceresult"
+    cursor.execute(query)
+    data = cursor.fetchall()
+    return data
+
 def getResults():
-    query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, DATE_ADD(Time, " + TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId ORDER BY d.Id DESC LIMIT 100"
+    query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId ORDER BY d.Id DESC LIMIT 100"
     cursor.execute(query)
     data = cursor.fetchall()
     return data
 
 def getResultsByEvent(event):
-    query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, DATE_ADD(Time, " + TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId WHERE d.Source = %(event)s AND c.Position >=1 AND c.Position <= 27 ORDER BY d.Id DESC"
+    query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId WHERE d.Source = %(event)s ORDER BY d.Id DESC"
     cursor.execute(query, {"event": event})
     data = cursor.fetchall()
     return data
 
+def getResultsByDate(start, end):
+    query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId WHERE AND Time > DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AND Time < DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") ORDER BY d.Id DESC"
+    cursor.execute(query, {"start": start, "end": end})
+    data = cursor.fetchall()
+    return data
+
+def getResultsByDatenAndEvent(start, end, event):
+    query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId WHERE d.Source = %(event)s AND Time > DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AND Time < DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") ORDER BY d.Id DESC"
+    cursor.execute(query, {"start": start, "end": end, "event": event})
+    data = cursor.fetchall()
+    return data
+
 def getResultsByClientId(clientId):
-    query = "SELECT Result, UserGenerated, X, Y, DATE_ADD(Time, " + TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM diceresult WHERE ClientId = %(clientId)s ORDER BY Id DESC LIMIT 100"
+    query = "SELECT Result, UserGenerated, X, Y, DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM diceresult WHERE ClientId = %(clientId)s ORDER BY Id DESC LIMIT 100"
     cursor.execute(query, {"clientId": clientId})
     data = cursor.fetchall()
     return data

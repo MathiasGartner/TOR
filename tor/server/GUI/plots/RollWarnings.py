@@ -1,7 +1,7 @@
-import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import numpy as np
 
 from tor.base import DBManager
 
@@ -36,14 +36,20 @@ class RollWarnings:
             if w.ClientId in allData:
                 allData[w.ClientId]["values"].append(float(w.XPos))
 
-        self.fig.clear()
-
         plot_data = {k: v for k, v in allData.items() if v['values']}
 
+        return plot_data
+
+
+
+    def updatePlot(self, start, end):
+        print(f"Fetching data from '{start}' to '{end}'...")
+        plot_data = self.loadData(start, end)
 
         labels = [client['label'] for client in plot_data.values()]
         values = [client['values'] for client in plot_data.values()]
 
+        self.fig.clf()
         axes = self.fig.subplots(nrows=len(plot_data))
         # If there's only one subplot, make sure it's iterable
         if len(plot_data) == 1:
@@ -100,9 +106,4 @@ class RollWarnings:
 
         # 5. Redraw the canvas to display the new plot in your application.
         self.canvas.draw()
-
-    def updatePlot(self, start, end):
-        print(f"Fetching data from '{start}' to '{end}'...")
-
-        self.loadData(start, end)
 

@@ -118,7 +118,10 @@ from tor.base import NetworkUtils
 from tor.base.GUI import TORIcons
 from tor.server.GUI.ClientDetailViewCompact import ClientDetailViewCompact
 from tor.server.GUI.ClientDetailViewFull import ClientDetailViewFull
+from tor.server.GUI.DatenAndEventSelection import DatenAndEventSelection
 from tor.server.GUI.plots.RollWarnings import RollWarnings
+from tor.server.GUI.plots.ResultPositions import ResultPositions
+from tor.server.GUI.plots.ResultStatistic import ResultStatistic
 from tor.server.GUI.TableModels import LogMessageTableModel, DiceResultTableModel, ResultStatisticsTableModel, LogMessageSortFilterProxyModel
 from tor.server.Job import Job
 from tor.server.Job import DefaultJobs
@@ -722,81 +725,69 @@ class MainWindow(QMainWindow):
         wdgDetails = QWidget()
         wdgDetails.setLayout(layDetails)
 
-        # Statistics
+        #################
+        ##### Plots #####
+        #################
 
-        self.dteStatisticsStart = QDateEdit(calendarPopup=True)
-        self.dteStatisticsStart.setDateTime(datetime.now() - timedelta(days=1))
-        self.dteStatisticsEnd = QDateEdit(calendarPopup=True)
-        self.dteStatisticsEnd.setDateTime(datetime.now())
-        self.btnStatisticsUpdate = QPushButton("Update")
-        self.btnStatisticsUpdate.clicked.connect(self.btnStatisticsUpdate_clicked)
+        # Plot Result Statistic
+        wdgResultStatistic = QWidget()
+        layResultStatistic = QVBoxLayout()
 
-        self.statCanvas = MplCanvas(self, width=5, height=7, dpi=100)
-        toolbar = NavigationToolbar(self.statCanvas, self)
+        self.filterResultStatistic = DatenAndEventSelection(self.filterResultStatistic_update)
+        self.pltResultStatistic = ResultStatistic()
+        self.toolbarResultStatistic = NavigationToolbar(self.pltResultStatistic.canvas, self)
 
-        layStatSettings = QHBoxLayout()
-        layStatSettings.addWidget(self.dteStatisticsStart)
-        layStatSettings.addSpacing(10)
-        layStatSettings.addWidget(self.dteStatisticsEnd)
-        layStatSettings.addSpacing(10)
-        layStatSettings.addWidget(self.btnStatisticsUpdate)
-        layStatSettings.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Fixed))
-        wdgStatSettings = QWidget()
-        wdgStatSettings.setLayout(layStatSettings)
+        layResultStatistic.addWidget(self.filterResultStatistic)
+        layResultStatistic.addWidget(self.toolbarResultStatistic)
+        layResultStatistic.addWidget(self.pltResultStatistic.canvas)
+        layResultStatistic.addWidget(QWidget())
+        layResultStatistic.addStretch(1)
 
-        layStatPlot = QVBoxLayout()
-        layStatPlot.addWidget(toolbar)
-        layStatPlot.addWidget(self.statCanvas)
-        wdgStatPlot = QWidget()
-        wdgStatPlot.setLayout(layStatPlot)
-
-        layStatistics = QVBoxLayout()
-        layStatistics.addWidget(wdgStatSettings)
-        layStatistics.addWidget(wdgStatPlot)
+        wdgResultStatistic.setLayout(layResultStatistic)
 
 
-        wdgStatistics = QWidget()
-        wdgStatistics.setLayout(layStatistics)
-
-        self.statColorBar = None
-
-
+        # Plot Roll Warnings
         wdgRollWarnings = QWidget()
         layRollWarnings = QVBoxLayout()
 
-        grpRollWarningsTime = QGroupBox("Select Time Range")
-        layRollWarningsTime = QHBoxLayout()
-
-        self.timRollWarningsStart = QDateTimeEdit(self)
-        self.timRollWarningsStart.setCalendarPopup(True)
-        self.timRollWarningsStart.setDateTime(QDateTime.currentDateTime().addSecs(-2 * 3600*100*5))
-        self.timRollWarningsEnd = QDateTimeEdit(self)
-        self.timRollWarningsEnd.setCalendarPopup(True)
-        self.timRollWarningsEnd.setDateTime(QDateTime.currentDateTime().addSecs(3600))
-        self.btnRollWarningsUpdate = QPushButton("Update Plot")
-        self.btnRollWarningsUpdate.clicked.connect(self.btnRollWarningsUpdate_clicked)
-
-        layRollWarningsTime.addWidget(QLabel("Start:"))
-        layRollWarningsTime.addWidget(self.timRollWarningsStart)
-        layRollWarningsTime.addWidget(QLabel("End:"))
-        layRollWarningsTime.addWidget(self.timRollWarningsEnd)
-        layRollWarningsTime.addWidget(self.btnRollWarningsUpdate)
-        layRollWarningsTime.addStretch(1)
-
-        grpRollWarningsTime.setLayout(layRollWarningsTime)
-
+        self.filterRollWarnings = DatenAndEventSelection(self.filterRollWarnings_update)
+        self.filterRollWarnings.chkEvent.setVisible(False)
+        self.filterRollWarnings.cmbEvent.setVisible(False)
+        self.filterRollWarnings.chkTime.setChecked(True)
+        self.filterRollWarnings.timStart.setEnabled(True)
+        self.filterRollWarnings.timEnd.setEnabled(True)
         self.pltRollWarnings = RollWarnings()
 
-        layRollWarnings.addWidget(grpRollWarningsTime)
+        layRollWarnings.addWidget(self.filterRollWarnings)
         layRollWarnings.addWidget(self.pltRollWarnings.canvas)
         layRollWarnings.addWidget(QWidget())
         layRollWarnings.addStretch(1)
 
         wdgRollWarnings.setLayout(layRollWarnings)
 
+
+        # Plot Result Positions
+        wdgResultPositions = QWidget()
+        layResultPositions = QVBoxLayout()
+
+        self.chkResultPositionsGlobalColorbar = QCheckBox()
+
+        self.filterResultPositions = DatenAndEventSelection(self.filterResultPositions_update, customElements=[QLabel("global scale"), self.chkResultPositionsGlobalColorbar])
+        self.pltResultPositions = ResultPositions()
+
+        layResultPositions.addWidget(self.filterResultPositions)
+        layResultPositions.addWidget(self.pltResultPositions.canvas)
+        layResultPositions.addWidget(QWidget())
+        layResultPositions.addStretch(1)
+
+        wdgResultPositions.setLayout(layResultPositions)
+
+        ##############
+
         tabStatistics = QTabWidget()
-        tabStatistics.addTab(wdgStatistics, "Overview")
+        tabStatistics.addTab(wdgResultStatistic, "Results")
         tabStatistics.addTab(wdgRollWarnings, "Roll Warnings")
+        tabStatistics.addTab(wdgResultPositions, "Result Positions")
 
         layTORServer = QVBoxLayout()
         layTORServer.addWidget(QLabel("TOR server"))
@@ -879,7 +870,7 @@ class MainWindow(QMainWindow):
             elif index == self.clientDetailsTabIndex:
                 self.loadAllClientDetails()
             elif index == self.statisticsTabIndex:
-                self.reloadStatistics()
+                pass
             self.currentSelectedTabIndex = index
 
     def sendMsgToTORServer(self, msg, timeout=ts.STATUS_TIMEOUT_TOR_SERVER):
@@ -1300,78 +1291,25 @@ class MainWindow(QMainWindow):
         index = self.cmbClient.currentIndex()
         self.reloadClientDetailsBySelectedIndex(index)
 
-    ##################
-    ### Statistics ###
-    ##################
+    #############
+    ### Plots ###
+    #############
 
-    def btnStatisticsUpdate_clicked(self):
-        self.reloadStatistics()
+    def filterResultStatistic_update(self):
+        start, end, event = self.filterResultStatistic.getDateAndEvent()
+        self.pltResultStatistic.updatePlot(start, end, event)
+        self.pltResultStatistic.canvas.draw()
 
-    def reloadStatistics(self):
-        log.info("reload statistics")
-        self.statCanvas.axes.cla()
-
-        dateStart = self.dteStatisticsStart.date().toPyDate()
-        dateEnd = self.dteStatisticsEnd.date().toPyDate()
-        dateStartStr = str(dateStart)
-        dateEndStr = str(dateEnd)
-        log.info(dateStartStr + " - " + dateEndStr)
-        maxPos = 0
-        if ss.BOX_FORMATION == "3x3x3":
-            maxPos = 27
-        elif ss.BOX_FORMATION == "3x3":
-            maxPos = 9
-        query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, Time AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId WHERE DATE(Time) >= \"" + dateStartStr + "\" AND DATE(Time) <= \"" + dateEndStr + "\" AND c.Position >=1 AND c.Position <= " + str(maxPos) + " ORDER BY d.Id DESC"
-        data = DBManager.executeQuery(query)
-        if len(data) == 0:
-            return
-        positions = [d.Position for d in data]
-        times = [d.Time.timestamp() for d in data]
-        clientNames = [c.Material for c in self.cds]
-
-        bins = [240, len(clientNames)]
-        # compute the 2D histogram using numpy
-        H, xedges, yedges = np.histogram2d(times, positions, bins=bins)
-        # convert the x-edges into datetime format
-        to_datetime = np.vectorize(datetime.fromtimestamp)
-        xedges_datetime = to_datetime(xedges)
-
-        # plot the two cases side by side
-        #fig, ax = plt.subplots(1, 1, figsize=(18, 13))
-
-        ax = self.statCanvas.axes
-        fig = self.statCanvas.figure
-        if self.statColorBar is not None:
-            self.statColorBar.remove()
-        ax.cla()
-
-        plot = ax.pcolor(xedges_datetime, yedges, H.T, cmap='viridis')
-        ax.set_title('datetime')
-        ax.set_xlim([dateStart, dateEnd])
-        self.statColorBar = fig.colorbar(plot, ax=ax)
-
-        # pretty up the xaxis labels
-        # loc = mdates.MinuteLocator(byminute=(0, 30))
-        loc = mdates.DayLocator()
-        # fmt = mdates.DateFormatter('%d.%m. - %H:%M:%S')
-        fmt = mdates.DateFormatter('%d.%m.')
-
-        ax.xaxis.set_major_locator(loc)
-        ax.xaxis.set_major_formatter(fmt)
-
-        ax.set_yticks(np.arange(1, len(clientNames)+1, 1))
-        ax.set_yticklabels(clientNames)
-
-        fig.autofmt_xdate()
-        fig.tight_layout()
-
-        self.statCanvas.draw()
-
-    def btnRollWarningsUpdate_clicked(self):
-        start = self.timRollWarningsStart.dateTime().toString(Qt.ISODate)
-        end = self.timRollWarningsEnd.dateTime().toString(Qt.ISODate)
+    def filterRollWarnings_update(self):
+        start, end, _ = self.filterRollWarnings.getDateAndEvent()
         self.pltRollWarnings.updatePlot(start, end)
         self.pltRollWarnings.canvas.draw()
+
+    def filterResultPositions_update(self):
+        start, end, event = self.filterResultPositions.getDateAndEvent()
+        globalColorBar = self.chkResultPositionsGlobalColorbar.isChecked()
+        self.pltResultPositions.updatePlot(start, end, event, globalColorBar)
+        self.pltResultPositions.canvas.draw()
 
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
