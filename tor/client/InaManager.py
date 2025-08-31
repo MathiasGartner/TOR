@@ -3,27 +3,35 @@ log = logging.getLogger(__name__)
 
 import time
 
+from tor.base.Singleton import Singleton
 import tor.client.ClientSettings as cs
-from tor.base.utils import Utils
 
 if cs.ON_RASPI:
     from ina219 import INA219
     from ina219 import DeviceRangeError
 
-class InaManager:
+class InaManager(Singleton):
     def __init__(self, brightness=None):
+        if hasattr(self, "_initialized") and self._initialized:
+            log.warning("wanted to initialize InaManager again")
+            return
+        self._initialized = True
+
         self.__ina = None
         if cs.USE_INA:
             try:
                 self.__ina = INA219(cs.INA_SHUNT_OHMS)
                 self.__ina.logger = logging.getLogger("ina")
                 self.__ina._i2c._logger = logging.getLogger("ina")
-                self.__ina.configure()
+                self.__ina.configure(gain=INA219.GAIN_2_80MV)
                 log.info("INA initialized")
             except Exception as e:
                 log.error("Error while initializing INA")
                 log.error("{}".format(repr(e)))
                 self.__ina = None
+
+    def close(self):
+        self.reset()
 
     def configure(self):
         try:

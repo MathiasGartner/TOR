@@ -6,6 +6,7 @@ import numpy as np
 import re
 import time
 
+from tor.base.Singleton import Singleton
 from tor.base.utils import Utils
 import tor.client.ClientSettings as cs
 from tor.client.Communicator import Communicator
@@ -13,11 +14,15 @@ from tor.client.Cords import Cords
 from tor.client.InaManager import InaManager
 from tor.client.Position import Position
 
-class MovementManager:
-    isInitialized = False
+class MovementManager(Singleton):
     currentPosition = Position(-1, -1, -1)
 
     def __init__(self):
+        if hasattr(self, "_initialized") and self._initialized:
+            log.warning("wanted to initialize Communicator again")
+            return
+        self._initialized = True
+
         self.com = Communicator()
         self.feedratePercentage = 0
         self.magnetHadContact = False
@@ -25,11 +30,13 @@ class MovementManager:
         if cs.ON_RASPI:
             self.inaManager = InaManager()
         MovementManager.currentPosition = Position(-1, -1, -1) # todo: is this line needed?
-        if not MovementManager.isInitialized:
-            self.torMarlinVersion = "X"
-            self.hasCorrectVersion = self.checkTORMarlinVersion()
-            self.__initBoard()
-            MovementManager.isInitialized = True
+        self.torMarlinVersion = "X"
+        self.hasCorrectVersion = self.checkTORMarlinVersion()
+        self.__initBoard()
+
+    def close(self):
+        log.warning("closing MovementManager")
+        pass
 
     def __initBoard(self):
         # Restore Settings

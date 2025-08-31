@@ -3,12 +3,20 @@ log = logging.getLogger(__name__)
 logSerial = logging.getLogger("serial")
 
 import serial
-import sys
+import threading
+import time
 
+from tor.base.Singleton import Singleton
 import tor.client.ClientSettings as cs
 
-class Communicator:
+class Communicator(Singleton):
     def __init__(self, serialPort = ""):
+        if hasattr(self, "_initialized") and self._initialized:
+            log.warning("wanted to initialize Communicator again")
+            return
+        self._initialized = True
+
+        self._lock = threading.Lock()
         if serialPort == "":
             if cs.ON_RASPI:
                 serialPort = "/dev/ttyACM0"
@@ -28,30 +36,38 @@ class Communicator:
 
     def close(self):
         if self.useSerial:
-            self.ser.close()
+            with self._lock:
+                self.ser.close()
 
     def send(self, message):
         if self.useSerial:
-            logSerial.debug(f"SEND: {message}")
-            self.ser.write((message + "\n").encode())
+            with self._lock:
+                logSerial.debug(f"SEND: {message}")
+                self.ser.write((message + "\n").encode())
         else:
             logSerial.debug(message)
 
     def recv(self):
         if self.useSerial:
-            return self.ser.readline().decode()
+            with self._lock:
+                return self.ser.readline().decode()
         else:
             return ""
 
-    def recvUntilOk(self):
+    def recvUntilOk(self, timeout=60):
         #TODO: implement option for timeout when waiting for "ok" message
         msg = ""
         msgs = []
-        while (msg != "ok\n"):
-            if self.useSerial:
-                msg = self.recv()
-                msgs.append(msg)
-            else:
-                msg = "ok\n"
-            logSerial.debug(f"RECV: {msg}")
+        start_time = time.time()
+        with self._lock:
+            while (msg != "ok\n"):
+                if time.time() - start_time > timeout:
+                    logSerial.warning("recvUntilOk() timed out")
+                    break
+                if self.useSerial:
+                    msg = self.ser.readline().decode()
+                    msgs.append(msg)
+                else:
+                    msg = "ok\n"
+                logSerial.debug(f"RECV: {msg}")
         return msgs
