@@ -175,7 +175,7 @@ def getAllClients():
     return data
 
 def getAllAvailableClients():
-    query = "SELECT Id, IP, Material, Position, Latin, AllowUserMode, IsActive FROM client WHERE IsAvailable = 1 ORDER BY Latin"
+    query = "SELECT Id, IP, Material, Position, Latin, AllowUserMode, IsActive, UseSchedule FROM client WHERE IsAvailable = 1 ORDER BY Latin"
     cursor.execute(query)
     data = cursor.fetchall()
     return data
@@ -277,13 +277,13 @@ def getResultsByEvent(event):
     return data
 
 def getResultsByDate(start, end):
-    query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId WHERE AND Time > DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AND Time < DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") ORDER BY d.Id DESC"
+    query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId WHERE Time > DATE_ADD(%(start)s, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AND Time < DATE_ADD(%(end)s, " + ts.TIME_OFFSET_FOR_DISPLAY + ") ORDER BY d.Id DESC"
     cursor.execute(query, {"start": start, "end": end})
     data = cursor.fetchall()
     return data
 
 def getResultsByDatenAndEvent(start, end, event):
-    query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId WHERE d.Source = %(event)s AND Time > DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AND Time < DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") ORDER BY d.Id DESC"
+    query = "SELECT c.Position, c.Latin, Result, UserGenerated, X, Y, DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM diceresult d LEFT JOIN client c ON c.Id = d.ClientId WHERE d.Source = %(event)s AND Time > DATE_ADD(%(start)s, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AND Time < DATE_ADD(%(end)s, " + ts.TIME_OFFSET_FOR_DISPLAY + ") ORDER BY d.Id DESC"
     cursor.execute(query, {"start": start, "end": end, "event": event})
     data = cursor.fetchall()
     return data
