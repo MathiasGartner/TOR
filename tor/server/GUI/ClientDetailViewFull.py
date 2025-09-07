@@ -1,4 +1,7 @@
 import logging
+
+from PyQt5.QtSvg import QSvgWidget
+
 log = logging.getLogger(__name__)
 
 from PyQt5.QtCore import Qt, QSize
@@ -6,6 +9,7 @@ from PyQt5.QtWidgets import QApplication, QStyle, QComboBox, QGridLayout, QLineE
 
 from tor.base import DBManager
 from tor.base.GUI import TORIcons
+from tor.base.GUI.SvgButton import SvgButton
 from tor.server.GUI.ClientDetailViewBase import ClientDetailViewBase
 from tor.server.Job import Job, DefaultJobs
 
@@ -20,19 +24,16 @@ class ClientDetailViewFull(ClientDetailViewBase):
         self.openDetailTabCallback = openDetailTabCallback
         self.inInstallation = self.position > 0
 
-        self.lblTORVersion = QLabel()
+        self.svgTORVersion = QSvgWidget(TORIcons.LED_RED)
         self.lblTORVersionText = QLabel()
-        self.lblStatusServiceRunning = QLabel()
-        self.lblClientServiceRunning = QLabel()
-        self.lblResultAverageStatus = QLabel()
+        self.svgStatusServiceRunning = QSvgWidget(TORIcons.LED_RED)
+        self.svgClientServiceRunning = QSvgWidget(TORIcons.LED_RED)
+        self.svgResultAverageStatus = QSvgWidget(TORIcons.LED_RED)
 
-        self.btnX = QPushButton()
-        #self.btnX.setIcon(QApplication.style().standardIcon(QStyle.SP_DialogCancelButton))
-        self.btnX.setIcon(TORIcons.ICON_CLOSE_BTN)
+        self.btnX = SvgButton(TORIcons.ICON_CLOSE)
         self.btnX.setFixedSize(16, 16)
         self.btnX.clicked.connect(self.btnX_clicked)
-        self.btnChange = QPushButton()
-        self.btnChange.setIcon(TORIcons.ICON_ADD_BTN)
+        self.btnChange = SvgButton(TORIcons.ICON_ADD)
         self.btnChange.setFixedSize(50, 50)
         self.btnChange.clicked.connect(self.btnChange_clicked)
 
@@ -45,21 +46,22 @@ class ClientDetailViewFull(ClientDetailViewBase):
         #layMain.addWidget(self.btnX, alignment=Qt.AlignRight)
 
         layClientStatus = QGridLayout()
+        layClientStatus.setSpacing(2)
         h = 12
         row = 0
         layClientStatus.addWidget(QLabel("online:"), row, 0)
-        layClientStatus.addWidget(self.lblIsOnline, row, 1)
+        layClientStatus.addWidget(self.svgIsOnline, row, 1)
         layClientStatus.addWidget(self.btnX, row, 2, alignment=Qt.AlignCenter)
         row += 1
         layClientStatus.addWidget(QLabel("Version:"), row, 0)
-        layClientStatus.addWidget(self.lblTORVersion, row, 1)
+        layClientStatus.addWidget(self.svgTORVersion, row, 1)
         layClientStatus.addWidget(self.lblTORVersionText, row, 2)
         row += 1
         layClientStatus.addWidget(QLabel("responding:"), row, 0)
-        layClientStatus.addWidget(self.lblStatusServiceRunning, row, 1)
+        layClientStatus.addWidget(self.svgStatusServiceRunning, row, 1)
         row += 1
         layClientStatus.addWidget(QLabel("running:"), row, 0)
-        layClientStatus.addWidget(self.lblClientServiceRunning, row, 1)
+        layClientStatus.addWidget(self.svgClientServiceRunning, row, 1)
         #row += 1
         #layClientStatus.addWidget(QLabel("current job:"), row, 0)
         #layClientStatus.addWidget(self.lblCurrentJob, row, 1)
@@ -75,7 +77,7 @@ class ClientDetailViewFull(ClientDetailViewBase):
         grpClientStatus.setLayout(layClientStatus)
 
         #Client Service
-        w = 30
+        w = 25
         h = 16
         layClientService = QHBoxLayout()
         self.btnStartClientService.setFixedSize(w, h)
@@ -89,7 +91,7 @@ class ClientDetailViewFull(ClientDetailViewBase):
         grpClientService.setLayout(layClientService)
 
         #LEDs
-        w = 30
+        w = 21
         h = 16
         layLEDs = QHBoxLayout()
         self.btnTurnOnLEDs.setFixedSize(w, h)
@@ -104,8 +106,9 @@ class ClientDetailViewFull(ClientDetailViewBase):
 
         #Job
         layJob = QGridLayout()
-        w = 70
-        h = 16
+        layJob.setSpacing(2)
+        w = 50
+        h = 12
         row = 0
         layJob.addWidget(QLabel("Name:"), row, 0)
         self.cmbCurrentJob = QComboBox()
@@ -114,26 +117,25 @@ class ClientDetailViewFull(ClientDetailViewBase):
         self.cmbCurrentJob.currentIndexChanged.connect(self.cmbCurrentJob_currentIndexChanged)
         self.cmbCurrentJob.setFixedSize(w, h)
         layJob.addWidget(self.cmbCurrentJob, row, 1)
-        self.btnSaveJob = QPushButton()
-        self.btnSaveJob.setIcon(TORIcons.ICON_START_BTN)
+        self.btnSaveJob = SvgButton(TORIcons.ICON_START)
         self.btnSaveJob.setFixedSize(h, h)
         self.btnSaveJob.clicked.connect(self.btnSaveJob_clicked)
         layJob.addWidget(self.btnSaveJob, row, 2)
         row += 1
-        layJob.addWidget(QLabel("Parameters:"), row, 0)
+        layJob.addWidget(QLabel("Params:"), row, 0)
         self.txtJobParams = QLineEdit()
         self.txtJobParams.setFixedSize(w, h)
         layJob.addWidget(self.txtJobParams, row, 1)
-        lblJobParamsInfo = QLabel()
-        lblJobParamsInfo.setPixmap(TORIcons.ICON_INFO)
-        lblJobParamsInfo.setToolTip("<b>R:</b> no Job Parameters<br/><br/><b>W:</b> no Job Parameters<br/><br/><b>RW:</b> JobParameters: r w t<br/>run 'r' times, then wait 'w' times for 't' seconds")
-        layJob.addWidget(lblJobParamsInfo, row, 2)
+        svgJobParamsInfo = QSvgWidget(TORIcons.ICON_INFO)
+        svgJobParamsInfo.setToolTip("<b>R:</b> no Job Parameters<br/><br/><b>W:</b> no Job Parameters<br/><br/><b>RW:</b> JobParameters: r w t<br/>run 'r' times, then wait 'w' times for 't' seconds")
+        layJob.addWidget(svgJobParamsInfo, row, 2)
         grpJob = QGroupBox("Job")
         grpJob.setProperty("styleClass", "group-box-compact")
         grpJob.setLayout(layJob)
 
         #Options
         layClientOptions = QGridLayout()
+        layClientOptions.setSpacing(2)
         layClientOptions.addWidget(QLabel("User mode enabled"), 0, 0)
         layClientOptions.addWidget(self.chkUserMode, 0, 1)
         layClientOptions.addWidget(QLabel("Client activated"), 1, 0)
@@ -145,20 +147,19 @@ class ClientDetailViewFull(ClientDetailViewBase):
         grpClientOptions.setLayout(layClientOptions)
 
         #Error Log
-        layErrorLog = QGridLayout()
-        self.lblErrorLogIcon = QLabel()
-        layErrorLog.addWidget(self.lblErrorLogIcon, 0, 0)
+        layErrorLog = QHBoxLayout()
+        layErrorLog.setSpacing(2)
+        self.svgErrorLogIcon = QSvgWidget(TORIcons.ICON_INFO)
+        layErrorLog.addWidget(self.svgErrorLogIcon)
         self.lblErrorLogMessage = QLabel()
-        self.lblErrorLogMessage.setWordWrap(True);
-        layErrorLog.addWidget(self.lblErrorLogMessage, 0, 1)
-        self.btnErrorLogAcknowledge = QPushButton()
-        self.btnErrorLogAcknowledge.setIcon(QApplication.style().standardIcon(QStyle.SP_DialogApplyButton))
+        self.lblErrorLogMessage.setWordWrap(True)
+        layErrorLog.addWidget(self.lblErrorLogMessage)
+        self.btnErrorLogAcknowledge = SvgButton(TORIcons.ICON_OK)
         self.btnErrorLogAcknowledge.clicked.connect(self.btnErrorLogAcknowledge_clicked)
-        layErrorLog.addWidget(self.btnErrorLogAcknowledge, 0, 2)
-        self.btnErrorLogGoToDetails = QPushButton()
-        self.btnErrorLogGoToDetails.setIcon(QApplication.style().standardIcon(QStyle.SP_CommandLink))
+        layErrorLog.addWidget(self.btnErrorLogAcknowledge)
+        self.btnErrorLogGoToDetails = SvgButton(TORIcons.ICON_START)
         self.btnErrorLogGoToDetails.clicked.connect(self.btnErrorLogGoToDetails_clicked)
-        layErrorLog.addWidget(self.btnErrorLogGoToDetails, 0, 3)
+        layErrorLog.addWidget(self.btnErrorLogGoToDetails)
         grpErrorLog = QGroupBox("Error Log")
         grpErrorLog.setProperty("styleClass", "group-box-compact")
         grpErrorLog.setLayout(layErrorLog)
@@ -192,17 +193,19 @@ class ClientDetailViewFull(ClientDetailViewBase):
         if compact:
             layClientStatus.setContentsMargins(0, 0, 0, 0)
             layClientService.setContentsMargins(0, 0, 0, 0)
+            layClientService.setSpacing(2)
             layLEDs.setContentsMargins(0, 0, 0, 0)
+            layLEDs.setSpacing(2)
             layJob.setContentsMargins(0, 0, 0, 0)
             layClientOptions.setContentsMargins(0, 0, 0, 0)
             layErrorLog.setContentsMargins(0, 0, 0, 0)
             self.layStack.setContentsMargins(0, 0, 0, 0)
             layMainGroup.setContentsMargins(0, 0, 0, 0)
+            layMain.setContentsMargins(2, 10, 2, 2)
 
-            for lbl in [self.lblIsOnline, self.lblTORVersion, self.lblClientServiceRunning, self.lblStatusServiceRunning, self.lblResultAverageStatus, self.lblErrorLogIcon, lblJobParamsInfo]:
-                lbl.setFixedSize(8, 8)
-                lbl.setScaledContents(True)
-            for btn in [self.btnX, self.btnSaveJob]:
+            for svg in [self.svgIsOnline, self.svgTORVersion, self.svgClientServiceRunning, self.svgStatusServiceRunning, self.svgResultAverageStatus, self.svgErrorLogIcon, svgJobParamsInfo]:
+                svg.setFixedSize(8, 8)
+            for btn in [self.btnX, self.btnSaveJob, self.btnErrorLogAcknowledge, self.btnErrorLogGoToDetails]:
                 btn.setFixedSize(8, 8)
                 btn.setIconSize(QSize(8, 8))
 
@@ -214,7 +217,7 @@ class ClientDetailViewFull(ClientDetailViewBase):
             self.wdgEmpty.setVisible(True)
             self.wdgMain.setVisible(False)
         else:
-            self.grpMainGroup.setTitle("#{}: {}".format(self.clientDetails.Position, self.clientDetails.Latin))
+            self.grpMainGroup.setTitle("#{}: {}".format(self.clientDetails.Position, self.clientDetails.Latin[:15]))
             self.wdgEmpty.setVisible(False)
             self.wdgMain.setVisible(True)
         self.app.processEvents()
@@ -263,14 +266,14 @@ class ClientDetailViewFull(ClientDetailViewBase):
         if self.clientDetails is not None:
             self.ErrorMessage = DBManager.getRecentClientLogErrorByClientId(self.clientDetails.Id)
             if self.ErrorMessage is not None:
-                self.lblErrorLogIcon.setPixmap(TORIcons.LED_RED)
+                self.svgErrorLogIcon.load(TORIcons.LED_RED)
                 self.lblErrorLogMessage.setText(f"{self.ErrorMessage.Message}\nTime: {self.ErrorMessage.Time}\nCode: {self.ErrorMessage.MessageCode}")
                 self.btnErrorLogAcknowledge.setVisible(True)
                 if self.inInstallation:
                     self.btnErrorLogGoToDetails.setVisible(True)
                 self.grpMainGroup.setStyleSheet("QGroupBox#ClientDetails {border-color: #FF0000} QGroupBox:title#ClientDetails { background-color: #FF0000 }")
         if self.ErrorMessage is None:
-            self.lblErrorLogIcon.setPixmap(TORIcons.LED_GREEN)
+            self.svgErrorLogIcon.load(TORIcons.LED_GREEN)
             self.lblErrorLogMessage.setText("---")
             self.btnErrorLogAcknowledge.setVisible(False)
             self.btnErrorLogGoToDetails.setVisible(False)
@@ -291,26 +294,26 @@ class ClientDetailViewFull(ClientDetailViewBase):
 
     def refreshClientStatus(self):
         if self.clientDetails is not None:
-            self.lblIsOnline.setPixmap(TORIcons.LED_GREEN if self.clientDetails.IsOnline else TORIcons.LED_RED)
-            self.lblTORVersion.setPixmap(TORIcons.LED_GREEN if self.clientDetails.VersionOkay else TORIcons.LED_RED)
+            self.svgIsOnline.load(TORIcons.LED_GREEN if self.clientDetails.IsOnline else TORIcons.LED_RED)
+            self.svgTORVersion.load(TORIcons.LED_GREEN if self.clientDetails.VersionOkay else TORIcons.LED_RED)
             self.lblTORVersionText.setText(self.clientDetails.Version)
 
-            self.lblStatusServiceRunning.setToolTip(self.clientDetails.StatusManagerServiceStatus)
+            self.svgStatusServiceRunning.setToolTip(self.clientDetails.StatusManagerServiceStatus)
 
             if self.clientDetails.StatusManagerServiceStatus == "active":
-                self.lblStatusServiceRunning.setPixmap(TORIcons.LED_GREEN)
+                self.svgStatusServiceRunning.load(TORIcons.LED_GREEN)
             elif self.clientDetails.StatusManagerServiceStatus == "inactive":
-                self.lblStatusServiceRunning.setPixmap(TORIcons.LED_RED)
+                self.svgStatusServiceRunning.load(TORIcons.LED_RED)
             else:
-                self.lblStatusServiceRunning.setPixmap(TORIcons.LED_GRAY)
+                self.svgStatusServiceRunning.load(TORIcons.LED_GRAY)
 
-            self.lblClientServiceRunning.setToolTip(self.clientDetails.ClientServiceStatus)
+            self.svgClientServiceRunning.setToolTip(self.clientDetails.ClientServiceStatus)
             if self.clientDetails.ClientServiceStatus == "active":
-                self.lblClientServiceRunning.setPixmap(TORIcons.LED_GREEN)
+                self.svgClientServiceRunning.load(TORIcons.LED_GREEN)
             elif self.clientDetails.ClientServiceStatus == "inactive":
-                self.lblClientServiceRunning.setPixmap(TORIcons.LED_RED)
+                self.svgClientServiceRunning.load(TORIcons.LED_RED)
             else:
-                self.lblClientServiceRunning.setPixmap(TORIcons.LED_GRAY)
+                self.svgClientServiceRunning.load(TORIcons.LED_GRAY)
 
             self.chkUserMode.setChecked(self.clientDetails.AllowUserMode)
             self.chkIsActivated.setChecked(self.clientDetails.IsActive)

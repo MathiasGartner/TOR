@@ -1,4 +1,7 @@
 import logging
+
+from PyQt5.QtSvg import QSvgWidget
+
 log = logging.getLogger(__name__)
 
 from PyQt5.QtWidgets import QGridLayout, QGroupBox, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
@@ -16,7 +19,7 @@ class ClientDetailViewCompact(ClientDetailViewBase):
         layClientStatus = QGridLayout()
         layClientStatus.setContentsMargins(0, 0, 0, 0)
         layClientStatus.addWidget(QLabel("online:"), 0, 0)
-        layClientStatus.addWidget(self.lblIsOnline, 0, 1)
+        layClientStatus.addWidget(self.svgIsOnline, 0, 1)
         layClientStatus.addWidget(QLabel("current job:"), 1, 0)
         layClientStatus.addWidget(self.lblCurrentJob, 1, 1)
         layClientStatus.addWidget(QLabel("avg result:"), 2, 0)
@@ -61,16 +64,15 @@ class ClientDetailViewCompact(ClientDetailViewBase):
         grpClientOptions.setLayout(layClientOptions)
 
         # TORCLient Service
-        self.lblStatusClientService = QLabel()
-        self.lblStatusClientService.setPixmap(TORIcons.LED_RED)
-        self.lblStatusClientService.setToolTip("unknown")
+        self.svgStatusClientService = QSvgWidget(TORIcons.LED_RED)
+        self.svgStatusClientService.setToolTip("unknown")
         #self.btnStartClientService.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         self.btnStartClientService.setFixedSize(45, 22)
         self.btnStopClientService.setFixedSize(45, 22)
 
         layClientService = QHBoxLayout()
         layClientService.setContentsMargins(0, 0, 0, 0)
-        layClientService.addWidget(self.lblStatusClientService)
+        layClientService.addWidget(self.svgStatusClientService)
         layClientService.addWidget(self.btnStartClientService)
         layClientService.addWidget(self.btnStopClientService)
 
@@ -103,15 +105,15 @@ class ClientDetailViewCompact(ClientDetailViewBase):
 
     def refreshClientStatus(self):
         if self.clientDetails is not None:
-            self.lblStatusClientService.setToolTip(self.clientDetails.ClientServiceStatus)
+            self.svgStatusClientService.setToolTip(self.clientDetails.ClientServiceStatus)
             if self.clientDetails.ClientServiceStatus == "active":
-                self.lblStatusClientService.setPixmap(TORIcons.LED_GREEN)
+                self.svgStatusClientService.load(TORIcons.LED_GREEN)
             else:
-                self.lblStatusClientService.setPixmap(TORIcons.LED_GRAY)
+                self.svgStatusClientService.load(TORIcons.LED_GRAY)
             if self.clientDetails.IsOnline:
-                self.lblIsOnline.setPixmap(TORIcons.LED_GREEN)
+                self.svgIsOnline.load(TORIcons.LED_GREEN)
             else:
-                self.lblIsOnline.setPixmap(TORIcons.LED_RED)
+                self.svgIsOnline.load(TORIcons.LED_RED)
             if self.clientDetails.VersionOkay:
                 pass
             else:

@@ -1,7 +1,8 @@
-
+from PyQt5.QtSvg import QSvgWidget
 from PyQt5.QtWidgets import QCheckBox, QLabel, QPushButton, QWidget
 
 from tor.base import DBManager
+from tor.base.GUI import TORIcons
 from tor.server.TORCommands import TORCommands
 
 import tor.TORSettings as ts
@@ -13,7 +14,7 @@ class ClientDetailViewBase(QWidget):
         self.clientDetails = None
 
         # Status
-        self.lblIsOnline = QLabel()
+        self.svgIsOnline = QSvgWidget(TORIcons.LED_RED)
         self.lblCurrentJob = QLabel()
         self.lblResultAverage = QLabel()
         self.lblResultStddev = QLabel()

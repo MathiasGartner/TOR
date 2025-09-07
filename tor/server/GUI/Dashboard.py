@@ -11,6 +11,8 @@ import os
 import sys
 
 import matplotlib as plt
+from PyQt5.QtSvg import QSvgWidget
+
 plt.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
@@ -34,7 +36,7 @@ app = QApplication(sys.argv)
 app.setStyleSheet("""
         * 
         { 
-            font-size: 11px 
+            font-size: 10px 
         } 
 
         QGroupBox 
@@ -44,9 +46,9 @@ app.setStyleSheet("""
 
         QGroupBox#ClientDetails 
         { 
-            font-size: 11px;            
+            font-size: 10px;            
             border: 1px solid gray;
-            border-color: #17365D;
+            border-color: rgb(40, 140, 120);
             margin-top: 7px;
         }
 
@@ -55,7 +57,7 @@ app.setStyleSheet("""
             subcontrol-origin: margin;
             subcontrol-position: top center;
             padding: 2px 50px;
-            background-color: #17365D;
+            background-color: rgb(40, 140, 120);
             color: rgb(255, 255, 255);
         }
 
@@ -67,16 +69,21 @@ app.setStyleSheet("""
 
         *[styleClass~="group-box-compact"] 
         { 
-            font-size: 10px; 
+            font-size: 8px;
+            font-weight: font-semibold; 
+            color: rgb(90, 60, 120); 
         }
 
         *[styleClass~="group-box-compact"] * 
-        { 
-            font-size: 9px; 
+        {
+            font-size: 8px;
+            padding: 0px;
+            margin: 0px;
         }
         
         *[styleClass~="button-compact"] 
-        { 
+        {
+            font-size: 8px; 
         }
     """)
 window = None
@@ -116,6 +123,7 @@ class WaitCursor(object):
 from tor.base import DBManager
 from tor.base import NetworkUtils
 from tor.base.GUI import TORIcons
+from tor.base.GUI.SvgButton import SvgButton
 from tor.server.GUI.ClientDetailViewCompact import ClientDetailViewCompact
 from tor.server.GUI.ClientDetailViewFull import ClientDetailViewFull
 from tor.server.GUI.DatenAndEventSelection import DatenAndEventSelection
@@ -300,10 +308,7 @@ class MainWindow(QMainWindow):
                 if len(clients) != 27:
                     log.error("Positions are not set for all 27 boxes.")
                 for i in range(3):
-                    #layClientDetailsRegions[i].setContentsMargins(0, 0, 0, 0)
-                    #layClientDetailsRegions[i].setSpacing(0)
                     grpClientDetailsRegions[i].setLayout(layClientDetailsRegions[i])
-                    #grpClientDetailsRegions[i].setContentsMargins(0, 0, 0, 0)
                     for j in range(3):
                         for k in range(3):
                             c = clients[i*9 + j*3 + k]
@@ -318,6 +323,8 @@ class MainWindow(QMainWindow):
             else:
                 for i in range(3):
                     grpClientDetailsRegions[i].setLayout(layClientDetailsRegions[i])
+                    layClientDetailsRegions[i].setSpacing(2)
+                    layClientDetailsRegions[i].setContentsMargins(2, 2, 2, 2)
                     for j in range(3):
                         for k in range(3):
                             cdv = ClientDetailViewFull(app, position=9*i + 3*j + k + 1, changeClientCallback=self.reloadClients, openDetailTabCallback=self.openClientDetailTab, compact=True)
@@ -357,8 +364,7 @@ class MainWindow(QMainWindow):
         self.cmbQuickTour.setMaximumWidth(100)
         for i in range(len(self.quickTourNames)):
             self.cmbQuickTour.insertItem(i, self.quickTourNames[i], self.quickTourNames[i])
-        self.btnStartQuickTour = QPushButton()
-        self.btnStartQuickTour.setIcon(TORIcons.ICON_START_BTN)
+        self.btnStartQuickTour = SvgButton(TORIcons.ICON_START)
         self.btnStartQuickTour.clicked.connect(self.btnStartQuickTour_clicked)
 
         layDashboardQuickTour = QHBoxLayout()
@@ -395,7 +401,8 @@ class MainWindow(QMainWindow):
         self.btnRestoreSettings.setText("Restore Settings")
         self.btnRestoreSettings.clicked.connect(self.btnRestoreSettings_clicked)
 
-        self.lblStatusTORServer = QLabel()
+        self.svgStatusTORServer = QSvgWidget(TORIcons.LED_RED)
+        self.svgStatusTORServer.setFixedSize(8, 8)
 
         self.btnStartTORServer = QPushButton()
         self.btnStartTORServer.setText("Start TOR Server")
@@ -452,7 +459,7 @@ class MainWindow(QMainWindow):
         layDashboardButtons.addSpacing(spacerSize)
         layTmp = QHBoxLayout()
         layTmp.addWidget(QLabel("Server"))
-        layTmp.addWidget(self.lblStatusTORServer)
+        layTmp.addWidget(self.svgStatusTORServer)
         layDashboardButtons.addLayout(layTmp)
         layDashboardButtons.addWidget(self.btnStartTORServer)
         layDashboardButtons.addWidget(self.btnStopTORServer)
@@ -889,11 +896,11 @@ class MainWindow(QMainWindow):
         msg = { "DASH": "STATUS" }
         answer = self.sendMsgToTORServer(msg)
         if isinstance(answer, dict) and "STATUS" in answer and answer["STATUS"] == "OK":
-            self.lblStatusTORServer.setPixmap(TORIcons.LED_GREEN)
-            self.lblStatusTORServer.setToolTip("running")
+            self.svgStatusTORServer.load(TORIcons.LED_GREEN)
+            self.svgStatusTORServer.setToolTip("running")
         else:
-            self.lblStatusTORServer.setPixmap(TORIcons.LED_RED)
-            self.lblStatusTORServer.setToolTip("not responding")
+            self.svgStatusTORServer.load(TORIcons.LED_RED)
+            self.svgStatusTORServer.setToolTip("not responding")
 
     def executeCommandOnTORServer(self, cmd, timeout=DEFAULT_TIMEOUT_SERVER):
         val = -1
@@ -924,7 +931,7 @@ class MainWindow(QMainWindow):
     def initDashboard(self):
         for cdv in self.cdvs:
             if cdv.clientDetails is not None:
-                cdv.lblIsOnline.setToolTip("Id: {}\nIP: {}\nMaterial: {}\nLatin name: {}".format(cdv.clientDetails.Id, cdv.clientDetails.IP, cdv.clientDetails.Material, cdv.clientDetails.Latin))
+                cdv.svgIsOnline.setToolTip("Id: {}\nIP: {}\nMaterial: {}\nLatin name: {}".format(cdv.clientDetails.Id, cdv.clientDetails.IP, cdv.clientDetails.Material, cdv.clientDetails.Latin))
 
     def updateDashboardFromTimer(self):
         if not self.IsBusy and self.tabDashboard.currentIndex() == self.dashboardTabIndex:
@@ -972,9 +979,9 @@ class MainWindow(QMainWindow):
                 cdv.lblResultAverage.setText("{:.2f}±{:.2f}".format(cdv.clientDetails.ResultAverage, cdv.clientDetails.ResultStddev))
                 cdv.lblResultStddev.setText("+-{}".format(cdv.clientDetails.ResultStddev))
                 if cdv.clientDetails.IsBadStatistics():
-                    cdv.lblResultAverageStatus.setPixmap(TORIcons.LED_RED)
+                    cdv.svgResultAverageStatus.load(TORIcons.LED_RED)
                 else:
-                    cdv.lblResultAverageStatus.setPixmap(TORIcons.LED_GREEN)
+                    cdv.svgResultAverageStatus.load(TORIcons.LED_GREEN)
                 if isinstance(cdv, ClientDetailViewFull):
                     cdv.refreshErrorLog()
 
@@ -1078,16 +1085,16 @@ class MainWindow(QMainWindow):
         log.info("restored")
 
     def btnStartTORServer_clicked(self):
-        self.lblStatusTORServer.setPixmap(TORIcons.LED_GRAY)
-        self.lblStatusTORServer.setToolTip("starting...")
+        self.svgStatusTORServer.load(TORIcons.LED_GRAY)
+        self.svgStatusTORServer.setToolTip("starting...")
         app.processEvents()
         self.executeCommandOnTORServer(TORCommands.SERVER_SERVICE_START)
         log.info("start TORServer")
         self.checkStatusTORServer()
 
     def btnStopTORServer_clicked(self):
-        self.lblStatusTORServer.setPixmap(TORIcons.LED_GRAY)
-        self.lblStatusTORServer.setToolTip("stopping...")
+        self.svgStatusTORServer.load(TORIcons.LED_GRAY)
+        self.svgStatusTORServer.setToolTip("stopping...")
         app.processEvents()
         self.executeCommandOnTORServer(TORCommands.SERVER_SERVICE_STOP)
         log.info("stop TORServer")
