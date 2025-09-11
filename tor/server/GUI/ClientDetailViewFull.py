@@ -209,8 +209,6 @@ class ClientDetailViewFull(ClientDetailViewBase):
                 btn.setFixedSize(8, 8)
                 btn.setIconSize(QSize(8, 8))
 
-
-
     def updateClientArea(self):
         if self.clientDetails is None:
             self.grpMainGroup.setTitle("No Box selected")
