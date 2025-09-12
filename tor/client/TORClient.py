@@ -260,7 +260,9 @@ def run():
         checkFunctionality()
 
     if doHoming and cm.clientIsActive():
-        mr.pickupDieWhileHoming()
+        homingResult = mr.pickupDieWhileHoming()
+        if homingResult.found:
+            state.NoResultRecognized = 0
         doHomingCheck()
         checkFunctionality()
 
