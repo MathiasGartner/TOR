@@ -354,6 +354,7 @@ class MainWindow(QMainWindow):
         layMagnetContact = QHBoxLayout()
         layMagnetContact.addWidget(QLabel("Magnet has contact: "))
         self.svgMagnetContact = QSvgWidget(TORIcons.LED_GRAY)
+        self.svgMagnetContact.setFixedSize(8, 8)
         layMagnetContact.addWidget(self.svgMagnetContact)
         layMagnet.addLayout(layMagnetContact, row, 2)
 

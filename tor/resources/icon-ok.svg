@@ -1,7 +1,6 @@
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g clip-path="url(#clip0_324_2)">
-<rect width="64" height="64" fill="white"/>
-<circle cx="32" cy="32" r="32" fill="#2B8E7B"/>
+<circle cx="32" cy="32" r="32" fill="#34C759"/>
 <g filter="url(#filter0_d_324_2)">
 <path d="M31.7989 43.1629L18 35.1962L21 30L34.7989 37.9668L31.7989 43.1629Z" fill="white"/>
 </g>

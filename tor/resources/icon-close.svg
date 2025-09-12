@@ -1,13 +1,12 @@
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g clip-path="url(#clip0_314_14)">
-<rect width="64" height="64" fill="white"/>
-<circle cx="32" cy="32" r="32" fill="#B23A48"/>
+<circle cx="32" cy="32" r="32" fill="#FF3B30"/>
 <g filter="url(#filter0_d_314_14)">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M47.5563 20.6862L43.3137 16.4436L31.9999 27.7573L20.6863 16.4437L16.4436 20.6863L27.7573 32L16.4436 43.3137L20.6862 47.5563L31.9999 36.2426L43.3137 47.5564L47.5563 43.3137L36.2426 32L47.5563 20.6862Z" fill="white"/>
+<path d="M47.5559 20.6858L36.2415 31.9993L47.5559 43.3137L43.3137 47.5559L31.9993 36.2415L20.6858 47.5559L16.4436 43.3137L27.7571 31.9993L16.4436 20.6868L20.6868 16.4436L31.9993 27.7571L43.3137 16.4436L47.5559 20.6858Z" fill="white"/>
 </g>
 </g>
 <defs>
-<filter id="filter0_d_314_14" x="12.4436" y="16.4436" width="39.1128" height="39.1128" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<filter id="filter0_d_314_14" x="12.4436" y="16.4436" width="39.1123" height="39.1123" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
 <feFlood flood-opacity="0" result="BackgroundImageFix"/>
 <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
 <feOffset dy="4"/>

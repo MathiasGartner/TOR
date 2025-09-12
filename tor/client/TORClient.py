@@ -48,7 +48,6 @@ class ClientState:
         self.NoResultRecognized = 0
 
 def keepAskingForNextJob(askEveryNthSecond = None):
-    global lock
     global exitTOR
     global nextJob
     global userModeRequested

@@ -203,11 +203,12 @@ class ClientDetailViewFull(ClientDetailViewBase):
             layMainGroup.setContentsMargins(0, 0, 0, 0)
             layMain.setContentsMargins(2, 10, 2, 2)
 
-            for svg in [self.svgIsOnline, self.svgTORVersion, self.svgClientServiceRunning, self.svgStatusServiceRunning, self.svgResultAverageStatus, self.svgErrorLogIcon, svgJobParamsInfo]:
-                svg.setFixedSize(8, 8)
-            for btn in [self.btnX, self.btnSaveJob, self.btnErrorLogAcknowledge, self.btnErrorLogGoToDetails]:
-                btn.setFixedSize(8, 8)
-                btn.setIconSize(QSize(8, 8))
+        iconSize = 8 if compact else 10
+        for svg in [self.svgIsOnline, self.svgTORVersion, self.svgClientServiceRunning, self.svgStatusServiceRunning, self.svgResultAverageStatus, self.svgErrorLogIcon, svgJobParamsInfo]:
+            svg.setFixedSize(iconSize, iconSize)
+        for btn in [self.btnX, self.btnSaveJob, self.btnErrorLogAcknowledge, self.btnErrorLogGoToDetails]:
+            btn.setFixedSize(iconSize, iconSize)
+            btn.setIconSize(QSize(iconSize, iconSize))
 
     def updateClientArea(self):
         if self.clientDetails is None:

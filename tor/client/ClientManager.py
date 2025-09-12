@@ -105,6 +105,13 @@ class ClientManager:
         }
         answer = self.sendAndGetAnswer(msg)
 
+    def sendDisableUserMode(self, disabled):
+        msg = {
+            "C": self.clientId,
+            "DISABLE_USERMODE": disabled
+        }
+        answer = self.sendAndGetAnswer(msg)
+
     def sendOTPWTriggered(self):
         msg = {
             "C": self.clientId,
