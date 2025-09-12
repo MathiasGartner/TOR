@@ -3,6 +3,7 @@ log = logging.getLogger(__name__)
 logSerial = logging.getLogger("serial")
 
 import serial
+import serial.tools.list_ports
 import threading
 import time
 
@@ -19,8 +20,9 @@ class Communicator(Singleton):
         self._lock = threading.Lock()
         if serialPort == "":
             if cs.ON_RASPI:
-                serialPort = "/dev/ttyACM0"
-                #serialPort = "/dev/ttyS0"
+                serialPort = self.findPort(cs.BOARD_VENDOR_ID, cs.BOARD_PRODUCT_ID)
+                if serialPort is None:
+                    serialPort = cs.DEFAULT_SERIAL_PORT
         if serialPort == "":
             self.useSerial = False
         else:
@@ -33,6 +35,16 @@ class Communicator(Singleton):
                 bytesize=serial.EIGHTBITS,
                 timeout=1
             )
+            log.info("Connected to board at port \"{serialPort}\"")
+
+    def findPort(self, vendorId, productId):
+        ports = serial.tools.list_ports.comports()
+        for port in ports:
+            if (port.vid is not None and port.pid is not None and
+                    format(port.vid, '04x') == vendorId.lower() and
+                    format(port.pid, '04x') == productId.lower()):
+                return port.device
+        return None
 
     def close(self):
         if self.useSerial:

@@ -14,6 +14,9 @@ if sys.platform == "linux" and platform.platform() == "Linux-4.19.118+-armv6l-wi
 else:
     ON_RASPI = False
 
+BOARD_VENDOR_ID = "1eaf" # BTT SKR mini E3 V1.2
+BOARD_PRODUCT_ID = "0029" # BTT SKR mini E3 V1.2
+DEFAULT_SERIAL_PORT = "/dev/ttyACM0"
 TOR_MARLIN_VERSION = "1.4"
 
 #logging
