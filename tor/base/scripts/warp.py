@@ -31,6 +31,6 @@ cv2.imshow("original", image)
 
 cv2.namedWindow("warp", cv2.WINDOW_NORMAL)
 cv2.resizeWindow("warp", w, h)
-cv2.imshow("warp", warp)
+cv2.imshow("warp", warped)
 
 cv2.waitKey()

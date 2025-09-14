@@ -40,4 +40,4 @@ David Eilmsteiner
 Andreas Ganhör  
 Michaela Haslhofer  
 Gabriel Häusler  
-[badcap.at](badcap.at)
+[badcap.at](https://www.badcap.at/)
