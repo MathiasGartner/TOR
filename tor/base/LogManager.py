@@ -20,9 +20,9 @@ def getLogger(module_name=None):
 
     if caller == "__main__":  # main script
         # Use module_name if given, else just main script name
-        logger_name = MAIN_SCRIPT if module_name is None else f"{MAIN_SCRIPT} - {module_name}"
+        logger_name = MAIN_SCRIPT if module_name is None else f"{MAIN_SCRIPT}.{module_name}"
     else:
         # imported module, prefix with main script
-        logger_name = f"{MAIN_SCRIPT} - {module_name}"
+        logger_name = f"{MAIN_SCRIPT}.{module_name}"
 
     return logging.getLogger(logger_name)

@@ -25,9 +25,9 @@ root:
   handlers: [console, file]
 
 loggers:
-  ina:
+  Adafruit_I2C:
     level: INFO
     propagate: no
-  TORClient - SerialCommunication:
+  TORClient.SerialCommunication:
     level: INFO
     propagate: no
