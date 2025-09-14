@@ -30,9 +30,9 @@ class MovementRoutines:
 
     def relativeBedCoordinatesToPosition(self, px, py):
         p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12 = self.loadPoints()
-        #TODO: @David check the out of range logic. die was found correctly at y=1.002
-        #      why is y < 0 allowed? is the calculation correct for py < 0?
-        #      for now just clip
+        # TODO: @David check the out of range logic. die was found correctly at y=1.002
+        #       why is y < 0 allowed? is the calculation correct for py < 0?
+        #       for now just clip
         minX = -0.1
         maxX = 1.1
         minY = -0.1
@@ -55,7 +55,7 @@ class MovementRoutines:
         pass
 
     def searchForDie(self):
-        #starting position
+        # starting position
         '''
         1  2  3
         4  5  6
@@ -65,20 +65,20 @@ class MovementRoutines:
         M      M
         '''
         p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12 = self.loadPoints()
-        n_rows = 4 # rows per area
+        n_rows = 4  # rows per area
         self.mm.moveToPos(Position(p1[0], p1[1], 100), True)
         self.mm.moveToPos(Position(p1[0], p1[1], p1[2]), True)
         self.mm.waitForMovementFinished()
-        #raster bottom
+        # raster bottom
         # mesh left side
-        x_mesh_l=np.linspace(p1[0], p4[0], n_rows)
-        y_mesh_l=np.linspace(p1[1], p4[1], n_rows)
-        z_mesh_l=np.linspace(p1[2], p4[2], n_rows)
-        #mesh center
+        x_mesh_l = np.linspace(p1[0], p4[0], n_rows)
+        y_mesh_l = np.linspace(p1[1], p4[1], n_rows)
+        z_mesh_l = np.linspace(p1[2], p4[2], n_rows)
+        # mesh center
         x_mesh_c = np.linspace(p2[0], p5[0], n_rows)
         y_mesh_c = np.linspace(p2[1], p5[1], n_rows)
         z_mesh_c = np.linspace(p2[2], p5[2], n_rows)
-        #mesh right side
+        # mesh right side
         x_mesh_r = np.linspace(p3[0], p6[0], n_rows)
         y_mesh_r = np.linspace(p3[1], p6[1], n_rows)
         z_mesh_r = np.linspace(p3[2], p6[2], n_rows)
@@ -87,23 +87,23 @@ class MovementRoutines:
         for i in range(n_rows):
             if (i % 2 == 0):
                 self.mm.moveToPos(Position(x_mesh_l[i], y_mesh_l[i], z_mesh_l[i]), True)
-                #self.mm.waitForMovementFinished()
+                # self.mm.waitForMovementFinished()
                 self.mm.moveToPos(Position(x_mesh_c[i], y_mesh_c[i], z_mesh_c[i]), True, useSlowDownEnd=False)
-                #self.mm.waitForMovementFinished()
+                # self.mm.waitForMovementFinished()
                 self.mm.moveToPos(Position(x_mesh_r[i], y_mesh_r[i], z_mesh_r[i]), True, useSlowDownStart=False)
                 self.mm.waitForMovementFinished()
             else:
                 self.mm.moveToPos(Position(x_mesh_r[i], y_mesh_r[i], z_mesh_r[i]), True)
-                #self.mm.waitForMovementFinished()
+                # self.mm.waitForMovementFinished()
                 self.mm.moveToPos(Position(x_mesh_c[i], y_mesh_c[i], z_mesh_c[i]), True, useSlowDownEnd=False)
-                #self.mm.waitForMovementFinished()
+                # self.mm.waitForMovementFinished()
                 self.mm.moveToPos(Position(x_mesh_l[i], y_mesh_l[i], z_mesh_l[i]), True, useSlowDownStart=False)
                 self.mm.waitForMovementFinished()
         self.mm.moveToPos(Position(MovementManager.currentPosition.x, MovementManager.currentPosition.y+cs.CRITICAL_AREA_APPROACH_Y, MovementManager.currentPosition.z-cs.CRITICAL_AREA_APPROACH_Z), True)
 
         #### ramp ###
-        if(cs.SEARCH_RAMP):
-            #safely move away from ramp
+        if cs.SEARCH_RAMP:
+            # safely move away from ramp
             self.mm.moveToPos(Position(MovementManager.currentPosition.x, MovementManager.currentPosition.y + 20, 100), True)
             self.mm.waitForMovementFinished()
 
@@ -111,11 +111,11 @@ class MovementRoutines:
             x_mesh_l = np.linspace(p7[0], p10[0], n_rows)
             y_mesh_l = np.linspace(p7[1], p10[1], n_rows)
             z_mesh_l = np.linspace(p7[2], p10[2], n_rows)
-            #mesh center
+            # mesh center
             x_mesh_c = np.linspace(p8[0], p11[0], n_rows)
             y_mesh_c = np.linspace(p8[1], p11[1], n_rows)
             z_mesh_c = np.linspace(p8[2], p11[2], n_rows)
-            #mesh right side
+            # mesh right side
             x_mesh_r = np.linspace(p9[0], p12[0], n_rows)
             y_mesh_r = np.linspace(p9[1], p12[1], n_rows)
             z_mesh_r = np.linspace(p9[2], p12[2], n_rows)
@@ -200,7 +200,7 @@ class MovementRoutines:
         log.info("prepare camera: {}".format(cam))
         log.info("take picture while homing...")
         image = self.takePicture(cam)
-        #log.info("image {}".format(image))
+        # log.info("image {}".format(image))
         log.info("do homing mode 3")
         self.mm.doHoming(mode=3)
         dieRollResult, processedImages = self.dr.getDieRollResult(image, returnOriginalImg=True)
@@ -264,7 +264,7 @@ class MovementRoutines:
             p = Position(pos[0], pos[1] + cs.DROPOFF_ADVANCE_OFFSET_Y2, pos[2] + cs.DROPOFF_ADVANCE_OFFSET_Z2)
         return p
 
-    def moveToDropoffPosition(self, dropoffPos, speedupFactor1=1, speedupFactor2=1):
+    def moveToDropoffPosition(self, dropoffPos, speedupFactor1=1.0, speedupFactor2=1.0):
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
         if not isinstance(dropoffPos, Position):
             dropoffPos = Position(dropoffPos[0], dropoffPos[1], dropoffPos[2])
@@ -292,7 +292,7 @@ class MovementRoutines:
             px = 1 - px
 
         if cs.ALWAYS_USE_PX >= 0 and cs.ALWAYS_USE_PX <= 3:
-            #log.info("use fixed magnet point")
+            # log.info("use fixed magnet point")
             dropoffPos = cs.MESH_MAGNET[cs.ALWAYS_USE_PX, :]
         else:
             if px < 0.5:
@@ -309,7 +309,7 @@ class MovementRoutines:
         # calculate dropoff position
         # on every second try the position is not inverted
         invert = (numFailedTries % 2) == 0
-        # if the frist two tries fail, the position is altered
+        # if the first two tries fail, the position is altered
         if numFailedTries >= 2:
             lastPickupX = lastPickupX / (numFailedTries // 2)
         dropoffPos = self.getDropoffPosByPercent(lastPickupX, invert=invert)
@@ -317,8 +317,8 @@ class MovementRoutines:
         # move to dropoff position
         self.moveToDropoffPosition(dropoffPos)
 
-        #TODO: why is this not working?
-        #cam = Camera(doWarmup=False)
+        # TODO: why is this not working?
+        # cam = Camera(doWarmup=False)
 
         # roll die
         time.sleep(cs.WAIT_BEFORE_ROLL_TIME)
@@ -384,7 +384,7 @@ class MovementRoutines:
         self.mm.moveToPos(posMoveUpAndDown)
         self.mm.waitForMovementFinished()
 
-    def checkSuccesfulHoming(self):
+    def checkSuccessfulHoming(self):
         positionOK = self.verifyMagnetPosition()
         if positionOK:
             log.info("homing successful")
@@ -402,7 +402,7 @@ class MovementRoutines:
             self.mm.waitForMovementFinished()
             positionOK = self.verifyMagnetPosition()
             if positionOK:
-                log.warning("homing succesful (second attempt).")
+                log.warning("homing successful (second attempt).")
             else:
                 log.warning("could not verify position after homing two times")
         return positionOK
@@ -443,7 +443,7 @@ class MovementRoutines:
             self.mm.moveToPos(cs.AFTER_PICKUP_POSITION, True)
             dropoffPosPercent = int(steps)
             dropoffPos = self.getDropoffPosByPercent(1.0 - (dropoffPosPercent / 100.0), invert=False)
-            #dropoffPos = cs.MESH_MAGNET[2]
+            # dropoffPos = cs.MESH_MAGNET[2]
             self.rollDie(dropoffPos)
             dieRollResult, processedImages = self.findDie()
             if dieRollResult.found:
@@ -452,7 +452,7 @@ class MovementRoutines:
             else:
                 log.info("die not found...")
         else:
-            #log.warning("Action {} not known.".format(action))
+            # log.warning("Action {} not known.".format(action))
             time.sleep(0.7 * cs.ASK_EVERY_NTH_SECOND_FOR_JOB_USERMODE)
         if posTo is not None:
             validPos = self.getValidUserPosition(posTo)
@@ -499,7 +499,7 @@ class MovementRoutines:
         lm = LedManager()
         lm.clear()
         self.mm.setFeedratePercentage(cs.FR_SLOW_MOVE)
-        #TODO: check if USE_MAGNET_BETWEEN_P0P1=True, otherwise use left side
+        # TODO: check if USE_MAGNET_BETWEEN_P0P1=True, otherwise use left side
         dropoffPos = cs.MESH_MAGNET[2]
         dropoffAdvancePos = Position(dropoffPos[0], dropoffPos[1] + cs.DROPOFF_ADVANCE_OFFSET_Y, dropoffPos[2] + cs.DROPOFF_ADVANCE_OFFSET_Z)
         self.mm.moveToPos(dropoffAdvancePos, True)
@@ -510,26 +510,26 @@ class MovementRoutines:
         log.info("waiting for performance to start...")
         startTimestamp = datetime.timestamp(startTime)
         timings = np.cumsum([0,
-                             0.25, # turn on leds
-                             6.0, # move to dropoff position
-                             2,   # roll die and mvoe to cs.CENTER_TOP
-                             0.9+4.2, # take picture
-                             0.3, # move to cs.BEFORE_PICKUP_POSITION
-                             5.1, # find die on image
-                             4.9  # pickup die
-                            ])    # move to starting position (dropoff advance position)
+                             0.25,      # turn on leds
+                             6.0,       # move to dropoff position
+                             2,         # roll die and move to cs.CENTER_TOP
+                             0.9+4.2,   # take picture
+                             0.3,       # move to cs.BEFORE_PICKUP_POSITION
+                             5.1,       # find die on image
+                             4.9        # pickup die
+                            ])          # move to starting position (dropoff advance position)
         timestamps = [t + startTimestamp for t in timings]
         log.info(timestamps)
 
         step = 0
         Utils.sleepUntilTimestampIndex(step, timestamps)
-        #cam = Camera(doWarmup=False)
+        # cam = Camera(doWarmup=False)
         lm.setAllLeds()
 
         step += 1
         Utils.sleepUntilTimestampIndex(step, timestamps)
         self.moveToDropoffPosition(cs.MESH_MAGNET[2], speedupFactor1=1.5, speedupFactor2=1)
-        #self.moveToDropoffPosition(cs.MESH_MAGNET[2], speedupFactor1=3, speedupFactor2=3)
+        # self.moveToDropoffPosition(cs.MESH_MAGNET[2], speedupFactor1=3, speedupFactor2=3)
 
         step += 1
         Utils.sleepUntilTimestampIndex(step, timestamps)
@@ -540,7 +540,7 @@ class MovementRoutines:
 
         step += 1
         Utils.sleepUntilTimestampIndex(step, timestamps)
-        #image = self.takePicture(cam)
+        # image = self.takePicture(cam)
         image = self.takePicture()
 
         step += 1
@@ -565,14 +565,14 @@ class MovementRoutines:
 
         cs.FR_DEFAULT = fr_default_old
 
-    def doPositionTestWithTiming(self, startTime, clientIdentity, x, y ,z):
+    def doPositionTestWithTiming(self, startTime, clientIdentity, x, y, z):
         log.info("preparing for performance...")
         lm = LedManager()
         lm.clear()
         self.mm.setTopLed(cs.LED_TOP_BRIGHTNESS_OFF)
         log.info("waiting for performance to start...")
         startTimestamp = datetime.timestamp(startTime)
-        timings = np.cumsum([clientIdentity["Position"]*0.2, # wait for position to be next
+        timings = np.cumsum([clientIdentity["Position"]*0.2,  # wait for position to be next
                              27 * 0.2 + 1])  # light up
         timestamps = [t + startTimestamp for t in timings]
         log.info(timestamps)

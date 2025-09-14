@@ -106,7 +106,7 @@ def doHomingCheck():
     checkFunctionality()
     if cm.clientIsActive():
         lm.setAllLeds()
-        homingSuccessful = mr.checkSuccesfulHoming()
+        homingSuccessful = mr.checkSuccessfulHoming()
         if not homingSuccessful:
             cm.sendStopClient("homing not successful")
             cm.sendHomingNotSuccessful()

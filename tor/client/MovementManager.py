@@ -69,8 +69,9 @@ class MovementManager(Singleton):
             time.sleep(3)
 
     def setFeedratePercentage(self, fr):
-        self.sendGCode("M220 S{}".format(fr))
-        self.feedratePercentage = fr
+        fr_int = int(fr)
+        self.sendGCode("M220 S{}".format(fr_int))
+        self.feedratePercentage = fr_int
 
     def getCordLengthGCode(self, cords):
         cmd = ""
