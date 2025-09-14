@@ -1,10 +1,10 @@
+import tor.server.ServerSettings as ss
+from tor.base.LogManager import setupLogging, getLogger
+setupLogging(ss.SERVER_LOG_CONFIG_FILEPATH)
+log = getLogger()
+
 import copy
-import datetime
-import logging
-import itertools
-import json
 import numpy as np
-import random
 import socket
 
 from tor.base import DBManager
@@ -13,7 +13,6 @@ from tor.base import NetworkUtils
 from tor.base.utils import Utils
 from tor.base.PositionVerification import PositionVerification
 from tor.server.Job import DefaultJobs
-import tor.server.ServerSettings as ss
 import tor.TORSettings as ts
 
 def getClientSettings(clientId):
@@ -151,9 +150,6 @@ def handleRequest(conn):
     else:
         log.warning("request not defined: {}".format(request))
 
-
-logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=ss.SERVER_LOG_LEVEL)
-log = logging.getLogger(__name__)
 
 pv = PositionVerification()
 pvs = {}

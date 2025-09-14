@@ -1,8 +1,6 @@
-import logging
-log = logging.getLogger(__name__)
+from tor.base.LogManager import getLogger
+log = getLogger("MovementManager")
 
-import math
-import numpy as np
 import re
 import time
 

@@ -1,4 +1,8 @@
-import logging
+import tor.client.ClientSettings as cs
+from tor.base.LogManager import setupLogging, getLogger
+setupLogging(cs.CALIBRATE_LOG_CONFIG_FILEPATH)
+log = getLogger()
+
 import time
 import os
 import sys
@@ -54,7 +58,6 @@ class WaitCursor(object):
 import tor.TORSettings as ts
 from tor.base.GUI import TORIcons
 from tor.base.utils import Utils
-from tor.client import ClientSettings as cs
 from tor.client.MovementManager import MovementManager
 if cs.ON_RASPI:
     from tor.client.MovementRoutines import MovementRoutines
@@ -125,17 +128,6 @@ MANUAL_MOVEMENT_Y_MIN = -15
 MANUAL_MOVEMENT_Y_MAX = cs.LY + 15
 MANUAL_MOVEMENT_Z_MIN = 0
 MANUAL_MOVEMENT_Z_MAX = cs.LX + 15
-
-###############
-### logging ###
-###############
-
-logging.basicConfig(format='%(levelname)s: %(message)s', level=cs.LOG_LEVEL)
-log = logging.getLogger(__name__)
-logSerial = logging.getLogger("serial")
-logSerial.setLevel(cs.LOG_LEVEL_SERIAL)
-logIna = logging.getLogger("ina")
-logIna.setLevel(cs.LOG_LEVEL_INA)
 
 ###########################
 ### get client identity ###

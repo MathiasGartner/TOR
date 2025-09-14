@@ -1,8 +1,7 @@
-import logging
+from tor.base.LogManager import getLogger
+log = getLogger("ClientDetailViewCompact")
 
 from PyQt5.QtSvg import QSvgWidget
-
-log = logging.getLogger(__name__)
 
 from PyQt5.QtWidgets import QGridLayout, QGroupBox, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 

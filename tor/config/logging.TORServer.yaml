@@ -1,0 +1,30 @@
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  standard:
+    format: "%(asctime)-19s | %(levelname)-8s | %(name)-15s | %(message)s"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: standard
+    stream: ext://sys.stdout
+
+  file:
+    class: logging.handlers.RotatingFileHandler
+    level: DEBUG
+    formatter: standard
+    filename: TORServer.log
+    maxBytes: 3145728   # 3 MB
+    backupCount: 0      # delete old logs instead of keeping backups
+
+root:
+  level: DEBUG
+  handlers: [console, file]
+
+loggers:
+  mysql:
+    level: INFO
+    propagate: no

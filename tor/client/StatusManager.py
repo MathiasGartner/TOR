@@ -1,9 +1,12 @@
-import logging
-log = logging.getLogger(__name__)
+import tor.client.ClientSettings as cs
+from tor.base.LogManager import setupLogging, getLogger
+setupLogging(cs.STATUSMANAGER_LOG_CONFIG_FILEPATH)
+log = getLogger()
 
 import socket
 import subprocess
 
+import tor.TORSettings as ts
 from tor.base import NetworkUtils
 
 def getServiceStatusTORClient():
@@ -26,7 +29,7 @@ def stopServiceTORClient():
 def handleRequest(conn):
     request = NetworkUtils.recvData(conn)
     if isinstance(request, dict):
-        log.info(request)
+        log.info(f"new request: {request}")
         if "TYPE" in request:
             if request["TYPE"] == "STATUS":
                 serviceTORClientRunning = getServiceStatusTORClient()
@@ -56,9 +59,6 @@ def handleRequest(conn):
             log.warning("request not defined: {}".format(request))
     else:
         log.warning("request not defined: {}".format(request))
-
-logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=cs.LOG_LEVEL_STATUS)
-log = logging.getLogger(__name__)
 
 ownIP = NetworkUtils.getOwnIP()
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

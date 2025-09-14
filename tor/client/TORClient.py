@@ -1,3 +1,8 @@
+import tor.client.ClientSettings as cs
+from tor.base.LogManager import setupLogging, getLogger
+setupLogging(cs.CLIENT_LOG_CONFIG_FILEPATH)
+log = getLogger()
+
 import argparse
 from datetime import datetime, timedelta
 import math
@@ -9,7 +14,6 @@ from tor.base.DieRecognizer import DieRecognizer
 from tor.base.utils import Utils
 from tor.base.utils.Point2D import Point2D
 from tor.client.ClientManager import ClientManager
-import tor.client.ClientSettings as cs
 if cs.ON_RASPI:
     from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
@@ -547,13 +551,6 @@ def doJobs():
 ###    main     ###
 ###################
 
-logging.basicConfig(format='%(levelname)s: %(message)s', level=cs.LOG_LEVEL)
-log = logging.getLogger(__name__)
-logSerial = logging.getLogger("serial")
-logSerial.setLevel(cs.LOG_LEVEL_SERIAL)
-logIna = logging.getLogger("ina")
-logIna.setLevel(cs.LOG_LEVEL_INA)
-
 ###########################
 ### get client identity ###
 ###########################
@@ -587,8 +584,6 @@ except:
 
 cm.loadSettings()
 cm.loadMeshpoints()
-
-log.setLevel(cs.LOG_LEVEL)
 
 dr = DieRecognizer()
 mm = MovementManager()

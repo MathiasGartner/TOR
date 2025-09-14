@@ -1,12 +1,10 @@
-import logging
-log = logging.getLogger(__name__)
-
 import math
 import numpy as np
 import os
 import platform
 import sys
 
+import tor.TORSettingsLocal as tsl
 from tor.client.Position import Position
 
 if sys.platform == "linux" and platform.platform() == "Linux-4.19.118+-armv6l-with-debian-10.4":
@@ -14,17 +12,17 @@ if sys.platform == "linux" and platform.platform() == "Linux-4.19.118+-armv6l-wi
 else:
     ON_RASPI = False
 
+# Marlin Board
 BOARD_VENDOR_ID = "1eaf" # BTT SKR mini E3 V1.2
 BOARD_PRODUCT_ID = "0029" # BTT SKR mini E3 V1.2
 DEFAULT_SERIAL_PORT = "/dev/ttyACM0"
 TOR_MARLIN_VERSION = "1.4"
 
-#logging
-#LOG_LEVEL = logging.INFO
-LOG_LEVEL = logging.INFO
-LOG_LEVEL_SERIAL = logging.INFO
-LOG_LEVEL_INA = logging.INFO
-LOG_LEVEL_STATUS = logging.INFO
+# logging
+LOG_CONFIG_DIRECTORY = os.path.join(tsl.TOR_PROGRAM_DIRECTORY_CLIENT, "config")
+CLIENT_LOG_CONFIG_FILEPATH = os.path.join(LOG_CONFIG_DIRECTORY, "logging.TORClient.yaml")
+CALIBRATE_LOG_CONFIG_FILEPATH = os.path.join(LOG_CONFIG_DIRECTORY, "logging.calibrate.yaml")
+STATUSMANAGER_LOG_CONFIG_FILEPATH = os.path.join(LOG_CONFIG_DIRECTORY, "logging.StatusManager.yaml")
 
 L_X_RAW = 290
 L_Y_RAW = 290

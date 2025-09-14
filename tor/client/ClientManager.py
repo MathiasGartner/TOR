@@ -1,5 +1,5 @@
-import logging
-log = logging.getLogger(__name__)
+from tor.base.LogManager import getLogger
+log = getLogger("ClientManager")
 
 import numpy as np
 

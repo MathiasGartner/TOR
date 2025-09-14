@@ -1,6 +1,6 @@
-import logging
-log = logging.getLogger(__name__)
-logSerial = logging.getLogger("serial")
+from tor.base.LogManager import getLogger
+log = getLogger("Communicator")
+logSerial = getLogger("SerialCommunication")
 
 import serial
 import serial.tools.list_ports

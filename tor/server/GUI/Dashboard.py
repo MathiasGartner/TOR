@@ -1,13 +1,10 @@
 import concurrent.futures
 import copy
 import socket
-from datetime import datetime, timedelta
-import logging
-import numpy as np
+from datetime import datetime
 import shlex
 import subprocess
 import time
-import os
 import sys
 
 import matplotlib as plt
@@ -111,6 +108,15 @@ class WaitCursor(object):
         app.processEvents()
         WaitCursor.isActive = False
 
+###############
+### logging ###
+###############
+
+import tor.server.ServerSettings as ss
+from tor.base.LogManager import setupLogging, getLogger
+setupLogging(ss.DASHBOARD_LOG_CONFIG_FILEPATH)
+log = getLogger()
+
 ###################
 ### TOR imports ###
 ###################
@@ -130,7 +136,6 @@ from tor.server.Job import Job
 from tor.server.Job import DefaultJobs
 from tor.server.TORCommands import TORCommands
 
-import tor.server.ServerSettings as ss
 import tor.TORSettingsLocal as tsl
 import tor.TORSettings as ts
 
@@ -147,13 +152,6 @@ DEFAULT_TIMEOUT_PING = 2.5
 NEW_PROGRAM_NAME = "<new>"
 
 TAKE_N_RESULTS_FOR_RECENT_CONTRIBUTIONS = 200
-
-###############
-### logging ###
-###############
-
-logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=ss.SERVER_LOG_LEVEL)
-log = logging.getLogger(__name__)
 
 def executeCommand(cmd, timeout=DEFAULT_TIMEOUT):
     cmdList = shlex.split(cmd)
@@ -234,7 +232,7 @@ class ClientDetails:
             if not self.VersionOkay:
                 log.warning(f"wrong TOR version at client <{self.Position} - {self.Latin}> (v{self.Version})")
             else:
-                log.info(f"correct TOR version at {self.Latin}")
+                log.info(f"correct TOR version at {self.Latin} found")
             self.ClientServiceStatus = answer["TOR_CLIENT_SERVICE"]
         else:
             self.Version = "unknown"
@@ -252,7 +250,7 @@ class ClientDetails:
             self.IsOnline = False
 
     def __executeSSH(self, cmd, timeout=DEFAULT_TIMEOUT_SSH, asRoot=False):
-        cmdSSH = "";
+        cmdSSH = ""
         if asRoot:
             cmdSSH = TORCommands.CLIENT_SSH_CONNECTION_X11ROOT.format(tsl.PATH_TO_SSH_KEY, self.IP)
         else:
@@ -1322,6 +1320,8 @@ class MplCanvas(FigureCanvasQTAgg):
 ###################
 ### application ###
 ###################
+
+log.info("Start Dashboard")
 
 window = MainWindow()
 window.show()

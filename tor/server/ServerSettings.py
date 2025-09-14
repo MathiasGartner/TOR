@@ -1,11 +1,12 @@
-import logging
 import os
 import platform
 import sys
 
 import tor.TORSettingsLocal as tsl
 
-SERVER_LOG_LEVEL = logging.INFO
+LOG_CONFIG_DIRECTORY = os.path.join(tsl.TOR_PROGRAM_DIRECTORY_SERVER, "config")
+SERVER_LOG_CONFIG_FILEPATH = os.path.join(LOG_CONFIG_DIRECTORY, "logging.TORServer.yaml")
+DASHBOARD_LOG_CONFIG_FILEPATH = os.path.join(LOG_CONFIG_DIRECTORY, "logging.Dashboard.yaml")
 
 VERIFY_MAGNET_BY_CLIENTID = False
 TOR_MAGNET_PICTURE_DIRECTORY = os.path.join(tsl.TOR_BASE_DIRECTORY_SERVER, "pictures")

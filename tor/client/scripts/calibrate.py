@@ -28,7 +28,7 @@ parser.add_argument("-image", dest='image', action="store_true")
 parser.add_argument("-p", dest="points", default=None, type=int)
 args = parser.parse_args()
 
-logging.basicConfig(format='%(levelname)s: %(message)s', level=cs.LOG_LEVEL)
+logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 ###########################

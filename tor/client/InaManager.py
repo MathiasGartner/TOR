@@ -1,5 +1,5 @@
-import logging
-log = logging.getLogger(__name__)
+from tor.base.LogManager import getLogger
+log = getLogger("InaManager")
 
 import time
 
@@ -21,8 +21,6 @@ class InaManager(Singleton):
         if cs.USE_INA:
             try:
                 self.__ina = INA219(cs.INA_SHUNT_OHMS)
-                self.__ina.logger = logging.getLogger("ina")
-                self.__ina._i2c._logger = logging.getLogger("ina")
                 self.__ina.configure(gain=INA219.GAIN_2_80MV)
                 log.info("INA initialized")
             except Exception as e:

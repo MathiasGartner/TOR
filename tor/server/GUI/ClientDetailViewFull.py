@@ -1,4 +1,5 @@
-import logging
+from tor.base.LogManager import getLogger
+log = getLogger("ClientDetailViewFull")
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtSvg import QSvgWidget
@@ -219,6 +220,7 @@ class ClientDetailViewFull(ClientDetailViewBase):
         self.app.processEvents()
 
     def btnX_clicked(self):
+        log.debug(f"remove client {self.clientDetails.Id} from its position")
         DBManager.setClientPosition(self.clientDetails.Id, None)
         self.clientDetails = None
         self.changeClientCallback()

@@ -1,8 +1,5 @@
-import logging
-
-from tor.base.utils import Utils
-
-log = logging.getLogger(__name__)
+from tor.base.LogManager import getLogger
+log = getLogger("MovementRoutines")
 
 from datetime import datetime
 import numpy as np

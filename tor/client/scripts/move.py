@@ -33,7 +33,7 @@ parser.add_argument("-a", dest='a', action="store_true")
 parser.add_argument("-b", dest='b', action="store_true")
 args = parser.parse_args()
 
-logging.basicConfig(format='%(levelname)s: %(message)s', level=cs.LOG_LEVEL)
+logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 ###########################
