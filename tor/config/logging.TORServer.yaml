@@ -3,7 +3,7 @@ disable_existing_loggers: false
 
 formatters:
   standard:
-    format: "%(asctime)-19s | %(levelname)-8s | %(name)-15s | %(message)s"
+    format: "%(asctime)-19s | %(levelname)-8s | %(name)-25.25s | %(message)s"
 
 handlers:
   console:

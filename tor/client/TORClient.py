@@ -192,6 +192,7 @@ def run():
             state.NoResultRecognized += 1
             if state.NoResultRecognized < cs.HOME_AFTER_N_NOT_FOUND:
                 currentState = "PICKUP_PICKUP"
+                cm.sendSearchForDie()
                 mr.searchForDie()
             elif state.NoResultRecognized == cs.HOME_AFTER_N_NOT_FOUND:
                 doHoming = True

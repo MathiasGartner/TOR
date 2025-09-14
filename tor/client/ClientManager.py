@@ -72,6 +72,14 @@ class ClientManager:
         if "STATUS" in answer:
             log.debug("server response: {}".format(answer["STATUS"]))
 
+    def searchForDie(self):
+        msg = {
+            "C": self.clientId,
+            "WARN": "SEARCH",
+            "MESSAGE": "Perform search routine."
+        }
+        answer = self.sendAndGetAnswer(msg)
+
     def sendDieResultNotRecognized(self):
         msg = {
             "C": self.clientId,
