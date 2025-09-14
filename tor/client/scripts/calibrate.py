@@ -2,8 +2,6 @@ import argparse
 import cv2
 import logging
 import time
-import numpy as np
-import os
 
 from tor.client import ClientSettings as cs
 from tor.client.MovementManager import MovementManager

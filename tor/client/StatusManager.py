@@ -6,9 +6,6 @@ import subprocess
 
 from tor.base import NetworkUtils
 
-import tor.client.ClientSettings as cs
-import tor.TORSettings as ts
-
 def getServiceStatusTORClient():
     isActive = False
     val = subprocess.call(["systemctl", "is-active", "--quiet", "TORClient"])

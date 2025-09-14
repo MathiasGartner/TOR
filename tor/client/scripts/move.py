@@ -1,9 +1,7 @@
 import argparse
-import cv2
 import logging
 import time
 import numpy as np
-import os
 
 from tor.base.DieRollResult import DieRollResult
 from tor.base.utils.Point2D import Point2D
@@ -11,8 +9,6 @@ from tor.client import ClientSettings as cs
 from tor.client.MovementManager import MovementManager
 from tor.client.MovementRoutines import MovementRoutines
 from tor.client.Position import Position
-from tor.base.DieRecognizer import DieRecognizer
-from tor.client.Camera import Camera
 from tor.client.ClientManager import ClientManager
 from tor.client.LedManager import LedManager
 

@@ -5,7 +5,7 @@ import copy
 import mysql.connector as mysql
 
 import tor.TORSettings as ts
-from tor.server.Job import Job, DefaultJobs
+from tor.server.Job import DefaultJobs
 
 db = mysql.connect(
     host=ts.DB_HOST,

@@ -1,6 +1,4 @@
 
-import json
-
 from tor.base.utils.Point2D import Point2D
 
 class DieRollResult:

@@ -8,8 +8,8 @@ from functools import partial
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtSvg import QSvgWidget
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QHBoxLayout, QVBoxLayout, QLayout, QRadioButton, QButtonGroup, QMessageBox
-from PyQt5.QtGui import QPixmap, QIcon, QTextCursor
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QTabWidget, QGridLayout, QWidget, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox, QGroupBox, QHBoxLayout, QVBoxLayout, QLayout, QRadioButton, QMessageBox
+from PyQt5.QtGui import QPixmap, QTextCursor
 
 QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
 QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)

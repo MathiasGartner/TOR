@@ -2,11 +2,9 @@ import logging
 log = logging.getLogger(__name__)
 
 import numpy as np
-import socket
 
 from tor.base import NetworkUtils
 import tor.client.ClientSettings as cs
-import tor.TORSettings as ts
 
 class ClientManager:
     def __init__(self):

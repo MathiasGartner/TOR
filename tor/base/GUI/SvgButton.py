@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtSvg import QSvgRenderer
-from PyQt5.QtGui import QPainter, QCursor
+from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import QRectF, Qt
 
 class SvgButton(QPushButton):

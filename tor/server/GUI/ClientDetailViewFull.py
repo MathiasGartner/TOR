@@ -1,11 +1,8 @@
 import logging
 
-from PyQt5.QtSvg import QSvgWidget
-
-log = logging.getLogger(__name__)
-
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtWidgets import QApplication, QStyle, QComboBox, QGridLayout, QLineEdit, QGroupBox, QHBoxLayout, QInputDialog, QLabel, QPushButton, QVBoxLayout, QWidget
+from PyQt5.QtSvg import QSvgWidget
+from PyQt5.QtWidgets import QComboBox, QGridLayout, QLineEdit, QGroupBox, QHBoxLayout, QInputDialog, QLabel, QVBoxLayout, QWidget
 
 from tor.base import DBManager
 from tor.base.GUI import TORIcons

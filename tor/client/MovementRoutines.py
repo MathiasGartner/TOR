@@ -6,14 +6,12 @@ log = logging.getLogger(__name__)
 
 from datetime import datetime
 import numpy as np
-import os
 import time
 
 from tor.base.DieRecognizer import DieRecognizer
 from tor.base.DieRollResult import DieRollResult
 from tor.base.utils import Utils
 from tor.client import ClientSettings as cs
-from tor.client.ClientManager import ClientManager
 from tor.client.LedManager import LedManager
 from tor.client.MovementManager import MovementManager
 from tor.client.Position import Position

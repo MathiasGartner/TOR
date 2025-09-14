@@ -17,9 +17,6 @@ import os
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 
-from tor.base.utils import Utils
-import tor.TORSettings as ts
-
 # INFO: set local directories
 #data_dir = "/home/gartner/TOR2022/20220812_CoffeaArabica_Magnet/cropped/"
 #model_dir = "./model/"

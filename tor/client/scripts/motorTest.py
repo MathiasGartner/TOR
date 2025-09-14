@@ -2,9 +2,7 @@
 import argparse
 import time
 
-import tor.client.ClientSettings as cs
 from tor.client.MovementManager import MovementManager
-from tor.client.Position import Position
 from tor.client.Cords import Cords
 
 parser = argparse.ArgumentParser()

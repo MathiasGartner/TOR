@@ -10,7 +10,6 @@ import numpy as np
 
 from tor.base.DieRecognizer import DieRecognizer
 import tor.client.ClientSettings as cs
-from tor.client.Cords import Cords
 if cs.ON_RASPI:
     from tor.client.Camera import Camera
 from tor.client.LedManager import LedManager

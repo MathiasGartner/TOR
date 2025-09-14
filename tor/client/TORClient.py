@@ -1,15 +1,11 @@
 import argparse
 from datetime import datetime, timedelta
-import logging
 import math
-#from multiprocessing import Process
-import numpy as np
 import time
 import threading
 
 import tor.TORSettings as ts
 from tor.base.DieRecognizer import DieRecognizer
-from tor.base.DieRollResult import DieRollResult
 from tor.base.utils import Utils
 from tor.base.utils.Point2D import Point2D
 from tor.client.ClientManager import ClientManager

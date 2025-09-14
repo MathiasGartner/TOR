@@ -5,7 +5,6 @@ import time
 
 from tor.base import DBManager
 from tor.server.Job import Job
-import tor.TORSettings as ts
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-run", dest="run", action="store_true")

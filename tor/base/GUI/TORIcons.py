@@ -1,6 +1,6 @@
 import os
 
-from PyQt5.QtGui import QPixmap, QIcon
+from PyQt5.QtGui import QIcon
 
 APP_ICON = QIcon(os.path.join(os.path.dirname(__file__), "..", "..", "resources", "icon.svg"))
 
