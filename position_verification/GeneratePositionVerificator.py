@@ -70,6 +70,11 @@ def createVerificationModel(id=None, show=False):
         print("not enough images for id: {}".format(id))
         return
 
+    print("##############")
+    print(f"start training for id: {id}")
+    print(f"using {len(dataset_im)} images")
+    print("##############")
+
     train_images, test_images, train_labels, test_labels = train_test_split(dataset_im, dataset_lbl, test_size=0.3, random_state=123)
 
     if show:
@@ -205,10 +210,11 @@ def plot_value_array(i, predictions_array, true_label):
 # create models #
 #################
 
-createVerificationModel(show=True)
+show = False
+createVerificationModel(show=show)
 
 #ids = [14, 19]
 #ids = [1, 30, 12]
 ids = ts.CLIENT_IDS
 for id in ids:
-    createVerificationModel(id, show=True)
+    createVerificationModel(id, show=show)
