@@ -28,7 +28,7 @@ app = QApplication(sys.argv)
 app.setStyleSheet("""
         * 
         { 
-            font-size: 10px 
+            font-size: 11px 
         } 
 
         QGroupBox 
@@ -38,7 +38,7 @@ app.setStyleSheet("""
 
         QGroupBox#ClientDetails 
         { 
-            font-size: 10px;            
+            font-size: 12px;            
             border: 1px solid gray;
             border-color: rgb(40, 140, 120);
             margin-top: 7px;
@@ -56,26 +56,26 @@ app.setStyleSheet("""
         QGroupBox#ClientGroup 
         { 
             font-weight: bold; 
-            font-size: 10px;
+            font-size: 12px;
         }
 
         *[styleClass~="group-box-compact"] 
         { 
-            font-size: 8px;
+            font-size: 10px;
             font-weight: font-semibold; 
             color: rgb(90, 60, 120); 
         }
 
         *[styleClass~="group-box-compact"] * 
         {
-            font-size: 8px;
+            font-size: 10px;
             padding: 0px;
             margin: 0px;
         }
         
         *[styleClass~="button-compact"] 
         {
-            font-size: 8px; 
+            font-size: 10px; 
         }
     """)
 window = None
