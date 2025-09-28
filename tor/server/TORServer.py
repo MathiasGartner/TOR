@@ -82,6 +82,9 @@ def handleRequest(conn):
                 else:
                     setCurrentStateForUserMode(clientId, request["U"])
                 NetworkUtils.sendOK(conn)
+            elif "USER_MODE" in request:
+                DBManager.setUserModeEnabled(request["USER_MODE"])
+                NetworkUtils.sendOK(conn)
             elif "A" in request:
                 log.info("send next user action")
                 action = DBManager.getUserAction(clientId)

@@ -39,6 +39,7 @@ class ClientState:
         # last pos and result
         self.LastPickupPos = Point2D(0.5, 0.75)
         self.LastResult = -1
+        self.UserModeTemporarilyDisabled = False
 
     def resetAllCounters(self):
         self.RunsSinceLastHoming = 0
@@ -143,6 +144,9 @@ def run():
         dropoffPos = mr.run(state.LastPickupPos.x, numFailedTries=state.NoMagnetContact)
         magnetHadContact = mr.getLastMagnetContactStatus()
         if not magnetHadContact:
+            if not state.UserModeTemporarilyDisabled:
+                state.UserModeTemporarilyDisabled = True
+                cm.setUserModeEnabled(False)
             state.NoMagnetContact += 1
             state.NoMagnetContactGlobal += 1
             cm.sendNoMagnetContact(dropoffPos, state.NoMagnetContactGlobal)
@@ -187,9 +191,12 @@ def run():
         if dieRollResult.found:
             state.NoResultRecognized = 0
         else:
+            if not state.UserModeTemporarilyDisabled:
+                state.UserModeTemporarilyDisabled = True
+                cm.setUserModeEnabled(False)
+            state.NoResultRecognized += 1
             log.info("No result recognized. Start search routine.")
             cm.sendDieResultNotFoundNTimes(state.NoResultRecognized)
-            state.NoResultRecognized += 1
             if state.NoResultRecognized < cs.HOME_AFTER_N_NOT_FOUND:
                 currentState = "PICKUP_PICKUP"
                 cm.sendSearchForDie()
@@ -211,6 +218,9 @@ def run():
         isNearOldPickupPosition = distance < cs.SAME_RESULT_NEAR_THRESHOLD
         if state.LastResult == dieRollResult.result and isNearOldPickupPosition:
             log.warning(f"Same position and result recognized again. Distance from last result is only {distance}")
+            if not state.UserModeTemporarilyDisabled:
+                state.UserModeTemporarilyDisabled = True
+                cm.setUserModeEnabled(False)
             state.SameResultRecognized += 1
             cm.sendSameDieResultNTimes(state.SameResultRecognized + 1, dieRollResult.result, dieRollResult.position.x, dieRollResult.position.y)
             if state.SameResultRecognized <= cs.PAUSE_AFTER_N_SAME_RESULTS:
@@ -220,7 +230,8 @@ def run():
                     mr.pickupDie_sideways(dieRollResult)
                 else:
                     log.warning("Pickup with extra z offset")
-                    mr.pickupDie_pickup(dieRollResult, zOffset=cs.LOW_PICKUP_Z_OFFSET)
+                    zOffset = cs.LOW_PICKUP_Z_OFFSET + state.SameResultRecognized
+                    mr.pickupDie_pickup(dieRollResult, zOffset=zOffset)
                 checkFunctionality()
                 if cm.clientIsActive():
                     # check if picked up
@@ -266,6 +277,10 @@ def run():
             state.NoResultRecognized = 0
         doHomingCheck()
         checkFunctionality()
+
+    if state.UserModeTemporarilyDisabled and state.NoMagnetContact == 0 and state.NoMagnetContactGlobal == 0 and state.NoResultRecognized == 0 and state.SameResultRecognized == 0:
+        state.UserModeTemporarilyDisabled = False
+        cm.setUserModeEnabled(True)
 
     # this is always the last step if client is still active
     if cm.clientIsActive():

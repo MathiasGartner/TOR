@@ -342,3 +342,10 @@ class ClientManager:
             "U": state
         }
         answer = self.sendAndGetAnswer(msg)
+
+    def setUserModeEnabled(self, enabled: bool):
+        msg = {
+            "C": self.clientId,
+            "USER_MODE": enabled
+        }
+        answer = self.sendAndGetAnswer(msg)

@@ -138,7 +138,9 @@ class MovementRoutines:
         self.mm.waitForMovementFinished()
 
     def pickupDieFromPosition(self, pos, zOffset=0):
-        self.pickupWithMultiplePositions([pos], zOffset)
+        if not isinstance(pos, list):
+            pos = [pos]
+        self.pickupWithMultiplePositions(pos, zOffset)
 
     def pickupWithMultiplePositions(self, positions, zOffset=0):
         self.mm.setFeedratePercentage(cs.FR_DEFAULT)
@@ -243,7 +245,7 @@ class MovementRoutines:
             left = dieRollResult.position
             left.y = Utils.clamp(left.y + cs.SIDEWAYS_PICKUP_Y_OFFSET, 0.0, 1.0)
             right = dieRollResult.position
-            right.y -= Utils.clamp(right.y - cs.SIDEWAYS_PICKUP_Y_OFFSET, 0.0, 1.0)
+            right.y = Utils.clamp(right.y - cs.SIDEWAYS_PICKUP_Y_OFFSET, 0.0, 1.0)
             self.pickupDieFromPosition([left, right])
         else:
             log.warning("Position for pickup not known.")
