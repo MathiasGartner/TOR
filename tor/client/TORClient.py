@@ -217,11 +217,11 @@ def run():
         distance = state.LastPickupPos.distance(dieRollResult.position)
         isNearOldPickupPosition = distance < cs.SAME_RESULT_NEAR_THRESHOLD
         if state.LastResult == dieRollResult.result and isNearOldPickupPosition:
-            log.warning(f"Same position and result recognized again. Distance from last result is only {distance}")
             if not state.UserModeTemporarilyDisabled:
                 state.UserModeTemporarilyDisabled = True
                 cm.setUserModeEnabled(False)
             state.SameResultRecognized += 1
+            log.warning(f"Same position and result recognized again ({state.SameResultRecognized + 1}). Distance from last result is only {distance:.5f}")
             cm.sendSameDieResultNTimes(state.SameResultRecognized + 1, dieRollResult.result, dieRollResult.position.x, dieRollResult.position.y)
             if state.SameResultRecognized <= cs.PAUSE_AFTER_N_SAME_RESULTS:
                 # modified pickup
@@ -255,7 +255,7 @@ def run():
                     doContinue = False
             else:
                 # pause
-                log.warning("Reached maximum value for same result recognized.")
+                log.warning("Reached maximum value for same result recognized. Pausing.")
                 cm.sendStopClient("Maximum value for same result recognized reached")
                 cm.sendSameResultMaxTimes()
                 updateClientIsActiveState()

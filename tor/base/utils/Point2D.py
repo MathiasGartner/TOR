@@ -22,3 +22,6 @@ class Point2D:
     def distance(self, other):
         p = self - other
         return p.length()
+
+    def copy(self):
+        return Point2D(self.x, self.y)

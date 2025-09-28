@@ -40,7 +40,7 @@ app.setStyleSheet("""
         { 
             font-size: 12px;            
             border: 1px solid gray;
-            border-color: rgb(40, 140, 120);
+            border-color: rgb(180, 180, 180);
             margin-top: 7px;
         }
 
@@ -49,7 +49,7 @@ app.setStyleSheet("""
             subcontrol-origin: margin;
             subcontrol-position: top center;
             padding: 2px 50px;
-            background-color: rgb(40, 140, 120);
+            background-color: rgb(180, 180, 180);
             color: rgb(255, 255, 255);
         }
 
@@ -63,7 +63,7 @@ app.setStyleSheet("""
         { 
             font-size: 10px;
             font-weight: font-semibold; 
-            color: rgb(90, 60, 120); 
+            color: rgb(70, 70, 70); 
         }
 
         *[styleClass~="group-box-compact"] * 
@@ -147,7 +147,7 @@ THREAD_POOL_SIZE = 27
 DEFAULT_TIMEOUT = 3
 DEFAULT_TIMEOUT_SERVER = 3
 DEFAULT_TIMEOUT_SSH = 7
-DEFAULT_TIMEOUT_PING = 2.5
+DEFAULT_TIMEOUT_PING: float = 2.5
 
 NEW_PROGRAM_NAME = "<new>"
 

@@ -239,12 +239,12 @@ class MovementRoutines:
         else:
             log.warning("Position for pickup not known.")
 
-    def pickupDie_sideways(self, dieRollResult):
+    def pickupDie_sideways(self, dieRollResult: DieRollResult):
         if dieRollResult.found:
             log.info("dieRollResult: {}".format(dieRollResult))
-            left = dieRollResult.position
+            left = dieRollResult.position.copy()
             left.y = Utils.clamp(left.y + cs.SIDEWAYS_PICKUP_Y_OFFSET, 0.0, 1.0)
-            right = dieRollResult.position
+            right = dieRollResult.position.copy()
             right.y = Utils.clamp(right.y - cs.SIDEWAYS_PICKUP_Y_OFFSET, 0.0, 1.0)
             self.pickupDieFromPosition([left, right])
         else:

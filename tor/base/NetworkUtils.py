@@ -90,12 +90,15 @@ def recvData(conn):
     #print("len recv TOTAL:", len(fullMessage))
     msg = fullMessage.decode()
     msgData = None
-    try:
-        msgData = json.loads(msg)
-    except Exception as e:
-        log.error("Error parsing JSON message:")
-        log.error("{}".format(repr(e)))
-        log.error("msg: {}".format(msg))
+    if len(msg) > 0:
+        try:
+            msgData = json.loads(msg)
+        except Exception as e:
+            log.error("Error parsing JSON message:")
+            log.error("{}".format(repr(e)))
+            log.error("msg: {}".format(msg))
+            import traceback
+            log.error(traceback.format_exc())
     return msgData
 
 def sendData(conn, data):
