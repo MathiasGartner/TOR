@@ -21,7 +21,7 @@ class Position:
         return Position(self.x / f, self.y / f, self.z / f)
 
     def __str__(self):
-        return "<Position: (x={}, y={}, z={})>".format(self.x, self.y, self.z)
+        return f"<Position: (x={self.x:.2f}, y={self.y:.2f}, z={self.z:.2f})>"
 
     def __repr__(self):
         return self.__str__()

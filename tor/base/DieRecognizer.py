@@ -109,8 +109,8 @@ class DieRecognizer:
         if not isGray:
             im = self.toGrayscale(im)
         im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
-        for l in lines:
-            im = cv2.line(im, tuple(l[0]), tuple(l[1]), (0, 0, 255), thickness=1)
+        for line in lines:
+            im = cv2.line(im, tuple(line[0]), tuple(line[1]), (0, 0, 255), thickness=1)
         return im
 
     def cropImage(self, image, tl=None, br=None):

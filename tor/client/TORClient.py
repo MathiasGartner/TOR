@@ -229,8 +229,8 @@ def run():
                     log.warning("Pickup sideways")
                     mr.pickupDie_sideways(dieRollResult)
                 else:
-                    log.warning("Pickup with extra z offset")
                     zOffset = cs.LOW_PICKUP_Z_OFFSET + state.SameResultRecognized
+                    log.warning(f"Pickup with extra z offset = {zOffset}")
                     mr.pickupDie_pickup(dieRollResult, zOffset=zOffset)
                 checkFunctionality()
                 if cm.clientIsActive():
