@@ -142,6 +142,14 @@ class ClientManager:
         }
         answer = self.sendAndGetAnswer(msg)
 
+    def sendSearchForDie(self):
+        msg = {
+            "C": self.clientId,
+            "MSG": "SEARCH_ROUTINE",
+            "MESSAGE": "Start search routine"
+        }
+        answer = self.sendAndGetAnswer(msg)
+
     def sendNoMagnetContact(self, dropoffPos, globalCounter):
         msg = {
             "C": self.clientId,
