@@ -227,7 +227,7 @@ def run():
                 # modified pickup
                 if dieRollResult.position.y < cs.NEAR_RAMP_Y or state.SameResultRecognized > 2:
                     log.warning("Pickup sideways")
-                    mr.pickupDie_sideways(dieRollResult)
+                    mr.pickupDie_sideways(dieRollResult, leftright=(state.SameResultRecognized % 2) == 0, frontback=(state.SameResultRecognized % 2) == 1)
                 else:
                     zOffset = cs.LOW_PICKUP_Z_OFFSET + state.SameResultRecognized
                     log.warning(f"Pickup with extra z offset = {zOffset}")

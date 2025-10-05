@@ -239,14 +239,19 @@ class MovementRoutines:
         else:
             log.warning("Position for pickup not known.")
 
-    def pickupDie_sideways(self, dieRollResult: DieRollResult):
+    def pickupDie_sideways(self, dieRollResult: DieRollResult, leftright=True, frontback=False):
         if dieRollResult.found:
             log.info("dieRollResult: {}".format(dieRollResult))
-            left = dieRollResult.position.copy()
-            left.y = Utils.clamp(left.y + cs.SIDEWAYS_PICKUP_Y_OFFSET, 0.0, 1.0)
-            right = dieRollResult.position.copy()
-            right.y = Utils.clamp(right.y - cs.SIDEWAYS_PICKUP_Y_OFFSET, 0.0, 1.0)
-            self.pickupDieFromPosition([left, right])
+            pos1 = dieRollResult.position.copy()
+            pos2 = dieRollResult.position.copy()
+            if leftright:
+                firstOffset = cs.SIDEWAYS_PICKUP_X_OFFSET * (1 if pos1.x > 0.5 else -1)
+                pos1.x = Utils.clamp(pos1.x + firstOffset, 0.0, 1.0)
+                pos2.x = Utils.clamp(pos2.x - firstOffset, 0.0, 1.0)
+            if frontback:
+                pos1.y = Utils.clamp(pos1.y + cs.SIDEWAYS_PICKUP_Y_OFFSET, 0.0, 1.0)
+                pos2.y = Utils.clamp(pos2.y - cs.SIDEWAYS_PICKUP_Y_OFFSET, 0.0, 1.0)
+            self.pickupDieFromPosition([pos1, pos2])
         else:
             log.warning("Position for pickup not known.")
 
@@ -284,7 +289,8 @@ class MovementRoutines:
         dropoffPos = cs.MESH_MAGNET[3, :]
         percent = np.clip(percent, 0.0, 1.0)
         if invert:
-            px = np.clip(1 - percent, 0.0, 1.0)
+            # INFO: make sure that inverting triggers a change of side by setting the value to 0.49 if value is exactly 0.5
+            px = np.clip(1 - percent, 0.0, 1.0) if percent != 0.5 else 0.49
         else:
             px = percent
         if px < 0.5:
