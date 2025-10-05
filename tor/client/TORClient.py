@@ -225,11 +225,13 @@ def run():
             cm.sendSameDieResultNTimes(state.SameResultRecognized + 1, dieRollResult.result, dieRollResult.position.x, dieRollResult.position.y)
             if state.SameResultRecognized <= cs.PAUSE_AFTER_N_SAME_RESULTS:
                 # modified pickup
-                if dieRollResult.position.y < cs.NEAR_RAMP_Y or state.SameResultRecognized > 2:
+                if state.SameResultRecognized > 2:
                     log.warning("Pickup sideways")
                     mr.pickupDie_sideways(dieRollResult, leftright=(state.SameResultRecognized % 2) == 0, frontback=(state.SameResultRecognized % 2) == 1)
                 else:
                     zOffset = cs.LOW_PICKUP_Z_OFFSET + state.SameResultRecognized
+                    if dieRollResult.position.y < cs.NEAR_RAMP_Y and (state.SameResultRecognized % 2) == 0:
+                        zOffset = -cs.HIGH_PICKUP_Z_OFFSET
                     log.warning(f"Pickup with extra z offset = {zOffset}")
                     mr.pickupDie_pickup(dieRollResult, zOffset=zOffset)
                 checkFunctionality()
