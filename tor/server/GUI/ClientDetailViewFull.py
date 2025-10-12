@@ -272,7 +272,7 @@ class ClientDetailViewFull(ClientDetailViewBase):
                 self.grpMainGroup.setStyleSheet("QGroupBox#ClientDetails {border-color: #FF0000} QGroupBox:title#ClientDetails { background-color: #FF0000 }")
         if self.ErrorMessage is None:
             self.svgErrorLogIcon.load(TORIcons.LED_GREEN)
-            self.lblErrorLogMessage.setText("---")
+            self.lblErrorLogMessage.setText("")
             self.btnErrorLogAcknowledge.setVisible(False)
             self.btnErrorLogGoToDetails.setVisible(False)
             self.grpMainGroup.setStyleSheet("")

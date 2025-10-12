@@ -128,6 +128,7 @@ from tor.base.GUI.SvgButton import SvgButton
 from tor.server.GUI.ClientDetailViewCompact import ClientDetailViewCompact
 from tor.server.GUI.ClientDetailViewFull import ClientDetailViewFull
 from tor.server.GUI.DatenAndEventSelection import DatenAndEventSelection
+from tor.server.GUI.plots.PickupProblems import PickupProblems
 from tor.server.GUI.plots.RollWarnings import RollWarnings
 from tor.server.GUI.plots.ResultPositions import ResultPositions
 from tor.server.GUI.plots.ResultStatistic import ResultStatistic
@@ -379,11 +380,11 @@ class MainWindow(QMainWindow):
         self.btnStopAllTORPrograms.setStyleSheet("QPushButton { font-weight: bold }; ")
 
         self.btnStartAllClientService = QPushButton()
-        self.btnStartAllClientService.setText("Start all active TORClients")
+        self.btnStartAllClientService.setText("Start all active boxes")
         self.btnStartAllClientService.clicked.connect(self.btnStartAllClientService_clicked)
 
         self.btnStopAllClientService = QPushButton()
-        self.btnStopAllClientService.setText("Stop all TORClients")
+        self.btnStopAllClientService.setText("Stop all boxes")
         self.btnStopAllClientService.clicked.connect(self.btnStopAllClientService_clicked)
 
         self.btnSaveSettings = QPushButton()
@@ -788,12 +789,35 @@ class MainWindow(QMainWindow):
 
         wdgResultPositions.setLayout(layResultPositions)
 
+
+        # Plot Pickup Problems
+        wdgPickupProblems = QWidget()
+        layPickupProblems = QVBoxLayout()
+
+        self.chkPickupProblemsGlobalColorbar = QCheckBox()
+
+        self.filterPickupProblems = DatenAndEventSelection(self.filterPickupProblems_update, customElements=[QLabel("global scale"), self.chkPickupProblemsGlobalColorbar])
+        self.filterPickupProblems.chkEvent.setVisible(False)
+        self.filterPickupProblems.cmbEvent.setVisible(False)
+        self.filterPickupProblems.chkTime.setChecked(True)
+        self.filterPickupProblems.timStart.setEnabled(True)
+        self.filterPickupProblems.timEnd.setEnabled(True)
+        self.pltPickupProblems = PickupProblems()
+
+        layPickupProblems.addWidget(self.filterPickupProblems)
+        layPickupProblems.addWidget(self.pltPickupProblems.canvas)
+        layPickupProblems.addWidget(QWidget())
+        layPickupProblems.addStretch(1)
+
+        wdgPickupProblems.setLayout(layPickupProblems)
+
         ##############
 
         tabStatistics = QTabWidget()
         tabStatistics.addTab(wdgResultStatistic, "Results")
         tabStatistics.addTab(wdgRollWarnings, "Roll Warnings")
         tabStatistics.addTab(wdgResultPositions, "Result Positions")
+        tabStatistics.addTab(wdgPickupProblems, "Pickup Problems")
 
         layTORServer = QVBoxLayout()
         layTORServer.addWidget(QLabel("TOR server"))
@@ -1339,6 +1363,12 @@ class MainWindow(QMainWindow):
         globalColorBar = self.chkResultPositionsGlobalColorbar.isChecked()
         self.pltResultPositions.updatePlot(start, end, event, globalColorBar)
         self.pltResultPositions.canvas.draw()
+
+    def filterPickupProblems_update(self):
+        start, end, _ = self.filterPickupProblems.getDateAndEvent()
+        globalColorBar = self.chkPickupProblemsGlobalColorbar.isChecked()
+        self.pltPickupProblems.updatePlot(start, end, globalColorBar)
+        self.pltPickupProblems.canvas.draw()
 
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
