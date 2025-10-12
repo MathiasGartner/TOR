@@ -54,7 +54,7 @@ class ClientDetailViewCompact(ClientDetailViewBase):
 
         layClientOptions = QGridLayout()
         layClientOptions.setContentsMargins(0, 0, 0, 0)
-        layClientOptions.addWidget(QLabel("User mode enabled"), 0, 0)
+        layClientOptions.addWidget(QLabel("Visitor control allowed"), 0, 0)
         layClientOptions.addWidget(self.chkUserMode, 0, 1)
         layClientOptions.addWidget(QLabel("Client activated"), 1, 0)
         layClientOptions.addWidget(self.chkIsActivated, 1, 1)

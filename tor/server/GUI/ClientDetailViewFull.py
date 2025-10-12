@@ -5,6 +5,8 @@ from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtSvg import QSvgWidget
 from PyQt5.QtWidgets import QComboBox, QGridLayout, QLineEdit, QGroupBox, QHBoxLayout, QInputDialog, QLabel, QVBoxLayout, QWidget
 
+import tor.TORSettings as ts
+
 from tor.base import DBManager
 from tor.base.GUI import TORIcons
 from tor.base.GUI.SvgButton import SvgButton
@@ -49,7 +51,8 @@ class ClientDetailViewFull(ClientDetailViewBase):
         row = 0
         layClientStatus.addWidget(QLabel("online:"), row, 0)
         layClientStatus.addWidget(self.svgIsOnline, row, 1)
-        layClientStatus.addWidget(self.btnX, row, 2, alignment=Qt.AlignCenter)
+        if ts.DASHBOARD_SHOW_X_BUTTON:
+            layClientStatus.addWidget(self.btnX, row, 2, alignment=Qt.AlignCenter)
         row += 1
         layClientStatus.addWidget(QLabel("Version:"), row, 0)
         layClientStatus.addWidget(self.svgTORVersion, row, 1)
@@ -134,11 +137,11 @@ class ClientDetailViewFull(ClientDetailViewBase):
         #Options
         layClientOptions = QGridLayout()
         layClientOptions.setSpacing(2)
-        layClientOptions.addWidget(QLabel("User mode enabled"), 0, 0)
+        layClientOptions.addWidget(QLabel("Visitor control allowed"), 0, 0)
         layClientOptions.addWidget(self.chkUserMode, 0, 1)
-        layClientOptions.addWidget(QLabel("Client activated"), 1, 0)
+        layClientOptions.addWidget(QLabel("Box enabled"), 1, 0)
         layClientOptions.addWidget(self.chkIsActivated, 1, 1)
-        layClientOptions.addWidget(QLabel("Use schedule"), 2, 0)
+        layClientOptions.addWidget(QLabel("Use run schedule"), 2, 0)
         layClientOptions.addWidget(self.chkUseSchedule, 2, 1)
         grpClientOptions = QGroupBox("Options")
         grpClientOptions.setProperty("styleClass", "group-box-compact")
