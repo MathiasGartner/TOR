@@ -16,7 +16,7 @@ BOX_FORMATION = "3x3x3"
 BOX_VIEW_COMPACT = False
 
 STARTUP_JOB_DELAY_MINUTES = 2
-STARTUP_JOB_PROGRAM_NAME = "JMAF2022"
+STARTUP_JOB_PROGRAM_NAME = "Zorlu - default"
 
 if sys.platform == "linux" and platform.platform() == "Linux-5.4.51-v7l+-armv7l-with-debian-10.4":
     ON_RASPI = True

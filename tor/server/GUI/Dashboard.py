@@ -352,7 +352,7 @@ class MainWindow(QMainWindow):
 
         #QuickJobs
         programNames = DBManager.getAllJobProgramNames()
-        self.quickTourNames = [pn.Name for pn in programNames if pn.Name.startswith("MSI - ")]
+        self.quickTourNames = [pn.Name for pn in programNames if pn.Name.startswith(ts.DASHBOARD_QUICK_JOB_PREFIX)]
         self.cmbQuickTour = QComboBox()
         self.cmbQuickTour.setMaximumWidth(100)
         for i in range(len(self.quickTourNames)):
@@ -404,6 +404,9 @@ class MainWindow(QMainWindow):
         self.btnStopTORServer = QPushButton()
         self.btnStopTORServer.setText("Stop TOR Server")
         self.btnStopTORServer.clicked.connect(self.btnStopTORServer_clicked)
+
+        self.svgStatusTORInteractive = QSvgWidget(TORIcons.LED_RED)
+        self.svgStatusTORInteractive.setFixedSize(8, 8)
 
         self.btnStartTORInteractive = QPushButton()
         self.btnStartTORInteractive.setText("Start Visitor App")
@@ -457,7 +460,10 @@ class MainWindow(QMainWindow):
         layDashboardButtons.addWidget(self.btnStartTORServer)
         layDashboardButtons.addWidget(self.btnStopTORServer)
         layDashboardButtons.addSpacing(spacerSize)
-        layDashboardButtons.addWidget(QLabel("Visitor App"))
+        layTmp = QHBoxLayout()
+        layTmp.addWidget(QLabel("Visitor App"))
+        layTmp.addWidget(self.svgStatusTORInteractive)
+        layDashboardButtons.addLayout(layTmp)
         layDashboardButtons.addWidget(self.btnStartTORInteractive)
         layDashboardButtons.addWidget(self.btnStopTORInteractive)
         layDashboardButtons.addWidget(self.btnEndAllUserModes)
@@ -895,6 +901,22 @@ class MainWindow(QMainWindow):
             self.svgStatusTORServer.load(TORIcons.LED_RED)
             self.svgStatusTORServer.setToolTip("not responding")
 
+    def checkStatusTORInteractive(self):
+        import requests
+        isUp = False
+        try:
+            response = requests.head(f"http://{ts.TOR_INTERACTIVE_IP}/check", timeout=1)
+            isUp = response.status_code == 200
+        except requests.RequestException as e:
+            log.error("Could not reach TOR-Interactive:")
+            log.error("{}".format(repr(e)))
+        if isUp:
+            self.svgStatusTORInteractive.load(TORIcons.LED_GREEN)
+            self.svgStatusTORInteractive.setToolTip("running")
+        else:
+            self.svgStatusTORInteractive.load(TORIcons.LED_RED)
+            self.svgStatusTORInteractive.setToolTip("not responding")
+
     def executeCommandOnTORServer(self, cmd, timeout=DEFAULT_TIMEOUT_SERVER):
         val = -1
         with WaitCursor():
@@ -984,6 +1006,7 @@ class MainWindow(QMainWindow):
             cdv.refreshClientStatus()
 
         self.checkStatusTORServer()
+        self.checkStatusTORInteractive()
 
         self.lblLastUpdateTime.setText("last update: {}".format(datetime.now().strftime("%H:%M:%S")))
         log.info("updateDashboard finished")
@@ -1094,12 +1117,18 @@ class MainWindow(QMainWindow):
         self.checkStatusTORServer()
 
     def btnStartTORInteractive_clicked(self):
+        self.svgStatusTORInteractive.load(TORIcons.LED_GRAY)
+        self.svgStatusTORInteractive.setToolTip("starting...")
         self.executeCommandOnTORServer(TORCommands.INTERACTIVE_START)
         log.info("start tor interactive")
+        self.checkStatusTORInteractive()
 
     def btnStopTORInteractive_clicked(self):
+        self.svgStatusTORInteractive.load(TORIcons.LED_GRAY)
+        self.svgStatusTORInteractive.setToolTip("starting...")
         self.executeCommandOnTORServer(TORCommands.INTERACTIVE_STOP)
         log.info("stop tor interactive")
+        self.checkStatusTORInteractive()
 
     def btnEndAllUserModes_clicked(self):
         #INFO: only sets flags realted to usermode in database, client should exit after given time interval by its own

@@ -231,26 +231,26 @@ def getJobsByProgramName(name):
     return data
 
 def getClientLog():
-    query = "SELECT c.Position, c.Latin, l.MessageType AS Type, l.MessageCode, l.Message, DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog l LEFT JOIN client c ON c.Id = l.ClientId ORDER BY l.Id DESC LIMIT 100"
-    cursor.execute(query)
+    query = "SELECT c.Position, c.Latin, l.MessageType AS Type, l.MessageCode, l.Message, DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog l LEFT JOIN client c ON c.Id = l.ClientId WHERE TIME > %(startdate)s ORDER BY l.Id DESC LIMIT 100"
+    cursor.execute(query, {"startdate": ts.DASHBOARD_LOG_STARTDATE})
     data = cursor.fetchall()
     return data
 
 def getClientLogByClientId(clientId, maxEntries=1000):
-    query = "SELECT MessageType AS Type, MessageCode, Message, DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog WHERE ClientId = %(clientId)s ORDER BY Id DESC LIMIT %(maxEntries)s"
-    cursor.execute(query, {"clientId": clientId, "maxEntries": maxEntries})
+    query = "SELECT MessageType AS Type, MessageCode, Message, DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog WHERE ClientId = %(clientId)s AND TIME > %(startdate)s ORDER BY Id DESC LIMIT %(maxEntries)s"
+    cursor.execute(query, {"clientId": clientId, "maxEntries": maxEntries, "startdate": ts.DASHBOARD_LOG_STARTDATE})
     data = cursor.fetchall()
     return data
 
 def getRecentClientLogErrorByClientId(clientId):
-    query = "SELECT Id, MessageCode, Message, Time FROM clientlog WHERE MessageType = 'ERROR' AND ClientId = %(clientId)s AND IsAcknowledged = 0 ORDER BY Time DESC LIMIT 1"
-    cursor.execute(query, {"clientId": clientId})
+    query = "SELECT Id, MessageCode, Message, Time FROM clientlog WHERE MessageType = 'ERROR' AND ClientId = %(clientId)s AND IsAcknowledged = 0 AND TIME > %(startdate)s ORDER BY Time DESC LIMIT 1"
+    cursor.execute(query, {"clientId": clientId, "startdate": ts.DASHBOARD_LOG_STARTDATE})
     data = cursor.fetchone()
     return data
 
 def getRecentClientLogErrors(maxEntries=10):
-    query = "SELECT l.MessageType AS Type, l.MessageCode, c.Material AS ClientName, l.Message, DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog l LEFT JOIN client c ON c.Id = l.ClientId WHERE MessageType = 'ERROR' ORDER BY l.Id DESC LIMIT %(maxEntries)s"
-    cursor.execute(query, {"maxEntries": maxEntries})
+    query = "SELECT l.MessageType AS Type, l.MessageCode, c.Material AS ClientName, l.Message, DATE_ADD(Time, " + ts.TIME_OFFSET_FOR_DISPLAY + ") AS Time FROM clientlog l LEFT JOIN client c ON c.Id = l.ClientId WHERE MessageType = 'ERROR' AND TIME > %(startdate)s ORDER BY l.Id DESC LIMIT %(maxEntries)s"
+    cursor.execute(query, {"maxEntries": maxEntries, "startdate": ts.DASHBOARD_LOG_STARTDATE})
     data = cursor.fetchall()
     return data
 
