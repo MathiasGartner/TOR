@@ -73,7 +73,7 @@ def keepAskingForNextJob(askEveryNthSecond = None):
         if "U" in nextJob:
             userModeRequested = True
         lock.release()
-        if not inUserMode:
+        if not inUserMode or ("A" in nextJob and nextJob["A"] != "NONE"):
             log.debug("nextJob: {}".format(nextJob))
         sleepFor = nextTime - time.time()
         if sleepFor > 0:
@@ -358,9 +358,10 @@ def doJobs():
     steppersDisabled = False
     done = False
     while not done:
-        log.debug("doJobs loop")
-        checkFunctionality()
-        log.debug(f"client is active: {cm.clientIsActive()}")
+        if not inUserMode:
+            log.debug("doJobs loop")
+            checkFunctionality()
+            log.debug(f"client is active: {cm.clientIsActive()}")
         if "Q" in nextJob: # Q...quit
             done = True
             continue
@@ -369,7 +370,7 @@ def doJobs():
             time.sleep(cs.UPDATE_ISACTIVE_SLEEP_TIME)
             updateClientIsActiveState()
             continue
-        log.info("nextJob: {}".format(nextJob))
+        #log.info("nextJob: {}".format(nextJob))
         if not "W" in nextJob:
             inParkingPosition = False
             if not inUserMode:
@@ -504,7 +505,7 @@ def doJobs():
                 if currentState == "":
                     currentState = "PICKUP_PICKUP"
                 cm.setUserModeReady(currentState)
-            mm.setFeedratePercentage(cs.FR_DEFAULT)
+                mm.setFeedratePercentage(cs.FR_DEFAULT)
             exitUserModeAtTime = datetime.now() + timedelta(seconds=cs.EXIT_USER_MODE_AFTER_N_SECONDS + 10)
         elif "A" in nextJob: # A...action from user
             action = nextJob["A"]
