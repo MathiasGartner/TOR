@@ -1,11 +1,24 @@
 use tor;
 
+UPDATE client SET Latin = "Cetraria islandica" WHERE Id = 17;
+
 ALTER TABLE client ADD UseSchedule tinyint NOT NULL DEFAULT 0;
 
 CREATE TABLE schedule (
     Id INT NOT NULL AUTO_INCREMENT,
     StartTime DATETIME NULL,
     EndTime DATETIME NULL,
+    PRIMARY KEY (Id)
+);
+
+CREATE TABLE interactivelog (
+    Id INT NOT NULL AUTO_INCREMENT,
+    Ip VARCHAR(45) NOT NULL,
+    Browser VARCHAR(100) DEFAULT NULL,
+    OS VARCHAR(100) DEFAULT NULL,
+    Device VARCHAR(100) DEFAULT NULL,
+    UserAgent TEXT DEFAULT NULL,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (Id)
 );
 
