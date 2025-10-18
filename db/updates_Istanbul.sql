@@ -11,7 +11,7 @@ CREATE TABLE schedule (
     PRIMARY KEY (Id)
 );
 
-CREATE TABLE interactivelog (
+CREATE TABLE interactivevisits (
     Id INT NOT NULL AUTO_INCREMENT,
     Ip VARCHAR(45) NOT NULL,
     Browser VARCHAR(100) DEFAULT NULL,
@@ -20,6 +20,18 @@ CREATE TABLE interactivelog (
     UserAgent TEXT DEFAULT NULL,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (Id)
+);
+
+CREATE TABLE interactivelog (
+    Id INT NOT NULL AUTO_INCREMENT,
+    VisitorId INT NOT NULL,
+    Path VARCHAR(255) NOT NULL,
+    Method VARCHAR(10) NOT NULL DEFAULT 'GET',
+    Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    Referrer VARCHAR(255) DEFAULT NULL,
+    PRIMARY KEY (Id),
+    FOREIGN KEY (VisitorId) REFERENCES interactivevisits(Id)
+        ON DELETE CASCADE
 );
 
 INSERT INTO schedule (StartTime, EndTime) VALUES ('2025-10-21 11:05:00', '2025-10-21 20:50:00');
