@@ -196,8 +196,8 @@ def getAllClientStatistics():
     data = cursor.fetchall()
     return data
 
-def setUserModeEnabled(clientId, enabled):
-    query = "UPDATE client SET AllowUserMode = %(userMode)s WHERE Id = %(clientId)s"
+def setUserModeEnabled(clientId, enabled, checkActiveIfDisabling = False):
+    query = f"UPDATE client SET AllowUserMode = %(userMode)s WHERE Id = %(clientId)s{' AND NOT UserModeActive' if (not enabled and checkActiveIfDisabling) else ''}"
     cursor.execute(query, {"userMode": enabled, "clientId": clientId})
 
 def setClientIsActive(clientId, active):
