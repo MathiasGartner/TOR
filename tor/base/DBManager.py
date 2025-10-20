@@ -165,7 +165,11 @@ def clearAllCurrentStates():
     cursor.execute(query)
 
 def setJobsByJobProgram(programName, startInNMinutes=0):
-    query = "INSERT INTO jobqueue (ClientId, JobCode, JobParameters, ExecuteAt) SELECT ClientId, JobCode, JobParameters, Date_ADD(NOW(), INTERVAL %(minutes)s MINUTE) FROM jobprogram WHERE Name = %(programName)s"
+    query = ""
+    if startInNMinutes > 0:
+        query = "INSERT INTO jobqueue (ClientId, JobCode, JobParameters, ExecuteAt) SELECT ClientId, JobCode, JobParameters, Date_ADD(NOW(), INTERVAL %(minutes)s MINUTE) FROM jobprogram WHERE Name = %(programName)s"
+    else:
+        query = "INSERT INTO jobqueue (ClientId, JobCode, JobParameters) SELECT ClientId, JobCode, JobParameters) FROM jobprogram WHERE Name = %(programName)s"
     cursor.execute(query, { "programName": programName, "minutes": startInNMinutes })
 
 def getAllClients():
