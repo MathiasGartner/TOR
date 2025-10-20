@@ -3,7 +3,7 @@ import os
 import tor.TORSettingsPrivate as tsp
 import tor.TORSettingsLocal as tsl
 
-VERSION_TOR = "1.25.2"
+VERSION_TOR = "1.25.3"
 
 DB_HOST = tsp.DB_HOST
 DB_USER = tsp.DB_USER

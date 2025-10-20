@@ -35,7 +35,7 @@ class Communicator(Singleton):
                 bytesize=serial.EIGHTBITS,
                 timeout=1
             )
-            log.info("Connected to board at port \"{serialPort}\"")
+            log.info(f"Connected to board at port \"{serialPort}\"")
 
     def findPort(self, vendorId, productId):
         ports = serial.tools.list_ports.comports()
