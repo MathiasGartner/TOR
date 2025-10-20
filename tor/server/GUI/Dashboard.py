@@ -198,10 +198,15 @@ class ClientDetails:
         self.Version = "unknown"
 
     def sendMsgToStatusManager(self, msg, timeout=ts.STATUS_TIMEOUT):
-        conn = NetworkUtils.createConnection(self.IP, ts.STATUS_PORT, timeout, verbose=False)
-        NetworkUtils.sendData(conn, msg)
-        answer = NetworkUtils.recvData(conn)
-        conn.close()
+        answer = None
+        try:
+            conn = NetworkUtils.createConnection(self.IP, ts.STATUS_PORT, timeout, verbose=False)
+            NetworkUtils.sendData(conn, msg)
+            answer = NetworkUtils.recvData(conn)
+            conn.close()
+        except Exception as e:
+            log.error("Error connecting to StatusManager:")
+            log.error("{}".format(repr(e)))
         return answer
 
     def IsBadStatistics(self):

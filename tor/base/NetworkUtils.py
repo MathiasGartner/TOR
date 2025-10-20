@@ -81,24 +81,25 @@ def createConnection(ip, port, timeout=None, verbose=True):
     return conn
 
 def recvData(conn):
-    msgReceived = conn.recv(ts.MAX_MSG_LENGTH)
-    fullMessage = msgReceived
-    while (len(msgReceived) == ts.MAX_MSG_LENGTH):
-        msgReceived = conn.recv(ts.MAX_MSG_LENGTH)
-        fullMessage += msgReceived
-    #print("finished receiving")
-    #print("len recv TOTAL:", len(fullMessage))
-    msg = fullMessage.decode()
     msgData = None
-    if len(msg) > 0:
-        try:
-            msgData = json.loads(msg)
-        except Exception as e:
-            log.error("Error parsing JSON message:")
-            log.error("{}".format(repr(e)))
-            log.error("msg: {}".format(msg))
-            import traceback
-            log.error(traceback.format_exc())
+    if conn is not None:
+        msgReceived = conn.recv(ts.MAX_MSG_LENGTH)
+        fullMessage = msgReceived
+        while (len(msgReceived) == ts.MAX_MSG_LENGTH):
+            msgReceived = conn.recv(ts.MAX_MSG_LENGTH)
+            fullMessage += msgReceived
+        #print("finished receiving")
+        #print("len recv TOTAL:", len(fullMessage))
+        msg = fullMessage.decode()
+        if len(msg) > 0:
+            try:
+                msgData = json.loads(msg)
+            except Exception as e:
+                log.error("Error parsing JSON message:")
+                log.error("{}".format(repr(e)))
+                log.error("msg: {}".format(msg))
+                import traceback
+                log.error(traceback.format_exc())
     return msgData
 
 def sendData(conn, data):
