@@ -650,5 +650,5 @@ if cm.clientIsActive():
     mm.moveToParkingPosition(True)
 
 jobScheduler.join()
-lm.clear()
+#lm.clear()
 log.info("TORClient will now quit.")
