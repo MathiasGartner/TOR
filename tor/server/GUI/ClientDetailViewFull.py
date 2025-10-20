@@ -26,6 +26,7 @@ class ClientDetailViewFull(ClientDetailViewBase):
 
         self.svgTORVersion = QSvgWidget(TORIcons.LED_RED)
         self.lblTORVersionText = QLabel()
+        self.lblIp = QLabel()
         self.svgStatusServiceRunning = QSvgWidget(TORIcons.LED_RED)
         self.svgClientServiceRunning = QSvgWidget(TORIcons.LED_RED)
         self.svgResultAverageStatus = QSvgWidget(TORIcons.LED_RED)
@@ -51,6 +52,7 @@ class ClientDetailViewFull(ClientDetailViewBase):
         row = 0
         layClientStatus.addWidget(QLabel("online:"), row, 0)
         layClientStatus.addWidget(self.svgIsOnline, row, 1)
+        layClientStatus.addWidget(self.lblIp, row, 2)
         if ts.DASHBOARD_SHOW_X_BUTTON:
             layClientStatus.addWidget(self.btnX, row, 2, alignment=Qt.AlignCenter)
         row += 1
@@ -141,8 +143,8 @@ class ClientDetailViewFull(ClientDetailViewBase):
         layClientOptions.addWidget(self.chkUserMode, 0, 1)
         layClientOptions.addWidget(QLabel("Box enabled"), 1, 0)
         layClientOptions.addWidget(self.chkIsActivated, 1, 1)
-        layClientOptions.addWidget(QLabel("Use run schedule"), 2, 0)
-        layClientOptions.addWidget(self.chkUseSchedule, 2, 1)
+        #layClientOptions.addWidget(QLabel("Use run schedule"), 2, 0)
+        #layClientOptions.addWidget(self.chkUseSchedule, 2, 1)
         grpClientOptions = QGroupBox("Options")
         grpClientOptions.setProperty("styleClass", "group-box-compact")
         grpClientOptions.setLayout(layClientOptions)

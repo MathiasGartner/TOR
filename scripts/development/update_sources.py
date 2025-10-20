@@ -73,7 +73,7 @@ cmd_flash = r'ssh -i {0} pi@{1} "sudo /home/pi/scripts/flashTORMarlin.sh"'
 with open(filename, 'w') as fAll:
     fAll.write ("scripts=(\n")
     for c in clients:
-        clientfilename = f"marlin_{c.Id}.sh"
+        clientfilename = f"marlin_{c.Id}.cmd"
         print(f"write file \"{clientfilename}\"")
         fAll.write(clientfilename + "\n")
         with open(os.path.join(directoryClients, clientfilename), 'w') as f:

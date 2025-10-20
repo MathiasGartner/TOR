@@ -73,11 +73,11 @@ def createConnection(ip, port, timeout=None, verbose=True):
             log.error("{}".format(repr(e)))
         conn = None
     #TODO: why is this done a second time??
-    if not ok:
-        conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if timeout is not None:
-            conn.settimeout(timeout)
-        conn.connect((ip, port))
+    #if not ok:
+    #    conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #    if timeout is not None:
+    #        conn.settimeout(timeout)
+    #    conn.connect((ip, port))
     return conn
 
 def recvData(conn):
@@ -103,8 +103,11 @@ def recvData(conn):
 
 def sendData(conn, data):
     msgToSend = json.dumps(data, cls=NumpyEncoder)
-    sent = conn.send(msgToSend.encode())
-    #print("sent: {}".format(sent))
+    if conn is not None:
+        sent = conn.send(msgToSend.encode())
+        #print("sent: {}".format(sent))
+    else:
+        log.error(f"cannot send {msgToSend}")
 
 def sendOK(conn):
     msgOK = json.dumps({"STATUS" : "OK"})

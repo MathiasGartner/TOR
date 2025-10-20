@@ -971,6 +971,7 @@ class MainWindow(QMainWindow):
         for cdv in self.cdvs:
             if cdv.clientDetails is not None:
                 cdv.svgIsOnline.setToolTip("Id: {}\nIP: {}\nMaterial: {}\nLatin name: {}".format(cdv.clientDetails.Id, cdv.clientDetails.IP, cdv.clientDetails.Material, cdv.clientDetails.Latin))
+                cdv.lblIp.setText(cdv.clientDetails.IP)
 
     def updateDashboardFromTimer(self):
         if not self.IsBusy and self.tabDashboard.currentIndex() == self.dashboardTabIndex:
