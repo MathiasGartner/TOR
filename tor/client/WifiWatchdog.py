@@ -43,23 +43,26 @@ def restart_wifi():
     except subprocess.CalledProcessError as e:
         log(f"Error restarting Wi-Fi: {e}")
 
-def main():
+log("start watchdog")
+try:
     failures = 0
     while True:
         if has_network():
+            log("has network")
             failures = 0
         else:
             failures += 1
             log(f"No connection to {PING_TARGET} ({failures}/{FAIL_THRESHOLD})")
             if failures >= FAIL_THRESHOLD:
                 log("No network for 2 minutes. Restarting Wi-Fi...")
-                restart_wifi()
+                #restart_wifi()
                 if not has_network():
                     log("Still no network after Wi-Fi restart. Rebooting...")
                     os.system("sudo reboot")
                 failures = 0
         time.sleep(CHECK_INTERVAL)
+except Exception as e:
+    log("Error connecting to StatusManager:")
+    log("{}".format(repr(e)))
 
-if __name__ == "__main__":
-    log("Wi-Fi Watchdog started.")
-    main()
+log("end watchdog")

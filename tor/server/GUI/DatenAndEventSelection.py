@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, QDateTime
+from PyQt5.QtCore import Qt, QDateTime, QDate, QTime
 from PyQt5.QtWidgets import QCheckBox, QLabel, QPushButton, QWidget, QGroupBox, QHBoxLayout, QDateTimeEdit, QComboBox
 
 from tor.base import DBManager
@@ -14,10 +14,10 @@ class DatenAndEventSelection(QWidget):
         self.chkTime.clicked.connect(self.chkTime_clicked)
         self.timStart = QDateTimeEdit(self)
         self.timStart.setCalendarPopup(True)
-        self.timStart.setDateTime(QDateTime.currentDateTime().addSecs(-2 * 3600*100*5))
+        self.timStart.setDateTime(QDateTime(QDate(2025, 10, 21), QTime(5, 0)))
         self.timEnd = QDateTimeEdit(self)
         self.timEnd.setCalendarPopup(True)
-        self.timEnd.setDateTime(QDateTime.currentDateTime().addSecs(3600))
+        self.timEnd.setDateTime(QDateTime.currentDateTime().addSecs(3600*3))
 
         self.chkEvent = QCheckBox()
         self.chkEvent.clicked.connect(self.chkEvent_clicked)
