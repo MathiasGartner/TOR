@@ -987,7 +987,11 @@ class MainWindow(QMainWindow):
             return
         self.IsUpdating = True
         log.info("updateDashboard")
-        jobs = DBManager.getCurrentJobs()
+        try:
+            jobs = DBManager.getCurrentJobs()
+        except Exception as e:
+            log.error("Error getting jobs:")
+            log.error("{}".format(repr(e)))
         for j in jobs:
             for c in self.cds:
                 if c.Id == j.Id:
