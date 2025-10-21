@@ -44,7 +44,8 @@ class ClientManager:
         conn = self.createConnection()
         NetworkUtils.sendData(conn, msg)
         answer = NetworkUtils.recvData(conn)
-        conn.close()
+        if conn is not None:
+            conn.close()
         return answer
 
     def askForClientIdentity(self, macAddress):
