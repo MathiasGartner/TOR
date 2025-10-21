@@ -94,7 +94,9 @@ def updateClientIsActiveState():
 def checkFunctionality():
     global lastFunctionalityCheckAtTime
 
+    log.info("check functionaliyty")
     if lastFunctionalityCheckAtTime is None or datetime.now() > (lastFunctionalityCheckAtTime + timedelta(seconds=cs.MIN_TIME_BETWEEN_FUNCTIONALITY_CHECKS_S)):
+        log.info("in check functionaliyty")
         if cm.clientIsActive():
             if mm.checkOTPW():
                 log.warning("OTPW triggered, client will be stopped")
@@ -360,6 +362,7 @@ def doJobs():
     while not done:
         if not inUserMode:
             log.debug("doJobs loop")
+            updateClientIsActiveState()
             checkFunctionality()
             log.debug(f"client is active: {cm.clientIsActive()}")
         if "Q" in nextJob: # Q...quit
@@ -477,7 +480,7 @@ def doJobs():
                 steppersDisabled = True
                 # this is no user mode state but used for a quick fix for setting the wait status
                 # needed in the Dashboard when turning of the whole installation
-                cm.setUserModeReady("WAITING")
+                # cm.setUserModeReady("WAITING")
             sleepTime = int(nextJob["W"] or cs.STANDARD_CLIENT_SLEEP_TIME)
             if sleepTime <= 0:
                 sleepTime = cs.STANDARD_CLIENT_SLEEP_TIME
