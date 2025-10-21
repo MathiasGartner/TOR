@@ -168,9 +168,10 @@ def setJobsByJobProgram(programName, startInNMinutes=0):
     query = ""
     if startInNMinutes > 0:
         query = "INSERT INTO jobqueue (ClientId, JobCode, JobParameters, ExecuteAt) SELECT ClientId, JobCode, JobParameters, Date_ADD(NOW(), INTERVAL %(minutes)s MINUTE) FROM jobprogram WHERE Name = %(programName)s"
+        cursor.execute(query, {"programName": programName, "minutes": startInNMinutes})
     else:
         query = "INSERT INTO jobqueue (ClientId, JobCode, JobParameters) SELECT ClientId, JobCode, JobParameters) FROM jobprogram WHERE Name = %(programName)s"
-    cursor.execute(query, { "programName": programName, "minutes": startInNMinutes })
+        cursor.execute(query, { "programName": programName })
 
 def getAllClients():
     query = "SELECT Id, IP, Material, Position, Latin, AllowUserMode, IsActive, UseSchedule FROM client WHERE Position IS NOT NULL ORDER BY Position"
